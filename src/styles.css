@@ -448,12 +448,43 @@ input {
   font-weight: 700;
 }
 
-.stage.is-loading::after {
-  content: 'Leyendo…';
+.stage-loading {
   position: absolute;
-  inset: auto 32px 56px auto;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: calc(100% - 48px);
+  padding: 10px 14px;
+  background: var(--ink);
+  color: var(--bg);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.stage-loading::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 10px;
+  background: var(--accent);
+  animation: pq-blink 1s steps(2, jump-none) infinite;
+}
+
+@keyframes pq-blink {
+  to {
+    opacity: 0.2;
+  }
+}
+
+.stage.is-loading .empty {
+  visibility: hidden;
+}
+
+.stage-canvas:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -4px;
 }
 
 /* ───────────── Panel / ficha ───────────── */
@@ -1003,8 +1034,11 @@ input {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     transition: none !important;
+    animation: none !important;
   }
 }
 

@@ -3,10 +3,12 @@ import { isMaterialId, MATERIALS } from '../quote/materials';
 import { computeQuote, type Quote } from '../quote/model';
 import { DEFAULT_SETTINGS, LIMITS, normalizeSettings, type QuoteSettings } from '../quote/settings';
 import { buildQuoteText } from '../quote/text';
-import { computeStats, meshWarnings, type MeshWarning } from '../stl/geometry';
-import { parseStl, StlParseError } from '../stl/parse';
+import { StlAnalyzer } from '../stl/analyzer';
+import { meshWarnings, type MeshWarning } from '../stl/geometry';
+import { StlParseError } from '../stl/parse';
 import type { Mesh, MeshStats, Vec3 } from '../stl/types';
-import { supportsWebGL, Viewer, type ViewerTheme } from '../viewer/viewer';
+import type { Viewer, ViewerTheme } from '../viewer/viewer';
+import { supportsWebGL } from '../viewer/webgl';
 import { NumberField } from './number-field';
 import { renderPrintSheet } from './print-sheet';
 import { clearSettings, loadSettings, saveSettings } from './storage';
@@ -72,6 +74,7 @@ export function startApp(): void {
   const stage = byId('viewer').parentElement as HTMLElement;
   const notice = byId('notice');
   const live = byId('live-status');
+  const loading = byId('stage-loading');
   const fileInput = byId<HTMLInputElement>('file-input');
   const resetCameraButton = byId<HTMLButtonElement>('reset-camera');
   const copyButton = byId<HTMLButtonElement>('copy-button');
@@ -85,16 +88,37 @@ export function startApp(): void {
   let quote: Quote | null = null;
   let viewer: Viewer | null = null;
 
+  const analyzer = new StlAnalyzer();
+  /** Cada carga recibe un número; si llega otra antes de terminar, el resultado viejo se descarta. */
+  let loadTicket = 0;
+
   // ── Visor ──
-  if (supportsWebGL()) {
-    try {
-      viewer = new Viewer(byId('viewer'), readTheme());
-    } catch {
-      viewer = null;
-    }
-  }
-  if (!viewer) {
+  // three.js (~500 kB) se descarga aparte, después de pintar la interfaz: el panel
+  // y el presupuesto funcionan desde el primer momento aunque el visor tarde.
+  const noViewer = (): void =>
     showNotice('Sin vista 3D', 'Tu navegador no ha podido iniciar WebGL. El presupuesto funciona igualmente.');
+  if (supportsWebGL()) {
+    import('../viewer/viewer')
+      .then(({ Viewer }) => {
+        const container = byId('viewer');
+        viewer = new Viewer(container, readTheme());
+        // El visor admite teclado (lo gestiona OrbitControls): se hace enfocable y se explica.
+        container.tabIndex = 0;
+        container.setAttribute('role', 'application');
+        container.setAttribute('aria-roledescription', 'visor 3D');
+        container.setAttribute(
+          'aria-label',
+          'Vista 3D de la pieza. Flechas: desplazar. Mayúsculas más flechas: girar. «Restablecer vista» la vuelve a encuadrar.',
+        );
+        if (part) viewer.setPart(part.mesh.positions);
+        render();
+      })
+      .catch(() => {
+        viewer = null;
+        noViewer();
+      });
+  } else {
+    noViewer();
   }
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => viewer?.setTheme(readTheme()));
 
@@ -275,15 +299,18 @@ export function startApp(): void {
   }
 
   async function loadBuffer(fileName: string, getBuffer: () => Promise<ArrayBuffer>): Promise<void> {
+    const ticket = ++loadTicket;
     hideNotice();
     stage.classList.add('is-loading');
+    stage.setAttribute('aria-busy', 'true');
+    loading.textContent = `Leyendo «${fileName}»…`;
+    loading.hidden = false;
+    announce(`Leyendo ${fileName}…`);
     try {
       const buffer = await getBuffer();
-      // Deja pintar el indicador antes de un cálculo que puede tardar con mallas grandes.
-      // setTimeout y no requestAnimationFrame: este último se pausa en pestañas en segundo plano.
-      await new Promise((resolve) => window.setTimeout(resolve, 16));
-      const mesh = parseStl(buffer);
-      const stats = computeStats(mesh);
+      // El parseo y la geometría van en un Web Worker: la interfaz sigue respondiendo.
+      const { mesh, stats } = await analyzer.analyze(buffer);
+      if (ticket !== loadTicket) return; // ya se ha pedido otro archivo
       part = { fileName, mesh, stats };
       viewer?.setPart(mesh.positions);
 
@@ -294,12 +321,17 @@ export function startApp(): void {
       render();
       announce(`Pieza cargada: ${fileName}. Total ${quote ? formatEuro(quote.total) : ''}.`);
     } catch (error) {
+      if (ticket !== loadTicket) return;
       const message = error instanceof StlParseError
         ? error.message
         : 'Ha ocurrido un error inesperado al leer el archivo. Prueba a exportarlo de nuevo como STL.';
       showNotice(`No se ha podido leer «${fileName}»`, message);
     } finally {
-      stage.classList.remove('is-loading');
+      if (ticket === loadTicket) {
+        stage.classList.remove('is-loading');
+        stage.removeAttribute('aria-busy');
+        loading.hidden = true;
+      }
     }
   }
 

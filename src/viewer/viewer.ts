@@ -60,8 +60,12 @@ export class Viewer {
 
     this.camera.up.set(0, 0, 1);
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping = true;
+    // Inercia al soltar, salvo que se haya pedido reducir el movimiento.
+    this.controls.enableDamping = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.controls.dampingFactor = 0.12;
+    // Teclado (con el foco en el visor): flechas para desplazar, Mayús + flechas para girar.
+    this.controls.keyRotateSpeed = 15;
+    this.controls.listenToKeyEvents(container);
     this.controls.addEventListener('change', () => this.requestRender());
 
     this.scene.add(new HemisphereLight(0xffffff, 0x8a8580, 1.6));
@@ -236,12 +240,3 @@ export class Viewer {
   }
 }
 
-/** ¿Puede este navegador crear un contexto WebGL? */
-export function supportsWebGL(): boolean {
-  try {
-    const canvas = document.createElement('canvas');
-    return Boolean(canvas.getContext('webgl2') ?? canvas.getContext('webgl'));
-  } catch {
-    return false;
-  }
-}
