@@ -33,6 +33,15 @@ export interface Quote {
   readonly totalPerCopy: number;
 }
 
+/**
+ * Redondea a céntimos. Se pasa antes por 12 cifras significativas para que el ruido
+ * de la coma flotante (1,005 guardado como 1,00499999…) no decida el redondeo.
+ */
+export function roundCents(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.round(Number((value * 100).toPrecision(12))) / 100 + 0; // + 0: evita −0
+}
+
 /** Grosor de pared en mm: perímetros × ancho de línea. */
 export function wallThickness(settings: Pick<QuoteSettings, 'perimeters' | 'lineWidth'>): number {
   return Math.max(0, settings.perimeters) * Math.max(0, settings.lineWidth);
@@ -55,7 +64,13 @@ export function printedVolume(
   return { shell, infill, total: shell + infill };
 }
 
-/** Presupuesto completo. Función pura: mismos datos, mismo resultado. */
+/**
+ * Presupuesto completo. Función pura: mismos datos, mismo resultado.
+ *
+ * Los importes se redondean a céntimos línea a línea y el subtotal y el total son la
+ * suma de las líneas ya redondeadas, como en una factura: así lo que se ve en el
+ * desglose siempre suma el total (antes podía verse 0,08 + 0,00 = 0,09).
+ */
 export function computeQuote(part: PartGeometry, settings: QuoteSettings): Quote {
   const material = MATERIALS[settings.material];
   const pricePerKg = settings.pricePerKg[settings.material];
@@ -74,11 +89,11 @@ export function computeQuote(part: PartGeometry, settings: QuoteSettings): Quote
   const totalHours = hoursPerCopy * copies;
   const energyKwh = (settings.powerWatts * totalHours) / 1000;
 
-  const materialCost = (totalWeightGrams / 1000) * pricePerKg;
-  const energyCost = energyKwh * settings.energyPrice;
-  const subtotal = materialCost + energyCost;
-  const marginAmount = subtotal * (settings.marginPercent / 100);
-  const total = subtotal + marginAmount;
+  const materialCost = roundCents((totalWeightGrams / 1000) * pricePerKg);
+  const energyCost = roundCents(energyKwh * settings.energyPrice);
+  const subtotal = roundCents(materialCost + energyCost);
+  const marginAmount = roundCents(subtotal * (settings.marginPercent / 100));
+  const total = roundCents(subtotal + marginAmount);
 
   return {
     shellVolume: shell,
@@ -95,6 +110,6 @@ export function computeQuote(part: PartGeometry, settings: QuoteSettings): Quote
     subtotal,
     marginAmount,
     total,
-    totalPerCopy: total / copies,
+    totalPerCopy: roundCents(total / copies),
   };
 }

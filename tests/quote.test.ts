@@ -53,28 +53,32 @@ describe('computeQuote', () => {
     // 3328 mm³ × 1,24 g/cm³ = 4,12672 g
     expect(q.printedVolume).toBeCloseTo(3328);
     expect(q.weightGrams).toBeCloseTo(4.12672, 5);
-    // 4,12672 g × 20 €/kg
-    expect(q.materialCost).toBeCloseTo(0.0825344, 7);
+    // 4,12672 g × 20 €/kg = 0,0825 € → 0,08 € (los importes van en céntimos)
+    expect(q.materialCost).toBe(0.08);
     // 3328 / 8 = 416 s + 300 s de sobrecarga = 716 s
     expect(q.hoursPerCopy).toBeCloseTo(716 / 3600, 9);
     // 120 W × 716 s = 0,023867 kWh × 0,15 €/kWh
     expect(q.energyKwh).toBeCloseTo((120 * 716) / 3600 / 1000, 9);
-    expect(q.energyCost).toBeCloseTo(0.00358, 5);
-    expect(q.subtotal).toBeCloseTo(q.materialCost + q.energyCost, 12);
-    expect(q.marginAmount).toBeCloseTo(q.subtotal * 0.3, 12);
-    expect(q.total).toBeCloseTo(q.subtotal * 1.3, 12);
+    // 0,00358 € → 0,00 €
+    expect(q.energyCost).toBe(0);
+    expect(q.subtotal).toBe(0.08);
+    // 30 % de 0,08 = 0,024 → 0,02; total = suma de líneas redondeadas
+    expect(q.marginAmount).toBe(0.02);
+    expect(q.total).toBe(0.1);
   });
 
   it('relleno 100 % en PETG: peso de la pieza maciza con su densidad y precio', () => {
     const q = computeQuote(CUBE, settings({ material: 'PETG', infillPercent: 100 }));
     expect(q.weightGrams).toBeCloseTo(8 * 1.27, 9);
-    expect(q.materialCost).toBeCloseTo((8 * 1.27 * 24) / 1000, 9);
+    // 10,16 g × 24 €/kg = 0,24384 €
+    expect(q.materialCost).toBe(0.24);
   });
 
   it('usa el precio del material elegido, no el de otro', () => {
     const prices = { ...DEFAULT_SETTINGS.pricePerKg, TPU: 50 };
     const q = computeQuote(CUBE, settings({ material: 'TPU', infillPercent: 100, pricePerKg: prices }));
-    expect(q.materialCost).toBeCloseTo((8 * 1.21 * 50) / 1000, 9);
+    // 9,68 g × 50 €/kg = 0,484 €
+    expect(q.materialCost).toBe(0.48);
   });
 
   it('las copias multiplican peso, tiempo, energía y total; el precio por copia no cambia', () => {
@@ -84,8 +88,12 @@ describe('computeQuote', () => {
     expect(three.totalWeightGrams).toBeCloseTo(one.totalWeightGrams * 3, 9);
     expect(three.totalHours).toBeCloseTo(one.totalHours * 3, 9);
     expect(three.energyKwh).toBeCloseTo(one.energyKwh * 3, 9);
-    expect(three.total).toBeCloseTo(one.total * 3, 9);
-    expect(three.totalPerCopy).toBeCloseTo(one.total, 9);
+    // Los importes se redondean después de multiplicar: 3 × 0,0825 € = 0,2476 € → 0,25 €
+    // (no 3 × 0,08 €), así que el total de 3 copias no es exactamente 3 × el de una.
+    expect(three.materialCost).toBe(0.25);
+    expect(three.total).toBe(0.34);
+    expect(three.totalPerCopy).toBe(0.11);
+    expect(Math.abs(three.total - one.total * 3)).toBeLessThanOrEqual(0.05);
   });
 
   it('margen 0 %: total = coste; margen 100 %: total = el doble', () => {
@@ -93,7 +101,7 @@ describe('computeQuote', () => {
     expect(zero.marginAmount).toBe(0);
     expect(zero.total).toBe(zero.subtotal);
     const double = computeQuote(CUBE, settings({ marginPercent: 100 }));
-    expect(double.total).toBeCloseTo(double.subtotal * 2, 12);
+    expect(double.total).toBe(double.subtotal * 2);
   });
 
   it('pieza vacía: solo cuesta la sobrecarga fija de tiempo y su energía', () => {
@@ -101,7 +109,9 @@ describe('computeQuote', () => {
     expect(q.weightGrams).toBe(0);
     expect(q.materialCost).toBe(0);
     expect(q.hoursPerCopy).toBeCloseTo(5 / 60, 12);
-    expect(q.total).toBeCloseTo(0.12 * (5 / 60) * 0.15, 12);
+    // 0,12 kW × 5 min × 0,15 €/kWh = 0,0015 € → 0,00 €
+    expect(q.energyKwh).toBeCloseTo(0.12 * (5 / 60), 12);
+    expect(q.total).toBe(0);
   });
 });
 

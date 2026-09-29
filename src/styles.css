@@ -563,6 +563,8 @@ input {
 
 .rows dd {
   display: flex;
+  min-width: 0;
+  overflow-wrap: anywhere;
   align-items: baseline;
   gap: 6px;
   text-align: right;
@@ -868,6 +870,8 @@ input {
   font-weight: 600;
   color: var(--accent);
   letter-spacing: -0.04em;
+  min-width: 0;
+  overflow-wrap: anywhere; /* importes absurdamente grandes no desbordan el panel */
 }
 
 .summary-sub {

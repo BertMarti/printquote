@@ -1,5 +1,14 @@
 const LOCALE = 'es-ES';
 
+/**
+ * Valor listo para formatear: lo no finito pasa a 0 y lo que se mostraría como «-0,00»
+ * (negativos que redondean a cero) también.
+ */
+function displayable(value: number, decimals: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.abs(value) < 0.5 * 10 ** -decimals ? 0 : value;
+}
+
 const numberFormats = new Map<number, Intl.NumberFormat>();
 
 /** Número con formato es-ES (coma decimal) y un nº fijo de decimales. */
@@ -12,14 +21,14 @@ export function formatNumber(value: number, decimals = 2): string {
     });
     numberFormats.set(decimals, format);
   }
-  return format.format(Number.isFinite(value) ? value : 0);
+  return format.format(displayable(value, decimals));
 }
 
 const euroFormat = new Intl.NumberFormat(LOCALE, { style: 'currency', currency: 'EUR' });
 
 /** Importe en euros con formato es-ES, p. ej. «12,34 €». */
 export function formatEuro(value: number): string {
-  return euroFormat.format(Number.isFinite(value) ? value : 0);
+  return euroFormat.format(displayable(value, 2));
 }
 
 /** Duración legible a partir de horas: «45 min», «2 h 05 min». */

@@ -67,7 +67,9 @@ describe('buildQuoteText', () => {
     expect(text).toContain('20,0 × 20,0 × 20,0 mm');
     expect(text).toContain('8,00 cm³');
     expect(text).toContain('Tiempo total (estimación)');
-    expect(text).toMatch(/TOTAL\s+0,22 €/);
+    // Material 0,17 + energía 0,01 = 0,18; margen 0,054 → 0,05; total 0,23 (suma de líneas en céntimos)
+    expect(text).toMatch(/Subtotal\s+0,18 €/);
+    expect(text).toMatch(/TOTAL\s+0,23 €/);
     expect(text).toContain('Por copia');
   });
 });
