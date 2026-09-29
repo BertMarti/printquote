@@ -5,7 +5,8 @@ import { DEFAULT_SETTINGS } from '../src/quote/settings';
 import { buildQuoteText } from '../src/quote/text';
 
 /** Intl usa espacios duros; para comparar, los normalizamos. */
-const plain = (text: string): string => text.replace(/[  ]/g, ' ');
+const HARD_SPACES = new RegExp(`[${String.fromCharCode(0xa0, 0x202f)}]`, 'g');
+const plain = (text: string): string => text.replace(HARD_SPACES, ' ');
 
 describe('formato es-ES', () => {
   it('coma decimal', () => {
