@@ -182,13 +182,17 @@ export function countOpenEdges(positions: Float32Array, tolerance = WELD_TOLERAN
   return open;
 }
 
-export type MeshWarning = 'open-mesh' | 'inverted' | 'too-big';
+export type MeshWarning = 'open-mesh' | 'inverted' | 'too-big' | 'tiny';
+
+/** Por debajo de este tamaño (mm, dimensión mayor) la pieza seguramente se exportó en metros o pulgadas. */
+const TINY_PART_MM = 1;
 
 /**
  * Avisos sobre la pieza:
  * - `open-mesh`: volumen ≈ 0 o aristas abiertas: el volumen puede no ser fiable.
  * - `inverted`: volumen con signo negativo (normales hacia dentro).
  * - `too-big`: no cabe en la cama ni girándola 90° sobre Z.
+ * - `tiny`: la dimensión mayor mide menos de 1 mm (¿exportada en metros o pulgadas?).
  */
 export function meshWarnings(stats: MeshStats, bed: Vec3 = DEFAULT_BED): MeshWarning[] {
   const warnings: MeshWarning[] = [];
@@ -203,6 +207,9 @@ export function meshWarnings(stats: MeshStats, bed: Vec3 = DEFAULT_BED): MeshWar
   }
   if (!fitsBed(size, bed)) {
     warnings.push('too-big');
+  }
+  if (Math.max(size.x, size.y, size.z) < TINY_PART_MM) {
+    warnings.push('tiny');
   }
   return warnings;
 }

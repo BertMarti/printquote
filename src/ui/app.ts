@@ -45,6 +45,8 @@ function warningText(warning: MeshWarning, size: Vec3, bed: Vec3): string {
       return 'La malla parece abierta o con huecos: el volumen, el peso y el precio pueden no ser fiables. Repárala en tu laminador o editor 3D.';
     case 'inverted':
       return 'Las normales parecen invertidas (volumen negativo). Se usa el valor absoluto, pero conviene revisar la malla.';
+    case 'tiny':
+      return `La pieza mide solo ${formatNumber(Math.max(size.x, size.y, size.z), 3)} mm en su lado mayor. printquote asume que el STL está en milímetros: si se exportó en metros o pulgadas, cambia las unidades al exportar.`;
     case 'too-big':
       return `La pieza (${formatNumber(size.x, 1)} × ${formatNumber(size.y, 1)} × ${formatNumber(size.z, 1)} mm) no cabe en la cama de ${formatNumber(bed.x, 0)} × ${formatNumber(bed.y, 0)} × ${formatNumber(bed.z, 0)} mm, ni siquiera girándola.`;
   }

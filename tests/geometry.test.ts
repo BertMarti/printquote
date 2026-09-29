@@ -86,3 +86,14 @@ describe('fitsBed', () => {
   it('no cabe por altura', () => expect(fitsBed({ x: 10, y: 10, z: 200.1 }, bed)).toBe(false));
   it('no cabe en planta', () => expect(fitsBed({ x: 251, y: 10, z: 10 }, bed)).toBe(false));
 });
+
+describe('aviso de unidades', () => {
+  const bed = { x: 220, y: 220, z: 250 };
+  it('una pieza de menos de 1 mm probablemente no está en milímetros', () => {
+    // Cubo de 20 mm exportado en metros: 0,02 de lado.
+    expect(meshWarnings(computeStats(mesh(cubeTriangles(0.02))), bed)).toContain('tiny');
+  });
+  it('una pieza normal no da aviso de unidades', () => {
+    expect(meshWarnings(computeStats(mesh(cubeTriangles(1))), bed)).not.toContain('tiny');
+  });
+});
