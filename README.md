@@ -126,9 +126,14 @@ public/       favicon y pieza de ejemplo original
 
 Accesibilidad: todos los controles tienen etiqueta, la app se puede usar entera con teclado (↑/↓ ajustan los números, con Mayús de 10 en 10), el foco es visible y los textos cumplen contraste AA. El naranja nunca se usa como color de texto sobre fondo claro.
 
+## Documentación
+
+- [**Guía de uso**](docs/USO.md): cómo cargar un STL, leer los avisos, elegir los ajustes y calibrarlos con tu laminador.
+- [**Guía de contribución**](CONTRIBUTING.md): requisitos, comandos, ramas, commits, cómo añadir un material y dónde está cada fórmula.
+
 ## Contribuir
 
-1. Lee [`AGENTS.md`](AGENTS.md) (reglas, diseño y estructura) y [`MEMORY.md`](MEMORY.md) (estado actual).
+1. Lee [`CONTRIBUTING.md`](CONTRIBUTING.md), [`AGENTS.md`](AGENTS.md) (reglas, diseño y estructura) y [`MEMORY.md`](MEMORY.md) (estado actual).
 2. Crea una rama desde `main`: `main` está protegida y todo entra por pull request.
 3. Commits convencionales en español (`feat:`, `fix:`, `test:`, `docs:`…).
 4. Antes de abrir el PR: `npm run lint && npm test && npm run build` en verde.
@@ -136,7 +141,7 @@ Accesibilidad: todos los controles tienen etiqueta, la app se puede usar entera 
 
 ## Cómo se ha hecho
 
-printquote se ha construido con un **equipo de agentes de IA** —Claude Code (lead, builder y qa) y OpenCode (documentación)— en el que cada agente trabaja en su rama y entrega por pull request, **bajo la supervisión y revisión de Alberto**. El reparto y las reglas del equipo están en [`AGENTS.md`](AGENTS.md) y la bitácora de decisiones, en [`MEMORY.md`](MEMORY.md).
+printquote se ha construido con un **equipo de agentes de IA** en el que cada agente trabaja en su rama y entrega por pull request: coordinados por un **lead** (Claude Code): **builder** y **qa** con Claude Code (Opus) y **docs** con Claude Code (Sonnet). La documentación estaba prevista para OpenCode, pero no pudo ejecutarse en modo autónomo, así que la hizo Claude Code. **Alberto** supervisa el trabajo, revisa cada pull request y es quien fusiona en `main`. El reparto y las reglas del equipo están en [`AGENTS.md`](AGENTS.md) y la bitácora de decisiones, en [`MEMORY.md`](MEMORY.md).
 
 ## Licencia
 
