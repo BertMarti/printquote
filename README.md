@@ -1,7 +1,140 @@
 # printquote
 
-Presupuesta una impresión 3D en segundos: arrastra un STL, míralo en 3D y obtén peso, tiempo estimado y precio. Tu archivo no sale de tu navegador.
+**Presupuesta una impresión 3D en segundos: arrastra un STL, míralo en 3D y obtén peso, tiempo estimado y precio. Tu archivo no sale de tu navegador.**
 
-> En construcción. El equipo de agentes está trabajando en el MVP.
+[![CI](https://github.com/BertMarti/printquote/actions/workflows/ci.yml/badge.svg)](https://github.com/BertMarti/printquote/actions/workflows/ci.yml)
+[![Despliegue](https://github.com/BertMarti/printquote/actions/workflows/deploy.yml/badge.svg)](https://github.com/BertMarti/printquote/actions/workflows/deploy.yml)
+[![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-111111.svg)](LICENSE)
 
-Licencia MIT.
+**Demo:** <https://bertmarti.github.io/printquote/> · [abrir con la pieza de ejemplo](https://bertmarti.github.io/printquote/#ejemplo)
+
+![printquote: visor 3D a la izquierda con un soporte de móvil naranja sobre la rejilla de la cama y, a la derecha, la ficha técnica con el presupuesto](docs/captura.png)
+
+## Qué hace
+
+- **Carga STL** binario o ASCII arrastrándolo a la ventana o con «Abrir STL». ¿Sin archivo? «Probar con pieza de ejemplo».
+- **Mide la pieza**: volumen, superficie, caja envolvente (X × Y × Z en mm) y número de triángulos.
+- **Avisa** si la malla parece abierta o tiene las normales invertidas, o si no cabe en tu cama (por defecto 220 × 220 × 250 mm).
+- **Visor 3D** con la pieza apoyada en la cama, rejilla de 10 mm, órbita, zoom y «Restablecer vista».
+- **Presupuesto en vivo**: material, relleno, perímetros, caudal, energía, margen y copias. Cualquier cambio recalcula al instante.
+- **Copiar presupuesto** en texto plano o **Imprimir** una hoja limpia con la vista 3D y el desglose.
+- Recuerda tus ajustes en este navegador (`localStorage`). Modo claro y oscuro automático.
+
+## Cómo se calcula
+
+Todas las fórmulas viven en [`src/quote/`](src/quote) como funciones puras y con tests. Es un **modelo simplificado** a propósito: sirve para presupuestar rápido, no sustituye al laminador.
+
+### Geometría ([`src/stl/geometry.ts`](src/stl/geometry.ts))
+
+| Magnitud | Fórmula |
+|---|---|
+| Volumen *V* | Suma de los tetraedros con signo que forma cada triángulo (*a*, *b*, *c*) con un punto de referencia: Σ *a* · (*b* × *c*) / 6, en valor absoluto. |
+| Superficie *A* | Σ ‖(*b* − *a*) × (*c* − *a*)‖ / 2 |
+| Caja | Mínimos y máximos de X, Y y Z. |
+| ¿Malla cerrada? | Cada arista debe compartirse por exactamente dos triángulos y el volumen con signo no debe ser ≈ 0. Si es negativo, las normales están invertidas. |
+
+Se asume que el STL está en **milímetros**. Para saber si cabe en la cama se permite girar la pieza 90° sobre Z.
+
+### Presupuesto ([`src/quote/model.ts`](src/quote/model.ts))
+
+```text
+grosor de pared   = perímetros × ancho de línea                (2 × 0,45 mm)
+cáscara           = mín(A × grosor de pared, V)
+relleno           = relleno% × (V − cáscara)
+volumen impreso   = cáscara + relleno                          (por copia)
+
+peso (g)          = volumen impreso (cm³) × densidad (g/cm³)
+coste material    = peso (kg) × precio (€/kg)
+tiempo (h)        = volumen impreso / caudal (mm³/s) + 5 min    ← estimación, por copia
+energía (kWh)     = potencia media (W) × tiempo (h) / 1000
+coste energía     = energía × precio (€/kWh)
+
+subtotal          = (coste material + coste energía) × copias
+margen            = subtotal × margen%
+TOTAL             = subtotal + margen
+```
+
+Valores por defecto (todos editables):
+
+| Material | Densidad | Precio |
+|---|---|---|
+| PLA | 1,24 g/cm³ | 20 €/kg |
+| PETG | 1,27 g/cm³ | 24 €/kg |
+| ABS | 1,04 g/cm³ | 22 €/kg |
+| TPU | 1,21 g/cm³ | 35 €/kg |
+
+Relleno 20 % · 2 perímetros de 0,45 mm · caudal 8 mm³/s · sobrecarga 5 min por copia · 120 W · 0,15 €/kWh · margen 30 % · 1 copia.
+
+**Ejemplo:** un cubo de 20 mm (V = 8 000 mm³, A = 2 400 mm²) en PLA con los valores por defecto → cáscara 2 160 mm³ + relleno 1 168 mm³ = 3 328 mm³ → 4,13 g → 0,08 € de material, 12 min de impresión estimada y 0,11 € en total.
+
+**Límites honestos del modelo:** no tiene en cuenta soportes, balsa, purga, altura de capa ni la velocidad real de cada movimiento, y la cáscara se aproxima como área × grosor (sobreestima algo en piezas con muchos detalles finos). El tiempo es siempre una **estimación**; el laminador dará la cifra real.
+
+## Privacidad
+
+El STL se lee con la API de archivos del navegador y se procesa en tu equipo. No hay servidor, ni analítica, ni cookies: la web es estática (GitHub Pages) y **tu archivo no sale de tu navegador**. Los ajustes se guardan solo en el `localStorage` de tu navegador.
+
+## Uso en local
+
+Requisitos: Node 22.12 o superior y npm.
+
+```bash
+git clone https://github.com/BertMarti/printquote.git
+cd printquote
+npm ci
+npm run dev        # http://localhost:5173/printquote/
+```
+
+| Comando | Qué hace |
+|---|---|
+| `npm run dev` | Servidor de desarrollo con recarga en caliente. |
+| `npm test` | Tests unitarios (Vitest). |
+| `npm run lint` | ESLint. |
+| `npm run typecheck` | TypeScript estricto sobre `src/` y `tests/`. |
+| `npm run build` | Comprueba tipos y genera la web estática en `dist/`. |
+| `npm run preview` | Sirve `dist/` en <http://localhost:4173/printquote/>. |
+| `npm run sample` | Regenera la pieza de ejemplo `public/samples/soporte-movil.stl`. |
+
+## Stack
+
+- **TypeScript** estricto y **Vite**. Sin frameworks de UI: DOM y CSS propios.
+- **three.js** (con `OrbitControls`) para el visor.
+- **Vitest** para tests y **ESLint** (flat config con `typescript-eslint`).
+- **GitHub Actions**: CI en Ubuntu y Windows, y despliegue en **GitHub Pages**.
+- Parser STL propio: distingue binario y ASCII por el contenido y el tamaño, no solo por la cabecera `solid`.
+
+## Estructura
+
+```text
+src/
+  stl/        parser STL (binario y ASCII) y geometría: volumen, área, caja, aristas abiertas
+  quote/      modelo de coste, materiales, ajustes, formato es-ES y presupuesto en texto
+  viewer/     visor three.js (cama, cámara, luces)
+  ui/         controles, almacenamiento, hoja de impresión y arranque de la app
+  styles.css  diseño «hoja técnica suiza», modo oscuro e impresión
+tests/        pruebas unitarias (los STL de prueba se construyen en memoria)
+scripts/      generador de la pieza de ejemplo
+public/       favicon y pieza de ejemplo original
+.github/      CI, despliegue y plantilla de PR
+```
+
+## Diseño
+
+«Hoja técnica suiza»: fondo papel `#f6f5f2`, tinta `#111`, líneas `#d9d6cf` y un único acento naranja filamento `#ff5a1f`. Retícula fina, esquinas rectas, sin sombras ni degradados y cifras monoespaciadas alineadas. Visor grande a la izquierda y ficha estrecha a la derecha; en móvil, uno debajo del otro.
+
+Accesibilidad: todos los controles tienen etiqueta, la app se puede usar entera con teclado (↑/↓ ajustan los números, con Mayús de 10 en 10), el foco es visible y los textos cumplen contraste AA. El naranja nunca se usa como color de texto sobre fondo claro.
+
+## Contribuir
+
+1. Lee [`AGENTS.md`](AGENTS.md) (reglas, diseño y estructura) y [`MEMORY.md`](MEMORY.md) (estado actual).
+2. Crea una rama desde `main`: `main` está protegida y todo entra por pull request.
+3. Commits convencionales en español (`feat:`, `fix:`, `test:`, `docs:`…).
+4. Antes de abrir el PR: `npm run lint && npm test && npm run build` en verde.
+5. Rellena la plantilla del PR.
+
+## Cómo se ha hecho
+
+printquote se ha construido con un **equipo de agentes de IA** —Claude Code (lead, builder y qa) y OpenCode (documentación)— en el que cada agente trabaja en su rama y entrega por pull request, **bajo la supervisión y revisión de Alberto**. El reparto y las reglas del equipo están en [`AGENTS.md`](AGENTS.md) y la bitácora de decisiones, en [`MEMORY.md`](MEMORY.md).
+
+## Licencia
+
+[MIT](LICENSE). La pieza de ejemplo es un diseño original de este proyecto, con la misma licencia.
