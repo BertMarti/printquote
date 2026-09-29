@@ -14,7 +14,7 @@
 
 - **Carga STL** binario o ASCII arrastrándolo a la ventana o con «Abrir STL». ¿Sin archivo? «Probar con pieza de ejemplo».
 - **Mide la pieza**: volumen, superficie, caja envolvente (X × Y × Z en mm) y número de triángulos.
-- **Avisa** si la malla parece abierta o tiene las normales invertidas, o si no cabe en tu cama (por defecto 220 × 220 × 250 mm).
+- **Avisa** si la malla parece abierta o tiene las normales invertidas, si no cabe en tu cama (por defecto 220 × 220 × 250 mm) o si mide menos de 1 mm (¿exportada en metros o pulgadas?).
 - **Visor 3D** con la pieza apoyada en la cama, rejilla de 10 mm, órbita, zoom y «Restablecer vista».
 - **Presupuesto en vivo**: material, relleno, perímetros, caudal, energía, margen y copias. Cualquier cambio recalcula al instante.
 - **Copiar presupuesto** en texto plano o **Imprimir** una hoja limpia con la vista 3D y el desglose.
@@ -31,7 +31,7 @@ Todas las fórmulas viven en [`src/quote/`](src/quote) como funciones puras y co
 | Volumen *V* | Suma de los tetraedros con signo que forma cada triángulo (*a*, *b*, *c*) con un punto de referencia: Σ *a* · (*b* × *c*) / 6, en valor absoluto. |
 | Superficie *A* | Σ ‖(*b* − *a*) × (*c* − *a*)‖ / 2 |
 | Caja | Mínimos y máximos de X, Y y Z. |
-| ¿Malla cerrada? | Cada arista debe compartirse por exactamente dos triángulos y el volumen con signo no debe ser ≈ 0. Si es negativo, las normales están invertidas. |
+| ¿Malla cerrada? | Cada arista debe compartirse por exactamente dos triángulos y el volumen con signo no debe ser ≈ 0. Si es negativo, las normales están invertidas. Antes se sueldan los vértices a menos de 10⁻⁴ mm (más lejos del origen, 10⁻⁶ × la coordenada) para no dar falsos avisos por redondeos del exportador. |
 
 Se asume que el STL está en **milímetros**. Para saber si cabe en la cama se permite girar la pieza 90° sobre Z.
 
@@ -54,6 +54,8 @@ margen            = subtotal × margen%
 TOTAL             = subtotal + margen
 ```
 
+Cada importe (material, energía, margen) se redondea a céntimos y el subtotal y el total son la suma de esas líneas, como en una factura: lo que ves en el desglose siempre suma el total.
+
 Valores por defecto (todos editables):
 
 | Material | Densidad | Precio |
@@ -65,7 +67,7 @@ Valores por defecto (todos editables):
 
 Relleno 20 % · 2 perímetros de 0,45 mm · caudal 8 mm³/s · sobrecarga 5 min por copia · 120 W · 0,15 €/kWh · margen 30 % · 1 copia.
 
-**Ejemplo:** un cubo de 20 mm (V = 8 000 mm³, A = 2 400 mm²) en PLA con los valores por defecto → cáscara 2 160 mm³ + relleno 1 168 mm³ = 3 328 mm³ → 4,13 g → 0,08 € de material, 12 min de impresión estimada y 0,11 € en total.
+**Ejemplo:** un cubo de 20 mm (V = 8 000 mm³, A = 2 400 mm²) en PLA con los valores por defecto → cáscara 2 160 mm³ + relleno 1 168 mm³ = 3 328 mm³ → 4,13 g → 0,08 € de material, 0,00 € de energía, 0,02 € de margen, 12 min de impresión estimada y 0,10 € en total.
 
 **Límites honestos del modelo:** no tiene en cuenta soportes, balsa, purga, altura de capa ni la velocidad real de cada movimiento, y la cáscara se aproxima como área × grosor (sobreestima algo en piezas con muchos detalles finos). El tiempo es siempre una **estimación**; el laminador dará la cifra real.
 
@@ -100,18 +102,19 @@ npm run dev        # http://localhost:5173/printquote/
 - **three.js** (con `OrbitControls`) para el visor.
 - **Vitest** para tests y **ESLint** (flat config con `typescript-eslint`).
 - **GitHub Actions**: CI en Ubuntu y Windows, y despliegue en **GitHub Pages**.
-- Parser STL propio: distingue binario y ASCII por el contenido y el tamaño, no solo por la cabecera `solid`.
+- Parser STL propio: distingue binario y ASCII por el contenido y el tamaño, no solo por la cabecera `solid`. Lee el ASCII byte a byte (sin picos de memoria) y tolera BOM, CR/LF mezclados y nombres de sólido con palabras clave.
+- **Rendimiento:** el parseo y la geometría corren en un **Web Worker** (la interfaz no se congela con STL grandes; si el navegador no puede crear el worker, se hace en el hilo principal). three.js se carga bajo demanda: el JS inicial pesa ~26 kB y el visor llega en su propio archivo.
 
 ## Estructura
 
 ```text
 src/
-  stl/        parser STL (binario y ASCII) y geometría: volumen, área, caja, aristas abiertas
+  stl/        parser STL (binario y ASCII), geometría (volumen, área, caja, aristas abiertas) y Web Worker
   quote/      modelo de coste, materiales, ajustes, formato es-ES y presupuesto en texto
   viewer/     visor three.js (cama, cámara, luces)
   ui/         controles, almacenamiento, hoja de impresión y arranque de la app
   styles.css  diseño «hoja técnica suiza», modo oscuro e impresión
-tests/        pruebas unitarias (los STL de prueba se construyen en memoria)
+tests/        pruebas unitarias y de interfaz (happy-dom); los STL de prueba se construyen en memoria
 scripts/      generador de la pieza de ejemplo
 public/       favicon y pieza de ejemplo original
 .github/      CI, despliegue y plantilla de PR

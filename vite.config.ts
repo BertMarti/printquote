@@ -6,7 +6,8 @@ export default defineConfig({
   base: '/printquote/',
   build: {
     target: 'es2022',
-    // three.js pesa ~550 kB sin comprimir; es esperado.
+    // El chunk del visor (three.js) pesa ~560 kB sin comprimir; es esperado. Se carga
+    // con import() después de pintar la interfaz, así que no retrasa el primer render.
     chunkSizeWarningLimit: 800,
   },
   test: {
