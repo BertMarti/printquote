@@ -1,5 +1,5 @@
 # MEMORY.md · printquote
-Última actualización: 2026-09-30 por qa
+Última actualización: 2026-09-30 por docs
 
 ## Estado actual
 MVP completo en la rama `agent/builder` (PR abierto a `main`, pendiente de revisión del lead):
@@ -23,6 +23,11 @@ Revisión QA en la rama `agent/qa` (PR #2 contra `agent/builder`, se fusiona des
 - Open Graph, tarjeta de Twitter, canonical; aviso de unidades (pieza < 1 mm).
 - 132 tests (incluidos tests de interfaz con happy-dom que cargan `index.html`); lint, tests y build en verde en local y en el CI.
 
+Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona después de #1 y #2):
+- `docs/USO.md`: guía de uso en español (pieza de ejemplo, carga de STL, visor con ratón, táctil y teclado, avisos, material y precio, parámetros con valores de partida, energía y margen, copias, copiar e imprimir, cálculo con ejemplo completo, calibración con el laminador, privacidad, preguntas frecuentes). Cifras comprobadas contra el código y contra `npm run dev` (pieza de ejemplo: 59,3 g, 1 h 45 min, 1,59 €).
+- `CONTRIBUTING.md`: requisitos, comandos, ramas y PR, commits, dónde está cada fórmula y cómo testearla, cómo añadir un material y reglas de diseño.
+- README con sección «Documentación» y «Cómo se ha hecho» ajustada; fila de docs de `AGENTS.md` actualizada.
+
 ## Decisiones (por qué)
 - 2026-09-29: Todo el cálculo en el navegador para no gestionar servidores ni archivos de terceros (coste cero y privacidad).
 - 2026-09-29: TypeScript + Vite + three.js: stack web estándar y distinto al de los otros dos proyectos.
@@ -44,13 +49,16 @@ Revisión QA en la rama `agent/qa` (PR #2 contra `agent/builder`, se fusiona des
 - 2026-09-30 (qa): Nueva dependencia de desarrollo `happy-dom`: solo para tests de interfaz (`// @vitest-environment happy-dom` en `tests/ui.test.ts`), que cargan el `index.html` real y arrancan la app. Sin ella no se podían probar las regiones vivas ni el botón de copiar. No afecta al paquete publicado.
 - 2026-09-30 (qa): Contraste revisado (WCAG, calculado): claro — tinta/fondo 17,3, gris/fondo 6,4, gris/escenario 5,9, naranja/tinta 6,1; oscuro — gris/fondo 7,5, naranja/resumen 5,4. Todo AA; no hacía falta cambiar colores.
 - 2026-09-30 (qa): Móvil: sin scroll horizontal a 360 px (comprobado en el navegador). El lienzo mantiene `touch-action: none` para que OrbitControls reciba los gestos (un dedo gira, pellizco acerca, dos dedos desplazan); la página se desplaza tocando la cabecera o el total fijo.
+- 2026-09-30 (docs): La documentación la ha hecho Claude Code (Sonnet) y no OpenCode, porque el sistema de permisos no permite lanzar OpenCode en modo autónomo. `AGENTS.md` conserva OpenCode como herramienta futura «cuando se permita su ejecución autónoma»; la rama pasa de `agent/opencode-docs` a `agent/docs`.
+- 2026-09-30 (docs): La guía de uso explica el aviso de unidades tal como es en el código (solo salta por debajo de 1 mm): un STL en pulgadas de una pieza grande no avisa, y se indica al lector que compruebe las dimensiones. La sobrecarga de 5 min por copia no es editable en la interfaz y así se dice.
 - 2026-09-30 (qa): Imagen Open Graph = copia de `docs/captura.png` en `public/og.png` (1440 × 900), URL absoluta de GitHub Pages.
 
 ## Siguiente paso
 1. lead: revisar y fusionar el PR de `agent/builder`; comprobar que el despliegue a Pages funciona tras el merge.
 2. lead: tras fusionar #1, revisar y fusionar el PR #2 de `agent/qa` (base `agent/builder`; si GitHub lo retarga a `main` al borrar la rama, vale igual).
 3. Pendiente de una persona (no automatizable aquí): probar con lector de pantalla real (NVDA/VoiceOver) y la hoja de impresión en Firefox y Safari; comprobar la vista previa del enlace (og.png) una vez desplegado.
-4. docs (`agent/opencode-docs`): `docs/USO.md` para personas usuarias: cómo cargar un STL, qué significa cada ajuste (relleno, perímetros, caudal, margen), cómo leer los avisos, el enlace `#ejemplo`, copiar/imprimir y limitaciones del modelo (tiempo = estimación). Puede reutilizar `docs/captura.png`.
+4. lead: tras fusionar #1 y #2, revisar y fusionar el PR de `agent/docs` (base `agent/qa`; si GitHub lo retarga a `main` al borrar la rama, vale igual). Comprobar que los enlaces de `docs/USO.md` y `CONTRIBUTING.md` funcionan en GitHub.
+5. Pendiente de una persona: releer `docs/USO.md` con calma y probar la calibración con su laminador real; los valores de partida (caudal, potencia) son orientativos.
 
 ## Problemas conocidos
 - El chunk del visor pesa ~560 kB (139 kB gzip) por three.js; se carga aparte con `import()` y `chunkSizeWarningLimit` sigue en 800 kB.
@@ -64,3 +72,4 @@ Revisión QA en la rama `agent/qa` (PR #2 contra `agent/builder`, se fusiona des
 - 2026-09-29 lead (main): creación del repositorio y reparto del equipo.
 - 2026-09-29 builder (agent/builder): MVP completo (parser, geometría, presupuesto, visor, UI, tests, CI, Pages, README, captura) y PR abierto a main.
 - 2026-09-30 qa (agent/qa): revisión y endurecimiento (parser, soldado con tolerancia, Web Worker, carga diferida de three.js, redondeo por líneas, accesibilidad, Open Graph, aviso de unidades), 57 → 132 tests; PR #2 contra agent/builder.
+- 2026-09-30 docs · Claude Code Sonnet (agent/docs): `docs/USO.md` y `CONTRIBUTING.md`, sección «Documentación» y «Cómo se ha hecho» del README, fila docs de AGENTS.md; sin cambios de código; PR contra agent/qa.
