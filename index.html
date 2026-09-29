@@ -57,7 +57,7 @@
 
         <p class="stage-dims" id="stage-dims" aria-hidden="true"></p>
         <p class="stage-legend" id="stage-legend">Rejilla 10 mm · Cama 220 × 220 × 250 mm</p>
-        <p class="stage-hint" aria-hidden="true">Arrastra para girar · rueda para acercar · botón derecho para desplazar</p>
+        <p class="stage-hint" aria-hidden="true"><span class="hint-mouse">Arrastra para girar · rueda para acercar · botón derecho para desplazar</span><span class="hint-touch">Un dedo para girar · pellizca para acercar · dos dedos para desplazar</span></p>
 
         <div class="empty" id="empty-state">
           <p class="empty-title">Arrastra un archivo STL aquí</p>
@@ -95,7 +95,7 @@
             <div class="field">
               <label for="in-price">Precio del material <span class="sr-only">en euros por kilo</span></label>
               <div class="input-unit"><input id="in-price" data-key="price" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-price" /><span class="unit" aria-hidden="true">€/kg</span></div>
-              <p class="field-error" id="err-price" hidden></p>
+              <p class="field-error" id="err-price" aria-live="polite"></p>
             </div>
           </section>
 
@@ -105,22 +105,22 @@
               <label for="in-infill">Relleno <span class="sr-only">en porcentaje</span></label>
               <div class="input-unit"><input id="in-infill" data-key="infillPercent" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-infill" /><span class="unit" aria-hidden="true">%</span></div>
               <input class="range" id="in-infill-range" type="range" min="0" max="100" step="1" aria-label="Relleno, deslizador" />
-              <p class="field-error" id="err-infill" hidden></p>
+              <p class="field-error" id="err-infill" aria-live="polite"></p>
             </div>
             <div class="field">
               <label for="in-perimeters">Perímetros</label>
               <div class="input-unit"><input id="in-perimeters" data-key="perimeters" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" aria-describedby="err-perimeters" /><span class="unit" aria-hidden="true">uds.</span></div>
-              <p class="field-error" id="err-perimeters" hidden></p>
+              <p class="field-error" id="err-perimeters" aria-live="polite"></p>
             </div>
             <div class="field">
               <label for="in-linewidth">Ancho de línea <span class="sr-only">en milímetros</span></label>
               <div class="input-unit"><input id="in-linewidth" data-key="lineWidth" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-linewidth" /><span class="unit" aria-hidden="true">mm</span></div>
-              <p class="field-error" id="err-linewidth" hidden></p>
+              <p class="field-error" id="err-linewidth" aria-live="polite"></p>
             </div>
             <div class="field">
               <label for="in-flow">Caudal volumétrico <span class="sr-only">en milímetros cúbicos por segundo</span></label>
               <div class="input-unit"><input id="in-flow" data-key="flowRate" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-flow" /><span class="unit" aria-hidden="true">mm³/s</span></div>
-              <p class="field-error" id="err-flow" hidden></p>
+              <p class="field-error" id="err-flow" aria-live="polite"></p>
             </div>
             <fieldset class="field field--bed">
               <legend>Cama <span class="sr-only">en milímetros</span></legend>
@@ -133,7 +133,7 @@
                 <input id="in-bedz" data-key="bedZ" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-bed" />
                 <span class="unit" aria-hidden="true">mm</span>
               </div>
-              <p class="field-error" id="err-bed" hidden></p>
+              <p class="field-error" id="err-bed" aria-live="polite"></p>
             </fieldset>
           </section>
 
@@ -142,22 +142,22 @@
             <div class="field">
               <label for="in-power">Potencia media <span class="sr-only">en vatios</span></label>
               <div class="input-unit"><input id="in-power" data-key="powerWatts" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-power" /><span class="unit" aria-hidden="true">W</span></div>
-              <p class="field-error" id="err-power" hidden></p>
+              <p class="field-error" id="err-power" aria-live="polite"></p>
             </div>
             <div class="field">
               <label for="in-energy">Electricidad <span class="sr-only">en euros por kilovatio hora</span></label>
               <div class="input-unit"><input id="in-energy" data-key="energyPrice" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-energy" /><span class="unit" aria-hidden="true">€/kWh</span></div>
-              <p class="field-error" id="err-energy" hidden></p>
+              <p class="field-error" id="err-energy" aria-live="polite"></p>
             </div>
             <div class="field">
               <label for="in-margin">Margen <span class="sr-only">en porcentaje</span></label>
               <div class="input-unit"><input id="in-margin" data-key="marginPercent" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-margin" /><span class="unit" aria-hidden="true">%</span></div>
-              <p class="field-error" id="err-margin" hidden></p>
+              <p class="field-error" id="err-margin" aria-live="polite"></p>
             </div>
             <div class="field">
               <label for="in-copies">Copias</label>
               <div class="input-unit"><input id="in-copies" data-key="copies" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" aria-describedby="err-copies" /><span class="unit" aria-hidden="true">uds.</span></div>
-              <p class="field-error" id="err-copies" hidden></p>
+              <p class="field-error" id="err-copies" aria-live="polite"></p>
             </div>
             <button type="button" class="link-button" id="reset-settings">Restablecer valores por defecto</button>
           </section>
@@ -177,7 +177,7 @@
         </form>
 
         <section class="summary" aria-labelledby="total-label">
-          <div class="summary-figure">
+          <div class="summary-figure" aria-live="polite" aria-atomic="true">
             <h2 class="summary-label" id="total-label">Total</h2>
             <p class="summary-total num" id="out-total">—</p>
           </div>

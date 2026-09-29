@@ -106,14 +106,14 @@ export class NumberField {
     if (message) {
       input.setAttribute('aria-invalid', 'true');
       if (error) {
-        error.textContent = message;
-        error.hidden = false;
+        // El párrafo de error es una región viva siempre presente (vacía = invisible):
+        // así los lectores de pantalla anuncian el mensaje en cuanto aparece.
+        if (error.textContent !== message) error.textContent = message;
         error.dataset.owner = input.id;
       }
     } else {
       input.removeAttribute('aria-invalid');
       if (error && error.dataset.owner === input.id) {
-        error.hidden = true;
         error.textContent = '';
         delete error.dataset.owner;
       }

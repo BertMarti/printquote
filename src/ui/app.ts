@@ -82,6 +82,11 @@ export function startApp(): void {
   const infillRange = byId<HTMLInputElement>('in-infill-range');
   const materialRadios = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="material"]'));
   const out = (id: string): HTMLElement => byId(`out-${id}`);
+  /** Solo toca el DOM si el texto cambia: el total es una región viva y no debe repetirse. */
+  const setOut = (id: string, text: string): void => {
+    const node = out(id);
+    if (node.textContent !== text) node.textContent = text;
+  };
 
   let settings = loadSettings();
   let part: LoadedPart | null = null;
@@ -218,11 +223,11 @@ export function startApp(): void {
     if (!part) {
       quote = null;
       for (const id of ['volume', 'area', 'size', 'triangles', 'printed', 'weight', 'time', 'material', 'energy', 'subtotal', 'margin', 'total']) {
-        out(id).textContent = '—';
+        setOut(id, '—');
       }
-      out('kwh').textContent = '';
-      out('margin-pct').textContent = '';
-      out('summary').textContent = 'Carga una pieza para calcular el presupuesto.';
+      setOut('kwh', '');
+      setOut('margin-pct', '');
+      setOut('summary', 'Carga una pieza para calcular el presupuesto.');
       byId('stage-dims').textContent = '';
       warningsList.replaceChildren();
       return;
@@ -232,10 +237,10 @@ export function startApp(): void {
     const size = stats.bounds.size;
     quote = computeQuote(stats, settings);
 
-    out('volume').textContent = formatNumber(stats.volume / 1000, 2);
-    out('area').textContent = formatNumber(stats.surfaceArea / 100, 2);
-    out('size').textContent = `${formatNumber(size.x, 1)} × ${formatNumber(size.y, 1)} × ${formatNumber(size.z, 1)}`;
-    out('triangles').textContent = formatNumber(stats.triangleCount, 0);
+    setOut('volume', formatNumber(stats.volume / 1000, 2));
+    setOut('area', formatNumber(stats.surfaceArea / 100, 2));
+    setOut('size', `${formatNumber(size.x, 1)} × ${formatNumber(size.y, 1)} × ${formatNumber(size.z, 1)}`);
+    setOut('triangles', formatNumber(stats.triangleCount, 0));
 
     const dims = byId('stage-dims');
     dims.replaceChildren(
@@ -249,25 +254,31 @@ export function startApp(): void {
       'mm',
     );
 
-    warningsList.replaceChildren(
-      ...meshWarnings(stats, b).map((warning) => {
-        const li = document.createElement('li');
-        li.textContent = warningText(warning, size, b);
-        return li;
-      }),
-    );
+    // La lista es una región viva: solo se reescribe si los avisos cambian, para que el
+    // lector de pantalla no los repita cada vez que se toca un ajuste.
+    const warningTexts = meshWarnings(stats, b).map((warning) => warningText(warning, size, b));
+    const currentTexts = Array.from(warningsList.children, (li) => li.textContent ?? '');
+    if (warningTexts.join('|') !== currentTexts.join('|')) {
+      warningsList.replaceChildren(
+        ...warningTexts.map((text) => {
+          const li = document.createElement('li');
+          li.textContent = text;
+          return li;
+        }),
+      );
+    }
 
-    out('printed').textContent = formatNumber(quote.printedVolume / 1000, 2);
-    out('weight').textContent = formatNumber(quote.totalWeightGrams, 1);
-    out('weight-sub').textContent = quote.copies > 1 ? `total · ${quote.copies} copias` : 'total';
-    out('time').textContent = formatDuration(quote.totalHours);
-    out('material').textContent = formatNumber(quote.materialCost, 2);
-    out('energy').textContent = formatNumber(quote.energyCost, 2);
-    out('kwh').textContent = `${formatNumber(quote.energyKwh, 2)} kWh`;
-    out('subtotal').textContent = formatNumber(quote.subtotal, 2);
-    out('margin-pct').textContent = `${formatNumber(settings.marginPercent, 0)} %`;
-    out('margin').textContent = formatNumber(quote.marginAmount, 2);
-    out('total').textContent = formatEuro(quote.total);
+    setOut('printed', formatNumber(quote.printedVolume / 1000, 2));
+    setOut('weight', formatNumber(quote.totalWeightGrams, 1));
+    setOut('weight-sub', quote.copies > 1 ? `total · ${formatNumber(quote.copies, 0)} copias` : 'total');
+    setOut('time', formatDuration(quote.totalHours));
+    setOut('material', formatNumber(quote.materialCost, 2));
+    setOut('energy', formatNumber(quote.energyCost, 2));
+    setOut('kwh', `${formatNumber(quote.energyKwh, 2)} kWh`);
+    setOut('subtotal', formatNumber(quote.subtotal, 2));
+    setOut('margin-pct', `${formatNumber(settings.marginPercent, 0)} %`);
+    setOut('margin', formatNumber(quote.marginAmount, 2));
+    setOut('total', formatEuro(quote.total));
 
     const copiesText = quote.copies === 1 ? '1 copia' : `${formatNumber(quote.copies, 0)} copias · ${formatEuro(quote.totalPerCopy)}/copia`;
     out('summary').textContent =
@@ -319,7 +330,8 @@ export function startApp(): void {
         `STL ${mesh.format === 'binary' ? 'binario' : 'ASCII'} · ${formatNumber(mesh.triangleCount, 0)} triángulos`;
       document.title = `${fileName} · printquote`;
       render();
-      announce(`Pieza cargada: ${fileName}. Total ${quote ? formatEuro(quote.total) : ''}.`);
+      // El total se anuncia solo: su contenedor es una región viva.
+      announce(`Pieza cargada: ${fileName}.`);
     } catch (error) {
       if (ticket !== loadTicket) return;
       const message = error instanceof StlParseError
@@ -392,14 +404,17 @@ export function startApp(): void {
   // ── Acciones ──
   resetCameraButton.addEventListener('click', () => viewer?.resetCamera());
 
+  const copyLabel = copyButton.textContent;
+  let copyLabelTimer = 0;
   copyButton.addEventListener('click', () => {
     if (!part || !quote) return;
     const text = buildQuoteText({ fileName: part.fileName, stats: part.stats, settings, quote });
     void copyText(text).then((ok) => {
-      const label = copyButton.textContent;
+      // Etiqueta original guardada fuera: con dos clics seguidos se quedaba en «Copiado».
       copyButton.textContent = ok ? 'Copiado' : 'No se pudo copiar';
       announce(ok ? 'Presupuesto copiado al portapapeles.' : 'No se ha podido copiar el presupuesto.');
-      window.setTimeout(() => (copyButton.textContent = label), 1800);
+      window.clearTimeout(copyLabelTimer);
+      copyLabelTimer = window.setTimeout(() => (copyButton.textContent = copyLabel), 1800);
     });
   });
 
