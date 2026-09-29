@@ -318,13 +318,14 @@ export function startApp(): void {
     fileInput.value = '';
   });
 
-  byId('sample-button').addEventListener('click', () => {
+  const loadSample = (): void => {
     void loadBuffer(SAMPLE_FILE, async () => {
       const response = await fetch(`${import.meta.env.BASE_URL}samples/${SAMPLE_FILE}`);
       if (!response.ok) throw new StlParseError('No se ha podido descargar la pieza de ejemplo.');
       return response.arrayBuffer();
     });
-  });
+  };
+  byId('sample-button').addEventListener('click', loadSample);
 
   // ── Arrastrar y soltar en toda la ventana ──
   const overlay = byId('drop-overlay');
@@ -389,4 +390,7 @@ export function startApp(): void {
 
   syncForm();
   render();
+
+  // Enlace directo a la demo con la pieza cargada: …/printquote/#ejemplo
+  if (window.location.hash === '#ejemplo') loadSample();
 }

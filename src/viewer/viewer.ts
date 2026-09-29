@@ -153,7 +153,7 @@ export class Viewer {
 
     const vFov = (FOV * Math.PI) / 180;
     const hFov = 2 * Math.atan(Math.tan(vFov / 2) * this.camera.aspect);
-    const distance = (radius / Math.sin(Math.min(vFov, hFov) / 2)) * 1.08;
+    const distance = (radius / Math.sin(Math.min(vFov, hFov) / 2)) * 1.3;
 
     this.camera.near = Math.max(0.1, distance / 1000);
     this.camera.far = distance * 50;
