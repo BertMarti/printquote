@@ -66,3 +66,22 @@ export function asciiStl(triangles: Triangle[], name = 'test', newline = '\n'): 
 export function encode(text: string): Uint8Array {
   return new TextEncoder().encode(text);
 }
+
+/** OBJ de un prisma regular de `sides` lados (radio 10, alto 10) con las dos bases como un único polígono cada una. */
+export function discObj(sides: number): string {
+  const lines: string[] = [];
+  for (const z of [0, 10]) {
+    for (let i = 0; i < sides; i++) {
+      const angle = (2 * Math.PI * i) / sides;
+      lines.push(`v ${(10 * Math.cos(angle)).toFixed(5)} ${(10 * Math.sin(angle)).toFixed(5)} ${z}`);
+    }
+  }
+  const ring = (offset: number): number[] => Array.from({ length: sides }, (_, i) => offset + i + 1);
+  lines.push(`f ${ring(0).reverse().join(' ')}`); // base inferior, normal hacia abajo
+  lines.push(`f ${ring(sides).join(' ')}`); // base superior
+  for (let i = 0; i < sides; i++) {
+    const j = (i + 1) % sides;
+    lines.push(`f ${i + 1} ${j + 1} ${sides + j + 1} ${sides + i + 1}`);
+  }
+  return lines.join('\n');
+}

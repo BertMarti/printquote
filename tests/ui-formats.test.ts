@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { startApp } from '../src/ui/app';
-import { binaryStl, cubeTriangles } from './helpers/mesh';
+import { binaryStl, cubeTriangles, discObj } from './helpers/mesh';
 import { cube3mf } from './helpers/zip';
 
 const html = readFileSync(join(process.cwd(), 'index.html'), 'utf8');
@@ -51,6 +51,25 @@ describe('carga de STL, OBJ y 3MF en la interfaz', () => {
     await until(() => $('out-total').textContent !== '—');
     expect($('file-detail').textContent).toMatch(/^OBJ · 12/);
     expect($('out-volume').textContent).toBe('8,00');
+    expect($('warnings').children).toHaveLength(0);
+  });
+
+  it('un OBJ con polígonos de más de 200 vértices muestra un aviso en la lista de avisos, en cada idioma', async () => {
+    openFile(new File([discObj(250)], 'disco.obj'));
+    await until(() => $('out-total').textContent !== '—');
+    const warnings = $('warnings');
+    expect(warnings.children).toHaveLength(1);
+    expect(warnings.textContent).toMatch(/polígonos de más de 200 vértices \(2\)/);
+    expect(warnings.getAttribute('aria-live')).toBe('polite');
+    document.querySelector<HTMLButtonElement>('button[data-lang="en"]')?.click();
+    await until(() => /polygons with more than 200 vertices \(2\)/.test(warnings.textContent ?? ''));
+    document.querySelector<HTMLButtonElement>('button[data-lang="es"]')?.click();
+    await until(() => /polígonos de más de 200/.test(warnings.textContent ?? ''));
+  });
+
+  it('un OBJ normal no muestra el aviso', async () => {
+    openFile(new File([discObj(40)], 'disco.obj'));
+    await until(() => $('out-total').textContent !== '—');
     expect($('warnings').children).toHaveLength(0);
   });
 

@@ -3,7 +3,7 @@ import { analyzeModel } from '../src/stl/analyze';
 import { computeStats, meshWarnings } from '../src/stl/geometry';
 import { ModelParseError } from '../src/stl/errors';
 import { parseObj } from '../src/stl/obj';
-import { cubeTriangles, encode } from './helpers/mesh';
+import { cubeTriangles, discObj, encode } from './helpers/mesh';
 
 /** Cubo de lado 20 como OBJ con caras cuadradas y normales hacia fuera. */
 const CUBE_QUADS = `# cubo de 20 mm
@@ -129,6 +129,23 @@ function prismObj(outline: ReadonlyArray<readonly [number, number]>, h: number, 
 }
 
 const U_SHAPE: ReadonlyArray<readonly [number, number]> = [[0, 0], [3, 0], [3, 2], [2, 2], [2, 1], [1, 1], [1, 2], [0, 2]]; // área 5
+
+describe('OBJ con polígonos de más de 200 vértices', () => {
+  it('cuenta los polígonos que se triangulan en abanico sin poder comprobar si son cóncavos', () => {
+    expect(parseObj(encode(discObj(200))).largePolygons).toBe(0); // 200 todavía se trata bien
+    expect(parseObj(encode(discObj(201))).largePolygons).toBe(2); // las dos bases
+    expect(parseObj(encode(CUBE_QUADS)).largePolygons).toBe(0);
+  });
+
+  it('el aviso sale de meshWarnings solo si los hay, y no cambia el resto de avisos', async () => {
+    const big = await analyzeModel(encode(discObj(250)), 'disco.obj');
+    expect(big.mesh.largePolygons).toBe(2);
+    expect(meshWarnings(big.stats, undefined, big.mesh.largePolygons)).toEqual(['big-polygons']);
+    const small = await analyzeModel(encode(discObj(40)), 'disco.obj');
+    expect(meshWarnings(small.stats, undefined, small.mesh.largePolygons)).toEqual([]);
+    expect(meshWarnings(small.stats)).toEqual([]);
+  });
+});
 
 describe('OBJ con caras cóncavas', () => {
   it.each([0, 1, 3, 5, 7])('una base en «U» (empezando por el vértice %i) da el volumen exacto y una malla cerrada', async (rotate) => {

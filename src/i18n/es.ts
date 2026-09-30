@@ -174,6 +174,8 @@ export const es = {
     'Las normales parecen invertidas (volumen negativo). Se usa el valor absoluto, pero conviene revisar la malla.',
   'warn.tiny':
     'La pieza mide solo {size} mm en su lado mayor. printquote asume que el modelo está en milímetros: si se exportó en metros o pulgadas, cambia las unidades al exportar.',
+  'warn.bigPolygons':
+    'El OBJ tiene polígonos de más de 200 vértices ({count}). Se dividen en abanico, que solo es correcto si son convexos: si alguno es cóncavo, la superficie, el peso y la vista 3D pueden salir mal. Vuelve a exportar el modelo con caras triangulares.',
   'warn.tooBig': 'La pieza ({size} mm) no cabe en la cama de {bed} mm, ni siquiera girándola.',
 
   // ── Texto para copiar y hoja de impresión ──
