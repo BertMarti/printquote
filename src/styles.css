@@ -187,6 +187,42 @@ input {
   gap: 8px;
 }
 
+/* Selector de idioma ES / EN */
+
+.lang-switch {
+  display: inline-flex;
+  border: 1px solid var(--ink);
+  flex: none;
+}
+
+.lang-button {
+  min-width: 36px;
+  height: 34px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.lang-button + .lang-button {
+  border-left: 1px solid var(--ink);
+}
+
+.lang-button[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.lang-button:hover:not([aria-pressed='true']) {
+  background: var(--line);
+}
+
 /* ───────────── Botones ───────────── */
 
 .button {

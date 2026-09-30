@@ -1,9 +1,11 @@
-import { formatDuration, formatEuro, formatNumber } from '../quote/format';
+import { browserLanguages, detectLang, getLang, LANGS, onLangChange, setLang, t, type Key, type Lang } from '../i18n';
+import { applyStaticTranslations } from '../i18n/dom';
 import { buildQuoteDocument } from '../pdf/document';
+import { formatDuration, formatEuro, formatNumber } from '../quote/format';
 import { BUSINESS_LIMITS, nextQuoteNumber, normalizeBusiness, type BusinessProfile } from '../quote/business';
 import { isMaterialId, MATERIALS } from '../quote/materials';
 import { computeQuote, type Quote } from '../quote/model';
-import { applyPrinter, CUSTOM_PRINTER, getPrinter, PRINTERS } from '../quote/printers';
+import { applyPrinter, CUSTOM_PRINTER, getPrinter, PRINTERS, printerNote } from '../quote/printers';
 import { DEFAULT_SETTINGS, LIMITS, normalizeSettings, type QuoteSettings } from '../quote/settings';
 import { buildQuoteText } from '../quote/text';
 import { StlAnalyzer } from '../stl/analyzer';
@@ -16,7 +18,16 @@ import { formatLabel } from './format-label';
 import { NumberField } from './number-field';
 import { renderPrintSheet } from './print-sheet';
 import { LogoError, prepareLogo } from './logo';
-import { clearBusiness, clearSettings, loadBusiness, loadSettings, saveBusiness, saveSettings } from './storage';
+import {
+  clearBusiness,
+  clearSettings,
+  loadBusiness,
+  loadLang,
+  loadSettings,
+  saveBusiness,
+  saveLang,
+  saveSettings,
+} from './storage';
 
 const SAMPLE_FILE = 'soporte-movil.stl';
 const MAX_FILE_BYTES = 300 * 1024 * 1024;
@@ -47,15 +58,21 @@ function readTheme(): ViewerTheme {
 function warningText(warning: MeshWarning, size: Vec3, bed: Vec3): string {
   switch (warning) {
     case 'open-mesh':
-      return 'La malla parece abierta o con huecos: el volumen, el peso y el precio pueden no ser fiables. Repárala en tu laminador o editor 3D.';
+      return t('warn.open');
     case 'inverted':
-      return 'Las normales parecen invertidas (volumen negativo). Se usa el valor absoluto, pero conviene revisar la malla.';
+      return t('warn.inverted');
     case 'tiny':
-      return `La pieza mide solo ${formatNumber(Math.max(size.x, size.y, size.z), 3)} mm en su lado mayor. printquote asume que el modelo está en milímetros: si se exportó en metros o pulgadas, cambia las unidades al exportar.`;
+      return t('warn.tiny', { size: formatNumber(Math.max(size.x, size.y, size.z), 3) });
     case 'too-big':
-      return `La pieza (${formatNumber(size.x, 1)} × ${formatNumber(size.y, 1)} × ${formatNumber(size.z, 1)} mm) no cabe en la cama de ${formatNumber(bed.x, 0)} × ${formatNumber(bed.y, 0)} × ${formatNumber(bed.z, 0)} mm, ni siquiera girándola.`;
+      return t('warn.tooBig', {
+        size: `${formatNumber(size.x, 1)} × ${formatNumber(size.y, 1)} × ${formatNumber(size.z, 1)}`,
+        bed: `${formatNumber(bed.x, 0)} × ${formatNumber(bed.y, 0)} × ${formatNumber(bed.z, 0)}`,
+      });
   }
 }
+
+/** Quita el listener de idioma de la instancia anterior (los tests arrancan la app varias veces). */
+let detachLanguage: (() => void) | null = null;
 
 /** Descarga un archivo generado en el navegador. */
 function download(blob: Blob, fileName: string): void {
@@ -114,6 +131,8 @@ export function startApp(): void {
   let part: LoadedPart | null = null;
   let quote: Quote | null = null;
   let viewer: Viewer | null = null;
+  /** El aviso se guarda como función para poder volver a pintarlo si cambia el idioma. */
+  let noticeBuilder: (() => readonly [title: string, message: string]) | null = null;
 
   const analyzer = new StlAnalyzer();
   /** Cada carga recibe un número; si llega otra antes de terminar, el resultado viejo se descarta. */
@@ -122,8 +141,7 @@ export function startApp(): void {
   // ── Visor ──
   // three.js (~500 kB) se descarga aparte, después de pintar la interfaz: el panel
   // y el presupuesto funcionan desde el primer momento aunque el visor tarde.
-  const noViewer = (): void =>
-    showNotice('Sin vista 3D', 'Tu navegador no ha podido iniciar WebGL. El presupuesto funciona igualmente.');
+  const noViewer = (): void => showNotice(() => [t('viewer.none.title'), t('viewer.none.text')]);
   if (supportsWebGL()) {
     import('../viewer/viewer')
       .then(({ Viewer }) => {
@@ -132,11 +150,7 @@ export function startApp(): void {
         // El visor admite teclado (lo gestiona OrbitControls): se hace enfocable y se explica.
         container.tabIndex = 0;
         container.setAttribute('role', 'application');
-        container.setAttribute('aria-roledescription', 'visor 3D');
-        container.setAttribute(
-          'aria-label',
-          'Vista 3D de la pieza. Flechas: desplazar. Mayúsculas más flechas: girar. «Restablecer vista» la vuelve a encuadrar.',
-        );
+        applyViewerLabels();
         if (part) viewer.setPart(part.mesh.positions);
         render();
       })
@@ -146,6 +160,13 @@ export function startApp(): void {
       });
   } else {
     noViewer();
+  }
+  /** Etiquetas del visor en el idioma activo (solo si el visor ya existe: es cuando se hace enfocable). */
+  function applyViewerLabels(): void {
+    const container = byId('viewer');
+    if (!container.hasAttribute('role')) return;
+    container.setAttribute('aria-roledescription', t('viewer.roledescription'));
+    container.setAttribute('aria-label', t('viewer.label'));
   }
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => viewer?.setTheme(readTheme()));
 
@@ -199,25 +220,29 @@ export function startApp(): void {
   // Perfiles de impresora: elegir uno rellena caudal, potencia y cama; editar cualquiera de
   // esos campos vuelve a «Personalizada» (lo hace `normalizeSettings` al ver que ya no coinciden).
   const printerSelect = byId<HTMLSelectElement>('in-printer');
-  const printerNote = byId('printer-note');
+  const printerNoteEl = byId('printer-note');
   const option = (label: string, value: string): HTMLOptionElement => {
     const node = document.createElement('option');
     node.value = value;
     node.textContent = label;
     return node;
   };
-  printerSelect.append(option('Personalizada', CUSTOM_PRINTER), ...PRINTERS.map((printer) => option(printer.name, printer.id)));
+  /** (Re)crea las opciones: «Personalizada» cambia con el idioma; los nombres de modelo no. */
+  const fillPrinterOptions = (): void => {
+    printerSelect.replaceChildren(
+      option(t('printer.custom'), CUSTOM_PRINTER),
+      ...PRINTERS.map((printer) => option(printer.name, printer.id)),
+    );
+    printerSelect.value = settings.printerId;
+  };
+  fillPrinterOptions();
   printerSelect.addEventListener('change', () => {
     settings = normalizeSettings(applyPrinter(settings, printerSelect.value));
     saveSettings(settings);
     syncForm();
     render();
     const printer = getPrinter(settings.printerId);
-    announce(
-      printer
-        ? `Perfil ${printer.name} aplicado: caudal, potencia y cama actualizados.`
-        : 'Perfil personalizado: los valores no cambian.',
-    );
+    announce(printer ? t('printer.applied', { name: printer.name }) : t('printer.custom.applied'));
   });
 
   const syncForm = (): void => {
@@ -232,9 +257,7 @@ export function startApp(): void {
   function syncPrinter(): void {
     printerSelect.value = settings.printerId;
     const printer = getPrinter(settings.printerId);
-    printerNote.textContent = printer
-      ? `Valores de partida orientativos. ${printer.note}`
-      : 'Escribe tus propios valores de caudal, potencia y cama, o elige una impresora para rellenarlos.';
+    printerNoteEl.textContent = printer ? `${t('printer.note.prefix')} ${printerNote(printer)}` : t('printer.note.custom');
   }
 
   for (const radio of materialRadios) {
@@ -257,7 +280,7 @@ export function startApp(): void {
     settings = DEFAULT_SETTINGS;
     syncForm();
     render();
-    announce('Ajustes restablecidos a los valores por defecto.');
+    announce(t('settings.reset.done'));
   });
 
   // ── Render ──
@@ -265,7 +288,7 @@ export function startApp(): void {
     syncPrinter();
     const b = bed();
     viewer?.setBed(b);
-    byId('stage-legend').textContent = `Rejilla 10 mm · Cama ${formatNumber(b.x, 0)} × ${formatNumber(b.y, 0)} × ${formatNumber(b.z, 0)} mm`;
+    byId('stage-legend').textContent = t('stage.legend', { x: formatNumber(b.x, 0), y: formatNumber(b.y, 0), z: formatNumber(b.z, 0) });
     infillRange.value = String(settings.infillPercent);
     infillRange.setAttribute('aria-valuetext', `${formatNumber(settings.infillPercent, 0)} %`);
 
@@ -284,7 +307,10 @@ export function startApp(): void {
       }
       setOut('kwh', '');
       setOut('margin-pct', '');
-      setOut('summary', 'Carga una pieza para calcular el presupuesto.');
+      setOut('summary', t('summary.empty'));
+      byId('file-name').textContent = t('stage.none');
+      byId('file-detail').textContent = '';
+      document.title = t('meta.title');
       byId('stage-dims').textContent = '';
       warningsList.replaceChildren();
       return;
@@ -327,7 +353,7 @@ export function startApp(): void {
 
     setOut('printed', formatNumber(quote.printedVolume / 1000, 2));
     setOut('weight', formatNumber(quote.totalWeightGrams, 1));
-    setOut('weight-sub', quote.copies > 1 ? `total · ${formatNumber(quote.copies, 0)} copias` : 'total');
+    setOut('weight-sub', quote.copies > 1 ? t('breakdown.weight.copies', { n: formatNumber(quote.copies, 0) }) : t('breakdown.weight.total'));
     setOut('time', formatDuration(quote.totalHours));
     setOut('material', formatNumber(quote.materialCost, 2));
     setOut('energy', formatNumber(quote.energyCost, 2));
@@ -337,14 +363,28 @@ export function startApp(): void {
     setOut('margin', formatNumber(quote.marginAmount, 2));
     setOut('total', formatEuro(quote.total));
 
-    const copiesText = quote.copies === 1 ? '1 copia' : `${formatNumber(quote.copies, 0)} copias · ${formatEuro(quote.totalPerCopy)}/copia`;
-    out('summary').textContent =
-      `${copiesText} · ${MATERIALS[settings.material].name} ${formatNumber(settings.infillPercent, 0)} % · ` +
-      `${formatDuration(quote.totalHours)} (estimación)`;
+    const copiesText =
+      quote.copies === 1
+        ? t('summary.copies.one')
+        : t('summary.copies.other', { n: formatNumber(quote.copies, 0), price: formatEuro(quote.totalPerCopy) });
+    out('summary').textContent = t('summary.line', {
+      copies: copiesText,
+      material: MATERIALS[settings.material].name,
+      infill: formatNumber(settings.infillPercent, 0),
+      time: formatDuration(quote.totalHours),
+    });
+    byId('file-name').textContent = part.fileName;
+    byId('file-detail').textContent = t('file.detail', {
+      format: formatLabel(part.mesh.format),
+      n: formatNumber(part.mesh.triangleCount, 0),
+    });
+    document.title = `${part.fileName} · printquote`;
   }
 
   // ── Carga de archivos ──
-  function showNotice(title: string, message: string): void {
+  function showNotice(build: () => readonly [title: string, message: string]): void {
+    noticeBuilder = build;
+    const [title, message] = build();
     const heading = document.createElement('p');
     heading.className = 'notice-title';
     heading.textContent = title;
@@ -356,6 +396,7 @@ export function startApp(): void {
   }
 
   function hideNotice(): void {
+    noticeBuilder = null;
     notice.hidden = true;
     notice.removeAttribute('role');
     notice.replaceChildren();
@@ -371,9 +412,9 @@ export function startApp(): void {
     hideNotice();
     stage.classList.add('is-loading');
     stage.setAttribute('aria-busy', 'true');
-    loading.textContent = `Leyendo «${fileName}»…`;
+    loading.textContent = t('load.reading', { name: fileName });
     loading.hidden = false;
-    announce(`Leyendo ${fileName}…`);
+    announce(t('load.reading.announce', { name: fileName }));
     try {
       const buffer = await getBuffer();
       // El parseo y la geometría van en un Web Worker: la interfaz sigue respondiendo.
@@ -382,18 +423,15 @@ export function startApp(): void {
       part = { fileName, mesh, stats };
       viewer?.setPart(mesh.positions);
 
-      byId('file-name').textContent = fileName;
-      byId('file-detail').textContent = `${formatLabel(mesh.format)} · ${formatNumber(mesh.triangleCount, 0)} triángulos`;
-      document.title = `${fileName} · printquote`;
       render();
       // El total se anuncia solo: su contenedor es una región viva.
-      announce(`Pieza cargada: ${fileName}.`);
+      announce(t('load.done', { name: fileName }));
     } catch (error) {
       if (ticket !== loadTicket) return;
-      const message = error instanceof ModelParseError
-        ? error.message
-        : 'Ha ocurrido un error inesperado al leer el archivo. Prueba a exportarlo de nuevo como STL, OBJ o 3MF.';
-      showNotice(`No se ha podido leer «${fileName}»`, message);
+      showNotice(() => [
+        t('load.failed.title', { name: fileName }),
+        error instanceof ModelParseError ? t(error.code, error.params) : t('err.unexpected'),
+      ]);
     } finally {
       if (ticket === loadTicket) {
         stage.classList.remove('is-loading');
@@ -405,7 +443,7 @@ export function startApp(): void {
 
   function loadFile(file: File): void {
     if (file.size > MAX_FILE_BYTES) {
-      showNotice(`«${file.name}» es demasiado grande`, 'El límite es de 300 MB para no bloquear el navegador.');
+      showNotice(() => [t('load.tooBig.title', { name: file.name }), t('load.tooBig.text')]);
       return;
     }
     void loadBuffer(file.name, () => file.arrayBuffer());
@@ -421,7 +459,7 @@ export function startApp(): void {
   const loadSample = (): void => {
     void loadBuffer(SAMPLE_FILE, async () => {
       const response = await fetch(`${import.meta.env.BASE_URL}samples/${SAMPLE_FILE}`);
-      if (!response.ok) throw new ModelParseError('No se ha podido descargar la pieza de ejemplo.');
+      if (!response.ok) throw new ModelParseError('err.sample');
       return response.arrayBuffer();
     });
   };
@@ -460,17 +498,17 @@ export function startApp(): void {
   // ── Acciones ──
   resetCameraButton.addEventListener('click', () => viewer?.resetCamera());
 
-  const copyLabel = copyButton.textContent;
   let copyLabelTimer = 0;
   copyButton.addEventListener('click', () => {
     if (!part || !quote) return;
     const text = buildQuoteText({ fileName: part.fileName, stats: part.stats, settings, quote });
     void copyText(text).then((ok) => {
-      // Etiqueta original guardada fuera: con dos clics seguidos se quedaba en «Copiado».
-      copyButton.textContent = ok ? 'Copiado' : 'No se pudo copiar';
-      announce(ok ? 'Presupuesto copiado al portapapeles.' : 'No se ha podido copiar el presupuesto.');
+      // La etiqueta se restablece desde el diccionario (no desde el texto actual): con dos clics
+      // seguidos se quedaba en «Copiado».
+      copyButton.textContent = t(ok ? 'copy.done' : 'copy.failed');
+      announce(t(ok ? 'copy.announce.ok' : 'copy.announce.failed'));
       window.clearTimeout(copyLabelTimer);
-      copyLabelTimer = window.setTimeout(() => (copyButton.textContent = copyLabel), 1800);
+      copyLabelTimer = window.setTimeout(() => (copyButton.textContent = t('action.copy')), 1800);
     });
   });
 
@@ -506,7 +544,12 @@ export function startApp(): void {
   const logoPreview = byId('logo-preview');
   const logoImg = byId<HTMLImageElement>('logo-img');
   const logoStatus = byId('logo-status');
-  const logoHint = logoStatus.textContent ?? '';
+  /** Mensaje actual bajo el logotipo (una clave, para poder traducirlo si cambia el idioma). */
+  let logoStatusKey: Key = 'biz.logo.hint';
+  const setLogoStatus = (key: Key): void => {
+    logoStatusKey = key;
+    logoStatus.textContent = t(key);
+  };
 
   const updateBusiness = (patch: Partial<BusinessProfile>): boolean => {
     business = normalizeBusiness({ ...business, ...patch });
@@ -552,43 +595,40 @@ export function startApp(): void {
     const file = logoInput.files?.[0];
     logoInput.value = '';
     if (!file) return;
-    logoStatus.textContent = 'Procesando la imagen…';
+    setLogoStatus('biz.logo.processing');
     prepareLogo(file)
       .then((logo) => {
         const saved = updateBusiness({ logo });
         syncBusiness();
-        logoStatus.textContent = saved
-          ? 'Logotipo cargado. Se queda en este navegador.'
-          : 'Logotipo cargado, pero el navegador no deja guardarlo: tendrás que subirlo de nuevo la próxima vez.';
+        setLogoStatus(saved ? 'biz.logo.saved' : 'biz.logo.notSaved');
       })
       .catch((error: unknown) => {
-        logoStatus.textContent = error instanceof LogoError ? error.message : 'No se ha podido cargar la imagen.';
+        setLogoStatus(error instanceof LogoError ? error.code : 'err.logo.generic');
       });
   });
   byId('logo-remove').addEventListener('click', () => {
     updateBusiness({ logo: null });
     syncBusiness();
-    logoStatus.textContent = 'Logotipo quitado.';
+    setLogoStatus('biz.logo.removed');
     logoInput.focus();
   });
   byId('reset-business').addEventListener('click', () => {
     clearBusiness();
     business = normalizeBusiness(undefined);
     syncBusiness();
-    logoStatus.textContent = logoHint;
-    announce('Datos del negocio borrados.');
+    setLogoStatus('biz.logo.hint');
+    announce(t('biz.reset.done'));
   });
   byId('settings-form').addEventListener('submit', (event) => event.preventDefault());
 
-  const pdfFileName = (): string => `presupuesto-${business.quoteNumber.replace(/[^A-Za-z0-9._-]+/g, '-')}.pdf`;
+  const pdfFileName = (): string => `${t('pdf.title').toLowerCase()}-${business.quoteNumber.replace(/[^A-Za-z0-9._-]+/g, '-')}.pdf`;
 
   pdfButton.addEventListener('click', () => {
     if (!part || !quote || pdfBusy) return;
-    const label = pdfButton.textContent;
     pdfBusy = true;
     pdfButton.disabled = true;
-    pdfButton.textContent = 'Generando PDF…';
-    announce('Generando el PDF…');
+    pdfButton.textContent = t('pdf.generating');
+    announce(t('pdf.generating.announce'));
     const current = { part, quote, settings, business };
     void (async () => {
       try {
@@ -609,20 +649,55 @@ export function startApp(): void {
         // El número sube solo tras descargar: el siguiente presupuesto ya sale con el nuevo.
         updateBusiness({ quoteNumber: nextQuoteNumber(current.business.quoteNumber) });
         syncBusiness();
-        announce(`PDF descargado: ${name}. El próximo número de presupuesto es ${business.quoteNumber}.`);
+        announce(t('pdf.done', { name, next: business.quoteNumber }));
       } catch {
-        showNotice('No se ha podido crear el PDF', 'Ha ocurrido un error al generar el documento. Vuelve a intentarlo; si sigue fallando, usa «Imprimir» y guarda como PDF.');
+        showNotice(() => [t('pdf.failed.title'), t('pdf.failed.text')]);
       } finally {
         pdfBusy = false;
-        pdfButton.textContent = label;
+        pdfButton.textContent = t('action.pdf');
         pdfButton.disabled = !part;
       }
     })();
   });
 
-  syncForm();
-  syncBusiness();
-  render();
+  // ── Idioma ──
+  const langButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('button[data-lang]'));
+
+  /** Vuelve a pintar todo lo que depende del idioma: HTML estático, campos, avisos y cifras. */
+  function applyLanguage(): void {
+    const lang = getLang();
+    document.documentElement.lang = lang;
+    applyStaticTranslations();
+    document.querySelector('meta[name="description"]')?.setAttribute('content', t('meta.description'));
+    for (const node of document.querySelectorAll<HTMLElement>('[data-density]')) {
+      const id = node.dataset['density'];
+      if (isMaterialId(id)) node.textContent = formatNumber(MATERIALS[id].density, 2);
+    }
+    for (const button of langButtons) button.setAttribute('aria-pressed', String(button.dataset['lang'] === lang));
+    fillPrinterOptions();
+    logoStatus.textContent = t(logoStatusKey);
+    applyViewerLabels();
+    syncForm();
+    syncBusiness();
+    if (noticeBuilder) showNotice(noticeBuilder);
+    if (!pdfBusy) pdfButton.textContent = t('action.pdf');
+    render();
+  }
+
+  for (const button of langButtons) {
+    button.addEventListener('click', () => {
+      const lang = button.dataset['lang'];
+      if (lang && (LANGS as readonly string[]).includes(lang)) {
+        saveLang(lang as Lang);
+        setLang(lang as Lang);
+      }
+    });
+  }
+
+  detachLanguage?.();
+  setLang(detectLang(browserLanguages(), loadLang()));
+  detachLanguage = onLangChange(applyLanguage);
+  applyLanguage();
 
   // Enlace directo a la demo con la pieza cargada: …/printquote/#ejemplo
   if (window.location.hash === '#ejemplo') loadSample();
