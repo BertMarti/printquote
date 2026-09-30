@@ -137,6 +137,8 @@ export function startApp(): void {
   const analyzer = new StlAnalyzer();
   /** Cada carga recibe un número; si llega otra antes de terminar, el resultado viejo se descarta. */
   let loadTicket = 0;
+  /** Archivo que se está leyendo (para volver a rotular el indicador si cambia el idioma). */
+  let loadingName: string | null = null;
 
   // ── Visor ──
   // three.js (~500 kB) se descarga aparte, después de pintar la interfaz: el panel
@@ -402,9 +404,11 @@ export function startApp(): void {
     notice.replaceChildren();
   }
 
+  let announceTimer = 0;
   function announce(message: string): void {
     live.textContent = '';
-    window.setTimeout(() => (live.textContent = message), 50);
+    window.clearTimeout(announceTimer);
+    announceTimer = window.setTimeout(() => (live.textContent = message), 50);
   }
 
   async function loadBuffer(fileName: string, getBuffer: () => Promise<ArrayBuffer>): Promise<void> {
@@ -412,6 +416,7 @@ export function startApp(): void {
     hideNotice();
     stage.classList.add('is-loading');
     stage.setAttribute('aria-busy', 'true');
+    loadingName = fileName;
     loading.textContent = t('load.reading', { name: fileName });
     loading.hidden = false;
     announce(t('load.reading.announce', { name: fileName }));
@@ -437,6 +442,7 @@ export function startApp(): void {
         stage.classList.remove('is-loading');
         stage.removeAttribute('aria-busy');
         loading.hidden = true;
+        loadingName = null;
       }
     }
   }
@@ -586,7 +592,7 @@ export function startApp(): void {
     error: byId('err-vat'),
     min: BUSINESS_LIMITS.vatPercent.min,
     max: BUSINESS_LIMITS.vatPercent.max,
-    decimals: 1,
+    decimals: 2,
     step: 1,
     onValue: (value) => void updateBusiness({ vatPercent: value }),
   });
@@ -676,6 +682,10 @@ export function startApp(): void {
     for (const button of langButtons) button.setAttribute('aria-pressed', String(button.dataset['lang'] === lang));
     fillPrinterOptions();
     logoStatus.textContent = t(logoStatusKey);
+    if (loadingName !== null) loading.textContent = t('load.reading', { name: loadingName });
+    // El último anuncio para lectores de pantalla quedaría en el idioma anterior.
+    window.clearTimeout(announceTimer);
+    live.textContent = '';
     applyViewerLabels();
     syncForm();
     syncBusiness();

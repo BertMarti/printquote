@@ -12,6 +12,7 @@ import {
   validUntil,
   type BusinessProfile,
 } from '../src/quote/business';
+import { formatEuro } from '../src/quote/format';
 import { computeQuote } from '../src/quote/model';
 import { DEFAULT_SETTINGS } from '../src/quote/settings';
 import { computeTax, DEFAULT_VAT_PERCENT } from '../src/quote/tax';
@@ -252,7 +253,7 @@ describe('generación del PDF', () => {
     expect(await imageCount(await renderQuotePdf(make('data:image/png;base64,AAAA', 'data:image/png;base64,AAAA')))).toBe(0);
   });
 
-  it('caracteres que la fuente estándar no tiene se sustituyen por «?» en vez de fallar', async () => {
+  it('caracteres que la fuente estándar no tiene se transcriben o salen como «?» en vez de fallar', async () => {
     const stats = cube(20);
     const doc = buildQuoteDocument({
       business: business({ name: 'Łódź 印刷 3D', address: 'Ünïcode → ✓' }),
@@ -264,7 +265,7 @@ describe('generación del PDF', () => {
       date: fixedDate,
     });
     const texts = await pageTexts(await renderQuotePdf(doc));
-    expect(texts.some((t) => t.startsWith('?'))).toBe(true);
+    expect(texts).toContain('Lódz ?? 3D');
     expect(texts.join('')).toContain('Ünïcode');
   });
 
@@ -283,5 +284,57 @@ describe('tamaño del logotipo', () => {
     expect(logoSize(300, 1200)).toEqual({ width: 100, height: 400 });
     expect(logoSize(200, 100)).toEqual({ width: 200, height: 100 });
     expect(logoSize(10000, 1)).toEqual({ width: 400, height: 1 });
+  });
+});
+
+describe('PDF: caracteres del español y transliteración', () => {
+  const render = async (name: string, address = ''): Promise<string> => {
+    const stats = cube(20);
+    const doc = buildQuoteDocument({
+      business: business({ name, address }),
+      fileName: 'pieza.stl',
+      stats,
+      settings: DEFAULT_SETTINGS,
+      quote: computeQuote(stats, DEFAULT_SETTINGS),
+      image: null,
+      date: fixedDate,
+    });
+    return (await pageTexts(await renderQuotePdf(doc))).join('\n');
+  };
+
+  it('á é í ó ú ñ ü ¿ ¡ € y sus mayúsculas salen tal cual, sin «?»', async () => {
+    const text = await render('Áé íó úñ Ü', '¿Qué tal? ¡Hola! 5 € · Ñ É Í Ó Ú');
+    for (const expected of ['Áé íó úñ Ü', '¿Qué tal? ¡Hola! 5 € · Ñ É Í Ó Ú']) expect(text).toContain(expected);
+  });
+
+  it('las letras que la fuente no tiene se convierten en su equivalente sin acento en vez de «?»', async () => {
+    const text = await render('Łódź Ćerić Çağrı Đorđe Őrs Ștefan', 'Řeka ě ř ň ť ů');
+    expect(text).toContain('Lódz Ceric Çagri Dorde Ors Stefan'); // Ç sí está en WinAnsi
+    expect(text).toContain('Reka e r n t u');
+    expect(text).not.toContain('?');
+  });
+
+  it('lo que no es transliterable da un solo «?» por carácter y los caracteres invisibles desaparecen', async () => {
+    const text = await render('A印刷B 🚀 C​d️');
+    expect(text).toContain('A??B ? Cd');
+  });
+});
+
+describe('PDF: IVA con decimales y dirección larga', () => {
+  it('el tipo de IVA se guarda con 2 decimales y se rotula tal como se aplica (10,55 % no sale como 10,6 %)', () => {
+    expect(normalizeBusiness({ vatPercent: 21.567 }).vatPercent).toBe(21.57);
+    expect(documentFor(20, { vatPercent: 10.55 }).totalRows[1]?.[0]).toBe('IVA (10,55 %)');
+    expect(documentFor(20, { vatPercent: 0 }).totalRows[1]).toEqual(['IVA (0 %)', formatEuro(0)]);
+    const zero = documentFor(20, { vatPercent: 0 });
+    expect(zero.totalRows[2]?.[1]).toBe(zero.totalRows[0]?.[1]);
+  });
+
+  it('una dirección de muchas líneas no empuja el resto fuera de la página: se recorta con puntos suspensivos', async () => {
+    const address = Array.from({ length: 60 }, (_, i) => `L${i + 1}`).join('\n');
+    const texts = await pageTexts(await renderQuotePdf(documentFor(20, { address })));
+    expect(texts).toContain('L1');
+    expect(texts.some((t) => t === 'L60')).toBe(false);
+    expect(texts.some((t) => t.endsWith('...'))).toBe(true);
+    expect(texts).toContain('TOTAL CON IVA');
   });
 });

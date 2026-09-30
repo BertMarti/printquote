@@ -214,3 +214,75 @@ describe('parse3mf: errores en español', () => {
     await expectError(await zipWithModel(model), /circulares/);
   });
 });
+
+describe('3MF: ZIP de otros programas, unidades y objetos vacíos', () => {
+  const valid = modelXml(objectXml(1, cubeTriangles(10)), '<item objectid="1"/>');
+  const files = (model: string, extra: Partial<Parameters<typeof buildZip>[0][number]> = {}): Parameters<typeof buildZip>[0] => [
+    { name: '_rels/.rels', data: RELS, ...extra },
+    { name: '3D/3dmodel.model', data: model, ...extra },
+  ];
+
+  it('entradas con descriptor de datos (ZIP en flujo, como el de 3D Builder): comprimidas y sin comprimir', async () => {
+    for (const method of [8, 0]) {
+      const { mesh } = await analyzeModel(await buildZip(files(valid, { descriptor: true, method })));
+      expect(mesh.triangleCount, `método ${method}`).toBe(12);
+    }
+  });
+
+  it('un descriptor de datos sin directorio central da un error claro (no se puede saber dónde acaba cada entrada)', async () => {
+    const zip = await buildZip(files(valid, { descriptor: true }), { noDirectory: true });
+    await expect(parse3mf(zip)).rejects.toThrow(/le falta el directorio central/);
+  });
+
+  it('método de compresión que no soportamos, ZIP64 por entrada y cifrado: errores claros', async () => {
+    await expect(parse3mf(await buildZip(files(valid, { method: 12 })))).rejects.toThrow(/método de compresión \(12\)/);
+    await expect(parse3mf(await buildZip(files(valid, { zip64: true })))).rejects.toThrow(/ZIP64/);
+    await expect(parse3mf(await buildZip(files(valid, { encrypted: true })))).rejects.toThrow(/contraseña/);
+  });
+
+  it('un archivo de datos aleatorios con firma de ZIP no cuelga ni lanza un error genérico', async () => {
+    const noise = new Uint8Array(400).map((_, i) => (i * 37 + 11) & 0xff);
+    noise.set([0x50, 0x4b, 0x03, 0x04]);
+    await expect(parse3mf(noise)).rejects.toThrow(ModelParseError);
+  });
+
+  it('unidad en pulgadas: la traslación del item va en pulgadas y todo sale en milímetros', async () => {
+    const model = modelXml(objectXml(1, cubeTriangles(1)), `<item objectid="1" transform="${MOVE(2, 0, 0)}"/>`, 'unit="inch"');
+    const { mesh } = await analyzeModel(await zipWithModel(model));
+    const { min, max } = bounds(mesh.positions);
+    expect(min[0]).toBeCloseTo(50.8, 4);
+    expect(max[0]).toBeCloseTo(76.2, 4);
+  });
+
+  it('una unidad desconocida es un error (no se supone milímetros en silencio) y no falla con nombres de Object', async () => {
+    for (const unit of ['parsec', 'constructor', 'toString']) {
+      const model = modelXml(objectXml(1, cubeTriangles(2)), '<item objectid="1"/>', `unit="${unit}"`);
+      await expect(parse3mf(await zipWithModel(model)), unit).rejects.toThrow(/unidad desconocida/);
+    }
+    const upper = modelXml(objectXml(1, cubeTriangles(2)), '<item objectid="1"/>', 'unit="Millimeter"');
+    expect((await analyzeModel(await zipWithModel(upper))).stats.bounds.size.x).toBe(2);
+  });
+
+  it('un objeto sin triángulos junto a uno válido se ignora; solo con objetos vacíos es un error', async () => {
+    const empty = '<object id="9" type="model"><mesh><vertices/><triangles/></mesh></object>';
+    const both = modelXml(empty + objectXml(1, cubeTriangles(10)), '<item objectid="9"/><item objectid="1"/>');
+    expect((await analyzeModel(await zipWithModel(both))).mesh.triangleCount).toBe(12);
+    const onlyEmpty = modelXml(empty, '<item objectid="9"/>');
+    await expect(parse3mf(await zipWithModel(onlyEmpty))).rejects.toThrow(/ninguna pieza imprimible/);
+  });
+
+  it('transformación compuesta: giro de 90° sobre Z, escala ×2 y traslación, en un componente dentro de otro objeto', async () => {
+    // Vector fila: (x, y, z) · [[0, 1, 0], [−1, 0, 0], [0, 0, 1]] = (−y, x, z): gira 90° antihorario.
+    const rotate90 = '0 1 0 -1 0 0 0 0 1 0 0 0';
+    const model = modelXml(
+      objectXml(1, cubeTriangles(10)) +
+        `<object id="2" type="model"><components><component objectid="1" transform="${rotate90}"/></components></object>`,
+      `<item objectid="2" transform="2 0 0 0 2 0 0 0 2 100 0 0"/>`,
+    );
+    const { mesh } = await analyzeModel(await zipWithModel(model));
+    const { min, max } = bounds(mesh.positions);
+    // Cubo [0,10]³ → girado: x ∈ [−10, 0], y ∈ [0, 10] → ×2 → x ∈ [−20, 0], y ∈ [0, 20] → +100 en X.
+    expect(min).toEqual([80, 0, 0]);
+    expect(max).toEqual([100, 20, 20]);
+  });
+});

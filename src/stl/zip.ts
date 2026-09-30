@@ -63,6 +63,10 @@ export function readZipDirectory(bytes: Uint8Array): Map<string, ZipEntry> {
     pos += 46 + nameLength + extraLength + commentLength;
 
     if (flags & 1) throw new ModelParseError('err.zip.encrypted');
+    // 0xFFFFFFFF = el valor real está en el campo «extra» de ZIP64.
+    if (compressedSize === 0xffffffff || size === 0xffffffff || localOffset === 0xffffffff) {
+      throw new ModelParseError('err.zip.zip64');
+    }
     if (name.endsWith('/')) continue; // carpeta
     if (localOffset + 30 > bytes.length || view.getUint32(localOffset, true) !== SIG_LOCAL) {
       throw new ModelParseError('err.zip.header', { name });

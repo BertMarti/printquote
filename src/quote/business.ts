@@ -93,7 +93,9 @@ export function normalizeBusiness(input: unknown): BusinessProfile {
     validityDays: Math.round(
       cleanNumber(source.validityDays, DEFAULT_VALIDITY_DAYS, BUSINESS_LIMITS.validityDays.min, BUSINESS_LIMITS.validityDays.max),
     ),
-    vatPercent: cleanNumber(source.vatPercent, DEFAULT_VAT_PERCENT, BUSINESS_LIMITS.vatPercent.min, BUSINESS_LIMITS.vatPercent.max),
+    // Dos decimales como mucho: es lo que se puede escribir y rotular sin que el PDF diga otro tipo que el aplicado.
+    vatPercent:
+      Math.round(cleanNumber(source.vatPercent, DEFAULT_VAT_PERCENT, BUSINESS_LIMITS.vatPercent.min, BUSINESS_LIMITS.vatPercent.max) * 100) / 100,
   };
 }
 

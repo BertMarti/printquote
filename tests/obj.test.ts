@@ -115,3 +115,72 @@ describe('parseObj', () => {
     });
   });
 });
+
+/** Prisma de altura `h` cuya base es el polígono `outline` (antihorario en XY), con las bases como UNA cara cada una. */
+function prismObj(outline: ReadonlyArray<readonly [number, number]>, h: number, rotate = 0): string {
+  const n = outline.length;
+  const lines = [...outline.map(([x, y]) => `v ${x} ${y} 0`), ...outline.map(([x, y]) => `v ${x} ${y} ${h}`)];
+  const ids = [...Array(n).keys()].map((i) => i + 1);
+  const start = ids.map((_, i) => ((i + rotate) % n) + 1);
+  lines.push(`f ${[...start].reverse().join(' ')}`); // base (hacia −Z)
+  lines.push(`f ${start.map((i) => i + n).join(' ')}`); // tapa (hacia +Z)
+  for (let i = 1; i <= n; i++) lines.push(`f ${i} ${(i % n) + 1} ${(i % n) + 1 + n} ${i + n}`);
+  return lines.join('\n') + '\n';
+}
+
+const U_SHAPE: ReadonlyArray<readonly [number, number]> = [[0, 0], [3, 0], [3, 2], [2, 2], [2, 1], [1, 1], [1, 2], [0, 2]]; // área 5
+
+describe('OBJ con caras cóncavas', () => {
+  it.each([0, 1, 3, 5, 7])('una base en «U» (empezando por el vértice %i) da el volumen exacto y una malla cerrada', async (rotate) => {
+    const { stats } = await analyzeModel(encode(prismObj(U_SHAPE, 2, rotate)), 'u.obj');
+    expect(stats.volume).toBeCloseTo(10, 6);
+    expect(stats.surfaceArea).toBeCloseTo(34, 6); // 2 × 5 (bases) + 12 (perímetro) × 2 (altura); un abanico mal puesto la infla
+    expect(stats.openEdges).toBe(0);
+    expect(meshWarnings(stats)).toEqual([]);
+    expect(parseObj(encode(prismObj(U_SHAPE, 2, rotate))).triangleCount).toBe(6 + 6 + 8 * 2); // U: n−2 triángulos por base
+  });
+
+  it('un polígono cóncavo en cualquier plano y con la orientación contraria también se trocea bien', async () => {
+    const clockwise = [...U_SHAPE].reverse(); // un OBJ con las caras al revés: normales invertidas, pero mismo volumen
+    const { stats } = await analyzeModel(encode(prismObj(clockwise, 2)), 'u.obj');
+    expect(stats.volume).toBeCloseTo(10, 6);
+    // Cara vertical (plano XZ): la misma U de canto
+    const vertical = U_SHAPE.map(([x, y]) => `v ${x} 0 ${y}`).join('\n') + '\nf 1 2 3 4 5 6 7 8\n';
+    const area = (() => {
+      const mesh = parseObj(encode(vertical));
+      let sum = 0;
+      for (let t = 0; t < mesh.triangleCount; t++) {
+        const p = Array.from(mesh.positions.subarray(t * 9, t * 9 + 9), (value) => value);
+        const c = (k: number): number => p[k] ?? 0;
+        sum += Math.abs((c(3) - c(0)) * (c(8) - c(2)) - (c(5) - c(2)) * (c(6) - c(0))) / 2;
+      }
+      return sum;
+    })();
+    expect(area).toBeCloseTo(5, 6);
+  });
+
+  it('un polígono degenerado o que se cruza no cuelga ni pierde caras', () => {
+    const collinear = parseObj(encode('v 0 0 0\nv 1 0 0\nv 2 0 0\nv 3 0 0\nf 1 2 3 4\n'));
+    expect(collinear.triangleCount).toBe(2);
+    const bowtie = parseObj(encode('v 0 0 0\nv 2 2 0\nv 2 0 0\nv 0 2 0\nf 1 2 3 4\n'));
+    expect(bowtie.triangleCount).toBe(2);
+    const forward = parseObj(encode('f 1 2 3 4\nv 0 0 0\nv 1 0 0\nv 1 1 0\nv 0 1 0\n'));
+    expect(forward.triangleCount).toBe(2);
+  });
+});
+
+describe('OBJ: índices enormes', () => {
+  it('un índice que no cabe en 32 bits es un error, no un vértice cualquiera', () => {
+    const text = 'v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 4294967297\n'; // 2^32 + 1 se cortaría al vértice 2
+    expect(() => parseObj(encode(text))).toThrow(/vértice 4294967297/);
+  });
+});
+
+describe('OBJ: formas raras que no deben romper la lectura', () => {
+  it('BOM, continuación al final del archivo, solo espacios y solo comentarios', () => {
+    const text = '﻿v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3 \\';
+    expect(parseObj(encode(text)).triangleCount).toBe(1);
+    expect(() => parseObj(encode('   \n\t\n'))).toThrow(/no contiene vértices/);
+    expect(() => parseObj(encode('# solo un comentario\n'))).toThrow(/no contiene vértices/);
+  });
+});
