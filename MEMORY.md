@@ -1,18 +1,66 @@
 # MEMORY.md · printquote
-Última actualización: 2026-09-29 por lead
+Última actualización: 2026-09-30 por qa
 
 ## Estado actual
-Repositorio creado con la base: README, AGENTS.md, CLAUDE.md, MEMORY.md, licencia MIT y plantilla de PR. Aún no hay código.
+MVP completo en la rama `agent/builder` (PR abierto a `main`, pendiente de revisión del lead):
+- Parser STL propio binario/ASCII con detección robusta y errores en español (`src/stl/parse.ts`).
+- Geometría: volumen (tetraedros con signo), área, caja, aristas abiertas y avisos (malla abierta, normales invertidas, no cabe en la cama) (`src/stl/geometry.ts`).
+- Modelo de presupuesto puro y testeado (`src/quote/`): material, relleno, perímetros, caudal, energía, margen, copias; formato es-ES; texto para copiar.
+- Visor three.js (`src/viewer/viewer.ts`): Z arriba, rejilla de cama, OrbitControls, render bajo demanda, tema claro/oscuro, captura para imprimir.
+- Interfaz (`index.html`, `src/styles.css`, `src/ui/`): «hoja técnica suiza», panel numerado 01–05, total fijo abajo, arrastrar y soltar, pieza de ejemplo, `#ejemplo` en la URL la carga sola, localStorage, copiar, imprimir, accesible.
+- Pieza de ejemplo original: `public/samples/soporte-movil.stl` generada por `scripts/generate-sample.mjs` (`npm run sample`).
+- 57 tests (Vitest) en verde; lint y build en verde en local.
+- CI (`.github/workflows/ci.yml`, Ubuntu + Windows, Node 22) y despliegue a Pages (`deploy.yml`).
+- README completo con fórmulas, captura `docs/captura.png` (generada con Chrome headless) y badges.
+
+Revisión QA en la rama `agent/qa` (PR #2 contra `agent/builder`, se fusiona después de #1):
+- Parser ASCII byte a byte (sin picos de memoria), BOM, nombres de sólido con palabras clave, rechazo de valores fuera de float32/«inf»/«NaN»/hex; binario con recuento 0 deducido del tamaño.
+- Soldado de vértices con tolerancia (1e-4 mm o 1e-6 × coordenada mayor) con rejilla espacial.
+- Parseo + geometría en Web Worker (`src/stl/stl.worker.ts`, cliente `analyzer.ts` con respaldo al hilo principal); indicador de carga; cargas concurrentes resueltas por número de carga.
+- three.js bajo demanda (`import()`): JS inicial 26 kB (10 kB gzip), visor en chunk aparte.
+- Importes redondeados a céntimos por línea: el desglose siempre suma el total.
+- Accesibilidad: total y errores en regiones vivas, avisos sin repeticiones, visor manejable con teclado, sin inercia con `prefers-reduced-motion`, pista táctil.
+- Open Graph, tarjeta de Twitter, canonical; aviso de unidades (pieza < 1 mm).
+- 132 tests (incluidos tests de interfaz con happy-dom que cargan `index.html`); lint, tests y build en verde en local y en el CI.
 
 ## Decisiones (por qué)
 - 2026-09-29: Todo el cálculo en el navegador para no gestionar servidores ni archivos de terceros (coste cero y privacidad).
 - 2026-09-29: TypeScript + Vite + three.js: stack web estándar y distinto al de los otros dos proyectos.
+- 2026-09-29 (builder): Dependencias de desarrollo: `typescript`, `vite`, `vitest`, `eslint`, `@eslint/js`, `typescript-eslint`, `globals` (lo pedido por AGENTS.md para lint/test/build) y `@types/node` (solo para que los tests lean la pieza de ejemplo del disco). En ejecución solo `three` (y `@types/three` en desarrollo).
+- 2026-09-29 (builder): `base: '/printquote/'` fija en dev, build y preview. Condicionarla a `command === 'build'` rompía `vite preview` (servía index.html en lugar de los assets). En local la web está en `http://localhost:5173/printquote/`.
+- 2026-09-29 (builder): Detección de formato STL: binario si el tamaño es exactamente 84 + 50·n (salvo que sea texto con «solid…facet»); ASCII si empieza por «solid» y la muestra inicial es texto; binario con relleno final si el tamaño supera lo esperado. Coordenadas NaN/Infinito → error.
+- 2026-09-29 (builder): «Malla abierta» = aristas que no comparten exactamente 2 triángulos (vértices soldados por igualdad exacta) o volumen ≈ 0 (relativo a la caja). Volumen negativo = normales invertidas (aviso aparte). El volumen se calcula respecto al centro de la caja para no perder precisión lejos del origen.
+- 2026-09-29 (builder): La sobrecarga fija de 5 min se aplica **por copia** (cada copia se considera una impresión). El margen se aplica sobre material + energía. Ancho de línea editable (por defecto 0,45 mm). Sobrecarga (5 min) no editable en la UI, pero sí en el modelo.
+- 2026-09-29 (builder): Para caber en la cama se permite girar la pieza 90° sobre Z. Se asume STL en milímetros.
+- 2026-09-29 (builder): Campos numéricos como `type="text" inputmode="decimal"` con parser propio (coma o punto) para que el formato es-ES sea coherente en todos los navegadores. Valor fuera de rango: error visible y se limita al salir del campo.
+- 2026-09-29 (builder): Accesibilidad de color: el naranja `#ff5a1f` no llega a 3:1 sobre `#f6f5f2`, así que nunca se usa como texto sobre fondo claro; solo en rellenos (con texto tinta, 6:1) y como cifra del total sobre fondo tinta (≥ 5,4:1). El foco usa contorno de tinta.
+- 2026-09-29 (builder): La pieza se pinta del color acento (es el filamento); render solo cuando cambia algo (sin bucle continuo). Espera antes de parsear con `setTimeout` y no `requestAnimationFrame`, que se pausa en pestañas en segundo plano.
+- 2026-09-29 (builder): El parseo es síncrono en el hilo principal; límite de 300 MB por archivo. Suficiente para el MVP. **Sustituida el 2026-09-30 por qa (ver abajo).**
+- 2026-09-30 (qa): Parseo y geometría en un Web Worker (`new Worker(new URL('./stl.worker.ts', import.meta.url), { type: 'module' })`). El buffer se transfiere (no se copia) ida y vuelta. Si el worker no se puede crear o revienta, se calcula en el hilo principal. Límite de 300 MB se mantiene.
+- 2026-09-30 (qa): three.js se carga con `import()` tras pintar la interfaz (decisión sencilla: un solo punto de carga en `app.ts`, `supportsWebGL` separado en `viewer/webgl.ts` para no arrastrar three.js). El panel funciona antes de que llegue el visor; si ya hay pieza, se muestra al llegar.
+- 2026-09-30 (qa): Parser ASCII con tokenizador byte a byte: con `split(/s+/)` un ASCII de 67 MB ocupaba ~800 MB de memoria; 300 MB habrían tumbado la pestaña. El nombre tras `solid`/`endsolid` se salta hasta fin de línea (salvo archivos de una sola línea). Solo se aceptan números con [0-9 . + - e E] y que quepan en float32.
+- 2026-09-30 (qa): Soldado de vértices con tolerancia 1e-4 mm (o 1e-6 × la coordenada mayor, porque lejos del origen el float32 pierde resolución), rejilla con celdas de 16 × tolerancia y búsqueda en la celda vecina solo cerca del borde. 1 millón de triángulos en ~0,6 s (antes ~0,8 s con claves de texto).
+- 2026-09-30 (qa): Importes redondeados a céntimos **por línea** (material, energía, margen) y subtotal/total como suma de líneas, como una factura. Consecuencia aceptada: el total puede diferir 1–2 céntimos del cálculo sin redondear y el total de N copias no es exactamente N × el de una. `roundCents` pasa por 12 cifras significativas para evitar el ruido de coma flotante (1,005 → 1,01).
+- 2026-09-30 (qa): Nueva dependencia de desarrollo `happy-dom`: solo para tests de interfaz (`// @vitest-environment happy-dom` en `tests/ui.test.ts`), que cargan el `index.html` real y arrancan la app. Sin ella no se podían probar las regiones vivas ni el botón de copiar. No afecta al paquete publicado.
+- 2026-09-30 (qa): Contraste revisado (WCAG, calculado): claro — tinta/fondo 17,3, gris/fondo 6,4, gris/escenario 5,9, naranja/tinta 6,1; oscuro — gris/fondo 7,5, naranja/resumen 5,4. Todo AA; no hacía falta cambiar colores.
+- 2026-09-30 (qa): Móvil: sin scroll horizontal a 360 px (comprobado en el navegador). El lienzo mantiene `touch-action: none` para que OrbitControls reciba los gestos (un dedo gira, pellizco acerca, dos dedos desplazan); la página se desplaza tocando la cabecera o el total fijo.
+- 2026-09-30 (qa): Imagen Open Graph = copia de `docs/captura.png` en `public/og.png` (1440 × 900), URL absoluta de GitHub Pages.
 
 ## Siguiente paso
-1. builder: MVP en `agent/builder` (parser, visor, presupuesto, CI y Pages).
+1. lead: revisar y fusionar el PR de `agent/builder`; comprobar que el despliegue a Pages funciona tras el merge.
+2. lead: tras fusionar #1, revisar y fusionar el PR #2 de `agent/qa` (base `agent/builder`; si GitHub lo retarga a `main` al borrar la rama, vale igual).
+3. Pendiente de una persona (no automatizable aquí): probar con lector de pantalla real (NVDA/VoiceOver) y la hoja de impresión en Firefox y Safari; comprobar la vista previa del enlace (og.png) una vez desplegado.
+4. docs (`agent/opencode-docs`): `docs/USO.md` para personas usuarias: cómo cargar un STL, qué significa cada ajuste (relleno, perímetros, caudal, margen), cómo leer los avisos, el enlace `#ejemplo`, copiar/imprimir y limitaciones del modelo (tiempo = estimación). Puede reutilizar `docs/captura.png`.
 
 ## Problemas conocidos
-- Ninguno todavía.
+- El chunk del visor pesa ~560 kB (139 kB gzip) por three.js; se carga aparte con `import()` y `chunkSizeWarningLimit` sigue en 800 kB.
+- Modelo de coste simplificado: no incluye soportes, balsa ni purga; la cáscara (área × grosor) sobreestima en piezas muy detalladas.
+- Mallas muy grandes (> 400 000 triángulos) no dibujan las aristas marcadas, por rendimiento. Con mallas grandes (< 400 000) el `EdgesGeometry` y las normales del visor se calculan aún en el hilo principal (unos cientos de ms de bloqueo tras la lectura).
+- Si falla la lectura de un archivo, se mantiene la pieza anterior en pantalla junto al aviso de error (intencionado, pero puede confundir).
+- El enlace `#ejemplo` solo se atiende al cargar la página (no escucha `hashchange`).
+- El visor con teclado usa lo que da OrbitControls (flechas desplazan, Mayús + flechas giran); no hay zoom con teclado.
 
 ## Registro de sesiones
 - 2026-09-29 lead (main): creación del repositorio y reparto del equipo.
+- 2026-09-29 builder (agent/builder): MVP completo (parser, geometría, presupuesto, visor, UI, tests, CI, Pages, README, captura) y PR abierto a main.
+- 2026-09-30 qa (agent/qa): revisión y endurecimiento (parser, soldado con tolerancia, Web Worker, carga diferida de three.js, redondeo por líneas, accesibilidad, Open Graph, aviso de unidades), 57 → 132 tests; PR #2 contra agent/builder.

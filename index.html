@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>printquote · presupuesto de impresión 3D</title>
+    <meta
+      name="description"
+      content="Arrastra un STL, míralo en 3D y obtén peso, tiempo estimado y precio de impresión. Todo ocurre en tu navegador."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f6f5f2" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121211" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="canonical" href="https://bertmarti.github.io/printquote/" />
+
+    <!-- Vista previa al compartir el enlace (Open Graph y Twitter/X). Las URL deben ser absolutas. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_ES" />
+    <meta property="og:site_name" content="printquote" />
+    <meta property="og:title" content="printquote · presupuesto de impresión 3D" />
+    <meta property="og:description" content="Arrastra un STL, míralo en 3D y obtén peso, tiempo estimado y precio de impresión. Todo ocurre en tu navegador." />
+    <meta property="og:url" content="https://bertmarti.github.io/printquote/" />
+    <meta property="og:image" content="https://bertmarti.github.io/printquote/og.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1440" />
+    <meta property="og:image:height" content="900" />
+    <meta property="og:image:alt" content="Interfaz de printquote: soporte de móvil naranja en el visor 3D y ficha técnica con el presupuesto" />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <a class="skip-link" href="#panel">Saltar al presupuesto</a>
+
+    <header class="titleblock">
+      <div class="tb-cell tb-brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <h1 class="brand-name">printquote</h1>
+        <p class="brand-sub">Presupuesto de impresión 3D</p>
+      </div>
+      <p class="tb-cell tb-privacy">
+        <svg class="icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <path d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2M3 7h10v7H3z" fill="none" stroke="currentColor" stroke-width="1.3" />
+        </svg>
+        <span>Tu archivo no sale de tu navegador</span>
+      </p>
+      <div class="tb-cell tb-actions">
+        <button type="button" class="button button--primary" id="open-button">Abrir STL</button>
+        <button type="button" class="button" id="sample-button">Probar con pieza de ejemplo</button>
+        <input type="file" id="file-input" accept=".stl,model/stl,application/sla" hidden />
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="stage" aria-labelledby="stage-title">
+        <h2 class="sr-only" id="stage-title">Visor 3D</h2>
+        <div class="stage-canvas" id="viewer"></div>
+
+        <span class="crop crop--tl" aria-hidden="true"></span>
+        <span class="crop crop--tr" aria-hidden="true"></span>
+        <span class="crop crop--bl" aria-hidden="true"></span>
+        <span class="crop crop--br" aria-hidden="true"></span>
+
+        <div class="stage-meta">
+          <span class="stage-label">Pieza</span>
+          <span class="stage-file" id="file-name">Sin pieza cargada</span>
+          <span class="stage-detail" id="file-detail"></span>
+        </div>
+
+        <button type="button" class="button button--small stage-reset" id="reset-camera" disabled>
+          Restablecer vista
+        </button>
+
+        <p class="stage-dims" id="stage-dims" aria-hidden="true"></p>
+        <p class="stage-legend" id="stage-legend">Rejilla 10 mm · Cama 220 × 220 × 250 mm</p>
+        <p class="stage-hint" aria-hidden="true"><span class="hint-mouse">Arrastra para girar · rueda para acercar · botón derecho para desplazar</span><span class="hint-touch">Un dedo para girar · pellizca para acercar · dos dedos para desplazar</span></p>
+
+        <div class="empty" id="empty-state">
+          <p class="empty-title">Arrastra un archivo STL aquí</p>
+          <p class="empty-text">o usa «Abrir STL». ¿No tienes ninguno a mano? Prueba con la pieza de ejemplo.</p>
+        </div>
+
+        <p class="stage-loading" id="stage-loading" aria-hidden="true" hidden></p>
+
+        <div class="notice" id="notice" hidden></div>
+      </section>
+
+      <aside class="panel" id="panel" tabindex="-1" aria-label="Ficha técnica y presupuesto">
+        <form id="settings-form" class="sheet" novalidate>
+          <section class="block" aria-labelledby="h-part">
+            <h2 class="block-title" id="h-part"><span class="block-num">01</span>Pieza</h2>
+            <dl class="rows">
+              <div class="row"><dt>Volumen</dt><dd><span class="num" id="out-volume">—</span><span class="unit">cm³</span></dd></div>
+              <div class="row"><dt>Superficie</dt><dd><span class="num" id="out-area">—</span><span class="unit">cm²</span></dd></div>
+              <div class="row"><dt>Dimensiones <span class="sub">X × Y × Z</span></dt><dd><span class="num" id="out-size">—</span><span class="unit">mm</span></dd></div>
+              <div class="row"><dt>Triángulos</dt><dd><span class="num" id="out-triangles">—</span><span class="unit"></span></dd></div>
+            </dl>
+            <ul class="warnings" id="warnings" aria-live="polite"></ul>
+          </section>
+
+          <section class="block" aria-labelledby="h-material">
+            <h2 class="block-title" id="h-material"><span class="block-num">02</span>Material</h2>
+            <fieldset class="segmented">
+              <legend class="sr-only">Tipo de material</legend>
+              <label class="segment"><input type="radio" name="material" value="PLA" /><span><b>PLA</b><small class="num">1,24</small></span></label>
+              <label class="segment"><input type="radio" name="material" value="PETG" /><span><b>PETG</b><small class="num">1,27</small></span></label>
+              <label class="segment"><input type="radio" name="material" value="ABS" /><span><b>ABS</b><small class="num">1,04</small></span></label>
+              <label class="segment"><input type="radio" name="material" value="TPU" /><span><b>TPU</b><small class="num">1,21</small></span></label>
+            </fieldset>
+            <p class="caption">Densidad en g/cm³</p>
+            <div class="field">
+              <label for="in-price">Precio del material <span class="sr-only">en euros por kilo</span></label>
+              <div class="input-unit"><input id="in-price" data-key="price" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-price" /><span class="unit" aria-hidden="true">€/kg</span></div>
+              <p class="field-error" id="err-price" aria-live="polite"></p>
+            </div>
+          </section>
+
+          <section class="block" aria-labelledby="h-print">
+            <h2 class="block-title" id="h-print"><span class="block-num">03</span>Impresión</h2>
+            <div class="field field--range">
+              <label for="in-infill">Relleno <span class="sr-only">en porcentaje</span></label>
+              <div class="input-unit"><input id="in-infill" data-key="infillPercent" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-infill" /><span class="unit" aria-hidden="true">%</span></div>
+              <input class="range" id="in-infill-range" type="range" min="0" max="100" step="1" aria-label="Relleno, deslizador" />
+              <p class="field-error" id="err-infill" aria-live="polite"></p>
+            </div>
+            <div class="field">
+              <label for="in-perimeters">Perímetros</label>
+              <div class="input-unit"><input id="in-perimeters" data-key="perimeters" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" aria-describedby="err-perimeters" /><span class="unit" aria-hidden="true">uds.</span></div>
+              <p class="field-error" id="err-perimeters" aria-live="polite"></p>
+            </div>
+            <div class="field">
+              <label for="in-linewidth">Ancho de línea <span class="sr-only">en milímetros</span></label>
+              <div class="input-unit"><input id="in-linewidth" data-key="lineWidth" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-linewidth" /><span class="unit" aria-hidden="true">mm</span></div>
+              <p class="field-error" id="err-linewidth" aria-live="polite"></p>
+            </div>
+            <div class="field">
+              <label for="in-flow">Caudal volumétrico <span class="sr-only">en milímetros cúbicos por segundo</span></label>
+              <div class="input-unit"><input id="in-flow" data-key="flowRate" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-flow" /><span class="unit" aria-hidden="true">mm³/s</span></div>
+              <p class="field-error" id="err-flow" aria-live="polite"></p>
+            </div>
+            <fieldset class="field field--bed">
+              <legend>Cama <span class="sr-only">en milímetros</span></legend>
+              <div class="bed-inputs">
+                <label class="bed-axis" for="in-bedx"><span aria-hidden="true">X</span><span class="sr-only">Ancho de la cama (X)</span></label>
+                <input id="in-bedx" data-key="bedX" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-bed" />
+                <label class="bed-axis" for="in-bedy"><span aria-hidden="true">Y</span><span class="sr-only">Fondo de la cama (Y)</span></label>
+                <input id="in-bedy" data-key="bedY" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-bed" />
+                <label class="bed-axis" for="in-bedz"><span aria-hidden="true">Z</span><span class="sr-only">Altura máxima (Z)</span></label>
+                <input id="in-bedz" data-key="bedZ" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-bed" />
+                <span class="unit" aria-hidden="true">mm</span>
+              </div>
+              <p class="field-error" id="err-bed" aria-live="polite"></p>
+            </fieldset>
+          </section>
+
+          <section class="block" aria-labelledby="h-costs">
+            <h2 class="block-title" id="h-costs"><span class="block-num">04</span>Costes</h2>
+            <div class="field">
+              <label for="in-power">Potencia media <span class="sr-only">en vatios</span></label>
+              <div class="input-unit"><input id="in-power" data-key="powerWatts" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-power" /><span class="unit" aria-hidden="true">W</span></div>
+              <p class="field-error" id="err-power" aria-live="polite"></p>
+            </div>
+            <div class="field">
+              <label for="in-energy">Electricidad <span class="sr-only">en euros por kilovatio hora</span></label>
+              <div class="input-unit"><input id="in-energy" data-key="energyPrice" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-energy" /><span class="unit" aria-hidden="true">€/kWh</span></div>
+              <p class="field-error" id="err-energy" aria-live="polite"></p>
+            </div>
+            <div class="field">
+              <label for="in-margin">Margen <span class="sr-only">en porcentaje</span></label>
+              <div class="input-unit"><input id="in-margin" data-key="marginPercent" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-margin" /><span class="unit" aria-hidden="true">%</span></div>
+              <p class="field-error" id="err-margin" aria-live="polite"></p>
+            </div>
+            <div class="field">
+              <label for="in-copies">Copias</label>
+              <div class="input-unit"><input id="in-copies" data-key="copies" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" aria-describedby="err-copies" /><span class="unit" aria-hidden="true">uds.</span></div>
+              <p class="field-error" id="err-copies" aria-live="polite"></p>
+            </div>
+            <button type="button" class="link-button" id="reset-settings">Restablecer valores por defecto</button>
+          </section>
+
+          <section class="block" aria-labelledby="h-breakdown">
+            <h2 class="block-title" id="h-breakdown"><span class="block-num">05</span>Desglose</h2>
+            <dl class="rows">
+              <div class="row"><dt>Volumen impreso <span class="sub">por copia</span></dt><dd><span class="num" id="out-printed">—</span><span class="unit">cm³</span></dd></div>
+              <div class="row"><dt>Peso <span class="sub" id="out-weight-sub">total</span></dt><dd><span class="num" id="out-weight">—</span><span class="unit">g</span></dd></div>
+              <div class="row"><dt>Tiempo <span class="tag">estimación</span></dt><dd><span class="num" id="out-time">—</span><span class="unit"></span></dd></div>
+              <div class="row"><dt>Material</dt><dd><span class="num" id="out-material">—</span><span class="unit">€</span></dd></div>
+              <div class="row"><dt>Energía <span class="sub" id="out-kwh"></span></dt><dd><span class="num" id="out-energy">—</span><span class="unit">€</span></dd></div>
+              <div class="row row--rule"><dt>Subtotal</dt><dd><span class="num" id="out-subtotal">—</span><span class="unit">€</span></dd></div>
+              <div class="row"><dt>Margen <span class="sub" id="out-margin-pct"></span></dt><dd><span class="num" id="out-margin">—</span><span class="unit">€</span></dd></div>
+            </dl>
+          </section>
+        </form>
+
+        <section class="summary" aria-labelledby="total-label">
+          <div class="summary-figure" aria-live="polite" aria-atomic="true">
+            <h2 class="summary-label" id="total-label">Total</h2>
+            <p class="summary-total num" id="out-total">—</p>
+          </div>
+          <p class="summary-sub" id="out-summary">Carga una pieza para calcular el presupuesto.</p>
+          <div class="summary-actions">
+            <button type="button" class="button button--inverse" id="copy-button" disabled>Copiar presupuesto</button>
+            <button type="button" class="button button--inverse" id="print-button" disabled>Imprimir</button>
+          </div>
+          <p class="sr-only" id="live-status" role="status" aria-live="polite"></p>
+        </section>
+      </aside>
+    </main>
+
+    <div class="drop-overlay" id="drop-overlay" hidden>
+      <p>Suelta el STL para calcular</p>
+    </div>
+
+    <article class="print-sheet" id="print-sheet" aria-hidden="true"></article>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
