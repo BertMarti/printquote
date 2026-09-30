@@ -18,7 +18,7 @@
 - **Visor 3D** con la pieza apoyada en la cama, rejilla de 10 mm, órbita, zoom y «Restablecer vista».
 - **Perfiles de impresora**: elige Bambu Lab A1 o P1S, Prusa MK4 o MINI+, Creality Ender-3 V3 o K1, Elegoo Neptune 4 (o «Personalizada») y se rellenan caudal, potencia y cama con valores de partida **orientativos**; al editar cualquiera de ellos vuelve a «Personalizada».
 - **Presupuesto en vivo**: material, relleno, perímetros, caudal, energía, margen y copias. Cualquier cambio recalcula al instante.
-- **Copiar presupuesto** en texto plano o **Imprimir** una hoja limpia con la vista 3D y el desglose.
+- **Copiar presupuesto** en texto plano, **Imprimir** una hoja limpia con la vista 3D y el desglose, o **Descargar PDF**: un presupuesto de una página con el nombre y el logotipo de tu negocio, tus datos de contacto, número, fecha, validez, desglose e **IVA** (21 % por defecto, configurable). Los datos del negocio se rellenan una vez en el bloque plegable «Datos del negocio» y se guardan en tu navegador.
 - Recuerda tus ajustes en este navegador (`localStorage`). Modo claro y oscuro automático.
 
 ## Cómo se calcula
@@ -74,7 +74,7 @@ Relleno 20 % · 2 perímetros de 0,45 mm · caudal 8 mm³/s · sobrecarga 5 min 
 
 ## Privacidad
 
-El STL, OBJ o 3MF se lee con la API de archivos del navegador y se procesa en tu equipo. No hay servidor, ni analítica, ni cookies: la web es estática (GitHub Pages) y **tu archivo no sale de tu navegador**. Los ajustes se guardan solo en el `localStorage` de tu navegador.
+El STL, OBJ o 3MF se lee con la API de archivos del navegador y se procesa en tu equipo. No hay servidor, ni analítica, ni cookies: la web es estática (GitHub Pages) y **tu archivo no sale de tu navegador**. Los ajustes y los datos del negocio (incluido el logotipo, ya reducido) se guardan solo en el `localStorage` de tu navegador, y el PDF se genera también en tu navegador: nada se envía a ningún servidor.
 
 ## Uso en local
 
@@ -105,6 +105,7 @@ npm run dev        # http://localhost:5173/printquote/
 - **GitHub Actions**: CI en Ubuntu y Windows, y despliegue en **GitHub Pages**.
 - Parser STL propio: distingue binario y ASCII por el contenido y el tamaño, no solo por la cabecera `solid`. Lee el ASCII byte a byte (sin picos de memoria) y tolera BOM, CR/LF mezclados y nombres de sólido con palabras clave.
 - **OBJ y 3MF:** el OBJ (`v`/`f`, caras de más de 3 vértices trianguladas en abanico, índices negativos) y el 3MF (ZIP leído a mano y descomprimido con `DecompressionStream`, sin dependencias; varios objetos, transformaciones de `item` y `component`, unidades, y componentes en otros `.model` como los de Bambu Studio) pasan por el mismo análisis geométrico y los mismos avisos que el STL. Un 3MF de 250 000 triángulos se lee en ~1 s.
+- **PDF:** [`pdf-lib`](https://pdf-lib.js.org/) (MIT, JavaScript puro, sin dependencias nativas) dibuja el PDF con fuentes estándar (Helvetica y Courier) y se carga con `import()` solo al pulsar «Descargar PDF»: no pesa en el JS inicial (~425 kB, 178 kB gzip, en su propio archivo). El contenido se calcula aparte en una función pura (`src/pdf/document.ts`) y el IVA en `src/quote/tax.ts` (cuota redondeada a céntimos; el total con IVA es siempre base + cuota).
 - **Rendimiento:** el parseo y la geometría corren en un **Web Worker** (la interfaz no se congela con STL grandes; si el navegador no puede crear el worker, se hace en el hilo principal). three.js se carga bajo demanda: el JS inicial pesa ~26 kB y el visor llega en su propio archivo.
 
 ## Estructura
@@ -112,7 +113,8 @@ npm run dev        # http://localhost:5173/printquote/
 ```text
 src/
   stl/        parsers STL, OBJ y 3MF (ZIP + XML), geometría (volumen, área, caja, aristas abiertas) y Web Worker
-  quote/      modelo de coste, materiales, ajustes, formato es-ES y presupuesto en texto
+  quote/      modelo de coste, materiales, perfiles de impresora, ajustes, IVA, datos del negocio, formato es-ES y presupuesto en texto
+  pdf/        contenido del presupuesto en PDF (puro) y su dibujo con pdf-lib
   viewer/     visor three.js (cama, cámara, luces)
   ui/         controles, almacenamiento, hoja de impresión y arranque de la app
   styles.css  diseño «hoja técnica suiza», modo oscuro e impresión
