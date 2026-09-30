@@ -1,7 +1,10 @@
 import { isMaterialId, MATERIAL_IDS, MATERIALS, type MaterialId } from './materials';
+import { CUSTOM_PRINTER, getPrinter, matchesPrinter } from './printers';
 
 export interface QuoteSettings {
   readonly material: MaterialId;
+  /** Perfil de impresora elegido (`custom` = valores propios). Rellena caudal, potencia y cama. */
+  readonly printerId: string;
   /** €/kg de cada material; se recuerda por separado. */
   readonly pricePerKg: Readonly<Record<MaterialId, number>>;
   /** Relleno en % (0–100). */
@@ -30,6 +33,7 @@ export interface QuoteSettings {
 
 export const DEFAULT_SETTINGS: QuoteSettings = {
   material: 'PLA',
+  printerId: CUSTOM_PRINTER,
   pricePerKg: {
     PLA: MATERIALS.PLA.defaultPricePerKg,
     PETG: MATERIALS.PETG.defaultPricePerKg,
@@ -50,7 +54,7 @@ export const DEFAULT_SETTINGS: QuoteSettings = {
   bedZ: 250,
 };
 
-type NumericKey = Exclude<keyof QuoteSettings, 'material' | 'pricePerKg'>;
+type NumericKey = Exclude<keyof QuoteSettings, 'material' | 'printerId' | 'pricePerKg'>;
 
 interface Limit {
   readonly min: number;
@@ -107,8 +111,9 @@ export function normalizeSettings(input: unknown): QuoteSettings {
     }),
   ) as Record<MaterialId, number>;
 
-  return {
+  const settings: QuoteSettings = {
     material: isMaterialId(source.material) ? source.material : DEFAULT_SETTINGS.material,
+    printerId: typeof source.printerId === 'string' ? source.printerId : CUSTOM_PRINTER,
     pricePerKg,
     infillPercent: number('infillPercent'),
     perimeters: number('perimeters'),
@@ -123,4 +128,9 @@ export function normalizeSettings(input: unknown): QuoteSettings {
     bedY: number('bedY'),
     bedZ: number('bedZ'),
   };
+
+  // Un perfil solo vale si los valores siguen siendo los suyos: si alguien los cambió
+  // (o el perfil ya no existe), pasa a «Personalizada».
+  const printer = getPrinter(settings.printerId);
+  return printer && matchesPrinter(settings, printer) ? settings : { ...settings, printerId: CUSTOM_PRINTER };
 }

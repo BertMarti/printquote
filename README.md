@@ -16,6 +16,7 @@
 - **Mide la pieza**: volumen, superficie, caja envolvente (X × Y × Z en mm) y número de triángulos.
 - **Avisa** si la malla parece abierta o tiene las normales invertidas, si no cabe en tu cama (por defecto 220 × 220 × 250 mm) o si mide menos de 1 mm (¿exportada en metros o pulgadas?).
 - **Visor 3D** con la pieza apoyada en la cama, rejilla de 10 mm, órbita, zoom y «Restablecer vista».
+- **Perfiles de impresora**: elige Bambu Lab A1 o P1S, Prusa MK4 o MINI+, Creality Ender-3 V3 o K1, Elegoo Neptune 4 (o «Personalizada») y se rellenan caudal, potencia y cama con valores de partida **orientativos**; al editar cualquiera de ellos vuelve a «Personalizada».
 - **Presupuesto en vivo**: material, relleno, perímetros, caudal, energía, margen y copias. Cualquier cambio recalcula al instante.
 - **Copiar presupuesto** en texto plano o **Imprimir** una hoja limpia con la vista 3D y el desglose.
 - Recuerda tus ajustes en este navegador (`localStorage`). Modo claro y oscuro automático.

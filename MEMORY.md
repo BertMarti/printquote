@@ -1,7 +1,16 @@
 # MEMORY.md · printquote
-Última actualización: 2026-09-30 por docs
+Última actualización: 2026-09-30 por builder (v0.2.0)
 
 ## Estado actual
+
+### v0.2.0 (hito en curso, agente builder)
+Una rama y un PR por issue, cada rama parte de la anterior y todos van contra `main`:
+- #5 Perfiles de impresora (rama `agent/builder-5-perfiles`): hecho, PR abierto.
+- #6 3MF y OBJ, #7 PDF con datos del negocio, #8 interfaz en inglés: pendientes (ver «Siguiente paso»).
+
+**#5 Perfiles de impresora.** `src/quote/printers.ts` (único archivo de datos, tipado, con `note` de origen por perfil): Bambu Lab A1 y P1S, Prusa MK4 y MINI+, Creality Ender-3 V3 y K1, Elegoo Neptune 4. Selector «Impresora» al principio del bloque 03; elegir un perfil rellena caudal, potencia y cama; editar cualquiera de esos campos vuelve a «Personalizada». `QuoteSettings.printerId` se guarda en localStorage (misma clave `printquote:ajustes:v1`; los ajustes antiguos sin perfil cargan como «Personalizada»).
+
+### MVP y revisiones anteriores (v0.1.0)
 MVP completo en la rama `agent/builder` (PR abierto a `main`, pendiente de revisión del lead):
 - Parser STL propio binario/ASCII con detección robusta y errores en español (`src/stl/parse.ts`).
 - Geometría: volumen (tetraedros con signo), área, caja, aristas abiertas y avisos (malla abierta, normales invertidas, no cabe en la cama) (`src/stl/geometry.ts`).
@@ -51,9 +60,13 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 (qa): Móvil: sin scroll horizontal a 360 px (comprobado en el navegador). El lienzo mantiene `touch-action: none` para que OrbitControls reciba los gestos (un dedo gira, pellizco acerca, dos dedos desplazan); la página se desplaza tocando la cabecera o el total fijo.
 - 2026-09-30 (docs): La documentación la ha hecho Claude Code (Sonnet) y no OpenCode, porque el sistema de permisos no permite lanzar OpenCode en modo autónomo. `AGENTS.md` conserva OpenCode como herramienta futura «cuando se permita su ejecución autónoma»; la rama pasa de `agent/opencode-docs` a `agent/docs`.
 - 2026-09-30 (docs): La guía de uso explica el aviso de unidades tal como es en el código (solo salta por debajo de 1 mm): un STL en pulgadas de una pieza grande no avisa, y se indica al lector que compruebe las dimensiones. La sobrecarga de 5 min por copia no es editable en la interfaz y así se dice.
+- 2026-09-30 (builder, #5): El perfil no se «detecta» comparando valores: `printerId` se guarda, y `normalizeSettings` lo mantiene solo mientras caudal, potencia y cama coinciden con el perfil (si no, pasa a `custom`). Así editar un campo vuelve a «Personalizada» sin lógica extra en la interfaz, y un perfil que ya no exista (o valores retocados a mano en localStorage) se degrada bien. Si alguien vuelve a escribir a mano los valores de un perfil, sigue en «Personalizada» (intencionado, es lo más simple).
+- 2026-09-30 (builder, #5): Valores de perfiles = cama de la ficha del fabricante; caudal y potencia son estimaciones redondeadas de uso normal con PLA (muy por debajo del máximo publicitario) y así se rotula en la interfaz («Valores de partida orientativos») y en la nota de cada perfil. La Ender-3 V3 usa las medidas de la V3 SE (220 × 220 × 250); la nota avisa de que KE y CoreXZ difieren.
 - 2026-09-30 (qa): Imagen Open Graph = copia de `docs/captura.png` en `public/og.png` (1440 × 900), URL absoluta de GitHub Pages.
 
 ## Siguiente paso
+00. Alberto: borrar la rama remota `agent/builder` (ya fusionada en `main`, SHA 5b0a29b: se puede recrear). Mientras exista, Git impide crear ramas `agent/builder/…`, y las de v0.2.0 se llaman `agent/builder-<n>-<slug>`. El borrado lo denegó el sistema de permisos del agente.
+0. builder (v0.2.0): tras #5, seguir con #6 (3MF y OBJ), #7 (PDF) y #8 (inglés). Alberto fusiona los PR en ese orden.
 1. lead: revisar y fusionar el PR de `agent/builder`; comprobar que el despliegue a Pages funciona tras el merge.
 2. lead: tras fusionar #1, revisar y fusionar el PR #2 de `agent/qa` (base `agent/builder`; si GitHub lo retarga a `main` al borrar la rama, vale igual).
 3. Pendiente de una persona (no automatizable aquí): probar con lector de pantalla real (NVDA/VoiceOver) y la hoja de impresión en Firefox y Safari; comprobar la vista previa del enlace (og.png) una vez desplegado.
@@ -73,3 +86,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-29 builder (agent/builder): MVP completo (parser, geometría, presupuesto, visor, UI, tests, CI, Pages, README, captura) y PR abierto a main.
 - 2026-09-30 qa (agent/qa): revisión y endurecimiento (parser, soldado con tolerancia, Web Worker, carga diferida de three.js, redondeo por líneas, accesibilidad, Open Graph, aviso de unidades), 57 → 132 tests; PR #2 contra agent/builder.
 - 2026-09-30 docs · Claude Code Sonnet (agent/docs): `docs/USO.md` y `CONTRIBUTING.md`, sección «Documentación» y «Cómo se ha hecho» del README, fila docs de AGENTS.md; sin cambios de código; PR contra agent/qa.
+- 2026-09-30 builder · Claude Code Sonnet (agent/builder-5-perfiles): #5 perfiles de impresora (`printers.ts`, selector, persistencia, tests) y actualización de AGENTS.md con el flujo por issues del hito.

@@ -116,6 +116,11 @@
 
           <section class="block" aria-labelledby="h-print">
             <h2 class="block-title" id="h-print"><span class="block-num">03</span>Impresión</h2>
+            <div class="field field--select">
+              <label for="in-printer">Impresora</label>
+              <select id="in-printer" aria-describedby="printer-note"></select>
+              <p class="caption field-note" id="printer-note"></p>
+            </div>
             <div class="field field--range">
               <label for="in-infill">Relleno <span class="sr-only">en porcentaje</span></label>
               <div class="input-unit"><input id="in-infill" data-key="infillPercent" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-infill" /><span class="unit" aria-hidden="true">%</span></div>
