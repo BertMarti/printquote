@@ -1,14 +1,16 @@
 # MEMORY.md · printquote
-Última actualización: 2026-09-30 por qa (revisión de v0.2.0, #9)
+Última actualización: 2026-09-30 por docs (documentación de v0.2.0, #10)
 
 ## Estado actual
 
-### v0.2.0 (hito en curso, agente builder)
+### v0.2.0 (hito en curso; todas las issues hechas, pendiente de fusionar los PR)
 Una rama y un PR por issue, cada rama parte de la anterior y todos van contra `main`:
 - #5 Perfiles de impresora (rama `agent/builder-5-perfiles`, PR #11): hecho, CI en verde.
 - #6 3MF y OBJ (rama `agent/builder-6-3mf-obj`, PR #12): hecho.
 - #7 PDF con datos del negocio (rama `agent/builder-7-pdf`, PR #13): hecho.
-- #8 interfaz en inglés (rama `agent/builder-8-ingles`): hecho, PR abierto (parte de la rama de #7).
+- #8 interfaz en inglés (rama `agent/builder-8-ingles`, PR #14): hecho (parte de la rama de #7).
+- #9 revisión QA (rama `agent/qa-9-revision-v0.2`, PR #15): hecho (parte de la rama de #8).
+- #10 documentación (rama `agent/docs-10-documentacion-v0.2`, PR #16): hecho (parte de la rama de #9), ver abajo.
 
 **#5 Perfiles de impresora.** `src/quote/printers.ts` (único archivo de datos, tipado, con `note` de origen por perfil): Bambu Lab A1 y P1S, Prusa MK4 y MINI+, Creality Ender-3 V3 y K1, Elegoo Neptune 4. Selector «Impresora» al principio del bloque 03; elegir un perfil rellena caudal, potencia y cama; editar cualquiera de esos campos vuelve a «Personalizada». `QuoteSettings.printerId` se guarda en localStorage (misma clave `printquote:ajustes:v1`; los ajustes antiguos sin perfil cargan como «Personalizada»).
 
@@ -24,6 +26,12 @@ Una rama y un PR por issue, cada rama parte de la anterior y todos van contra `m
 - 3MF/ZIP: unidad desconocida = error (antes milímetros en silencio; «constructor» daba NaN); entrada con tamaños 0xFFFFFFFF = error de ZIP64; mensaje de método de compresión corregido; tests de descriptor de datos (comprimido y sin comprimir), cifrado, ruido, pulgadas con traslación, objetos vacíos y transformación compuesta.
 - Idiomas: el indicador «Leyendo…» y la región viva se traducen/limpian al cambiar de idioma. Revisado en el navegador: sin texto en español en la interfaz en inglés (atributos incluidos), cifras «123.83» y «€1.59».
 - Accesibilidad: contraste AA calculado sobre todo el texto visible en claro y oscuro (con «Datos del negocio» abierto), sin desbordes a 360 px en ES y EN. Sin cambios necesarios.
+
+**Documentación de v0.2.0 (#10, rama agent/docs-10-documentacion-v0.2, PR #16, se fusiona después de #15).** Solo documentación, sin cambios de código:
+- `CHANGELOG.md` nuevo (Keep a Changelog, en español): [0.2.0] y [0.1.0], ambos con fecha 2026-09-30, y enlaces de comparación (las etiquetas `v0.1.0` y `v0.2.0` aún no existen: los crea Alberto al publicar).
+- `docs/USO.md`: sección 3 «Abrir un modelo 3D (STL, OBJ y 3MF)» (detección por contenido, unidades del 3MF, tabla de qué da error), «Impresora (perfiles)» dentro de la sección 7, sección 10 ampliada con datos del negocio y PDF (IVA, numeración, logotipo, límites), sección 14 «Cambiar el idioma» y preguntas frecuentes nuevas (la antigua 14 pasa a ser la 15). Cifras comprobadas contra el código (perfiles contra `printers.ts`; IVA: 1,59 € al 21 % → 0,33 € y 1,92 €).
+- `README.md`: enlace al CHANGELOG, guía de uso ampliada, límites del PDF, OBJ con caras cóncavas trianguladas y «Cómo se ha hecho» exacto. `CONTRIBUTING.md`: cómo añadir un perfil de impresora, una clave de traducción (y el test que la vigila, `tests/i18n.test.ts`) y un formato de archivo; el CHANGELOG entra en el flujo de PR.
+- No se ha regenerado `docs/captura.png` (muestra la interfaz de la v0.1.0, sin selector de impresora ni bloque de datos del negocio): pendiente si se quiere.
 
 ### MVP y revisiones anteriores (v0.1.0)
 MVP completo en la rama `agent/builder` (PR abierto a `main`, pendiente de revisión del lead):
@@ -92,16 +100,16 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 (builder, #8): El JS inicial pasa de ~50 kB a ~77 kB (27 kB gzip) por los dos diccionarios; sigue siendo pequeño frente al visor (139 kB gzip) y al PDF (178 kB gzip), que se cargan bajo demanda.
 - 2026-09-30 (qa, #9): Sin fuente incrustada en el PDF: pdf-lib no trae ninguna con cobertura amplia y fontkit + TTF añadiría una dependencia y cientos de kB; se transcribe lo latino y el resto es «?». Unidad 3MF desconocida = error, no milímetros. IVA limitado a 2 decimales.
 - 2026-09-30 (qa): Imagen Open Graph = copia de `docs/captura.png` en `public/og.png` (1440 × 900), URL absoluta de GitHub Pages.
+- 2026-09-30 (docs, #10): `CHANGELOG.md` lleva las dos versiones con fecha 2026-09-30 (la del hito) y las correcciones de QA (#9) en «Corregido» de 0.2.0, aunque arreglen funciones nuevas de la misma versión, porque así lo ve quien las use. Los PR del MVP (#1, #2, #4) se citan en 0.1.0.
+- 2026-09-30 (docs, #10): `docs/USO.md` conserva la numeración 1-13 y añade «Cambiar el idioma» como 14 (las FAQ pasan a la 15) para no romper enlaces ni referencias cruzadas; los perfiles van dentro de la sección 7 y el PDF dentro de la 10.
+- 2026-09-30 (docs, #10): la guía describe los límites tal como están en el código: el PDF transcribe las letras latinas que faltan y el resto sale como «?»; el bloque del emisor (NIF, dirección, teléfono, correo, web) se recorta a 10 líneas por el final, así que una dirección muy larga puede tapar el teléfono, el correo y la web.
+- 2026-09-30 (docs, #10): «Cómo se ha hecho» del README: v0.1.0, lead y builder con Claude Opus, qa y docs con Sonnet; v0.2.0, todo con Sonnet; OpenCode previsto para docs pero sin poder ejecutarse en modo autónomo; Alberto supervisa y fusiona.
 
 ## Siguiente paso
-00b. Alberto: fusionar el PR #15 (QA) después de #14. Después docs (#10).
-00. Alberto: borrar la rama remota `agent/builder` (ya fusionada en `main`, SHA 5b0a29b: se puede recrear). Mientras exista, Git impide crear ramas `agent/builder/…`, y las de v0.2.0 se llaman `agent/builder-<n>-<slug>`. El borrado lo denegó el sistema de permisos del agente.
-0. builder (v0.2.0): las cuatro issues están hechas. Alberto fusiona los PR en orden (#11, #12, #13 y el de #8). Después, qa (#9) y docs (#10). Docs debe actualizar `docs/USO.md` (botón «Abrir modelo 3D», OBJ/3MF, perfiles, PDF, IVA, idioma); yo solo he tocado README, CONTRIBUTING y AGENTS.
-1. lead: revisar y fusionar el PR de `agent/builder`; comprobar que el despliegue a Pages funciona tras el merge.
-2. lead: tras fusionar #1, revisar y fusionar el PR #2 de `agent/qa` (base `agent/builder`; si GitHub lo retarga a `main` al borrar la rama, vale igual).
+1. Alberto: fusionar los PR en orden #11, #12, #13, #14, #15 y #16 (docs). Cada uno se ha probado sobre el anterior; tras cada fusión conviene comprobar el CI de `main`. Después, borrar la rama remota `agent/builder` (ver 2) y publicar la release **v0.2.0** (etiqueta `v0.2.0`, con el texto de `CHANGELOG.md`; crea también la etiqueta `v0.1.0` si se quiere que funcionen los enlaces de comparación). Después, lead: comprobar el despliegue a Pages y los enlaces de `docs/USO.md`, `CHANGELOG.md` y `CONTRIBUTING.md` en GitHub.
+2. Alberto: borrar la rama remota `agent/builder` (ya fusionada en `main`, SHA 5b0a29b: se puede recrear). Mientras exista, Git impide crear ramas `agent/builder/…`, y las de v0.2.0 se llaman `agent/builder-<n>-<slug>`. El borrado lo denegó el sistema de permisos del agente.
 3. Pendiente de una persona (no automatizable aquí): probar con lector de pantalla real (NVDA/VoiceOver) y la hoja de impresión en Firefox y Safari; comprobar la vista previa del enlace (og.png) una vez desplegado.
-4. lead: tras fusionar #1 y #2, revisar y fusionar el PR de `agent/docs` (base `agent/qa`; si GitHub lo retarga a `main` al borrar la rama, vale igual). Comprobar que los enlaces de `docs/USO.md` y `CONTRIBUTING.md` funcionan en GitHub.
-5. Pendiente de una persona: releer `docs/USO.md` con calma y probar la calibración con su laminador real; los valores de partida (caudal, potencia) son orientativos.
+4. Pendiente de una persona: releer `docs/USO.md` con calma y probar la calibración con su laminador real; los valores de partida (caudal, potencia) son orientativos.
 
 ## Problemas conocidos
 - OBJ: polígonos cóncavos de más de 200 vértices siguen en abanico (recorte de orejas es O(n³)); no hay aviso al usuario.
@@ -109,9 +117,10 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - Sin revisar por falta de tiempo: descarga del PDF y hoja de impresión con lector real, foco de teclado del resumen de «Datos del negocio» a ojo, anuncio al pasar a «Personalizada» al editar un campo.
 - El chunk del visor pesa ~560 kB (139 kB gzip) por three.js; se carga aparte con `import()` y `chunkSizeWarningLimit` sigue en 800 kB.
 - Modelo de coste simplificado: no incluye soportes, balsa ni purga; la cáscara (área × grosor) sobreestima en piezas muy detalladas.
-- OBJ: los polígonos cóncavos (caras de más de 3 vértices) se trianguan en abanico y pueden salir mal; los OBJ y 3MF no se han probado con archivos reales de laminadores (solo con los construidos en los tests y una prueba manual en Chrome).
-- PDF: solo caracteres WinAnsi (el resto sale como «?»); una página; sin campo de cliente. Revisar el PDF impreso/abierto en distintos visores (solo se ha comprobado renderizado con PyMuPDF y la descarga en Chrome).
-- Las notas de impresora y demás textos están traducidos, pero `docs/USO.md` sigue en español (documentación); los meta Open Graph también.
+- Los OBJ y 3MF no se han probado con archivos reales de laminadores (solo con los construidos en los tests y una prueba manual en Chrome).
+- PDF: una página; sin campo de cliente. Revisar el PDF impreso/abierto en distintos visores (solo se ha comprobado renderizado con PyMuPDF y la descarga en Chrome).
+- Las notas de impresora y demás textos están traducidos, pero `docs/USO.md` y el README siguen solo en español (documentación); los meta Open Graph también. `docs/captura.png` muestra la interfaz de la v0.1.0.
+- El bloque del emisor del PDF se recorta a 10 líneas por el final: una dirección muy larga puede tapar teléfono, correo y web (está documentado en `docs/USO.md`).
 - Mallas muy grandes (> 400 000 triángulos) no dibujan las aristas marcadas, por rendimiento. Con mallas grandes (< 400 000) el `EdgesGeometry` y las normales del visor se calculan aún en el hilo principal (unos cientos de ms de bloqueo tras la lectura).
 - Si falla la lectura de un archivo, se mantiene la pieza anterior en pantalla junto al aviso de error (intencionado, pero puede confundir).
 - El enlace `#ejemplo` solo se atiende al cargar la página (no escucha `hashchange`).
@@ -127,3 +136,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder-7-pdf): #7 presupuesto en PDF (pdf-lib bajo demanda, datos del negocio plegables y persistentes, logotipo local, IVA configurable, número de presupuesto correlativo, tests).
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder-8-ingles): #8 interfaz en inglés (diccionarios es/en, selector de idioma, formato por idioma, errores con código, PDF y textos traducidos, tests de claves y de interfaz en inglés).
 - 2026-09-30 qa · Claude Code Sonnet (agent/qa-9-revision-v0.2): revisión de v0.2.0 (#9): OBJ cóncavo/índices, PDF (transcripción, IVA, dirección), 3MF/ZIP (unidades, ZIP64), idioma en caliente, contraste y 360 px; PR #15.
+- 2026-09-30 docs · Claude Code Sonnet (agent/docs-10-documentacion-v0.2): #10 documentación de v0.2.0 (`CHANGELOG.md`, `docs/USO.md`, README, CONTRIBUTING y este archivo); sin cambios de código; PR #16 (después de #15).

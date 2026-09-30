@@ -19,7 +19,7 @@ Hito v0.2.0: más formatos de entrada, perfiles de impresora, presupuesto en PDF
 ### Cambiado
 
 - El análisis del modelo (`analyzeModel`, asíncrono) sustituye a `analyzeStl` en el Web Worker y en su respaldo del hilo principal. Los errores de lectura pasan a ser `ModelParseError`, con código y datos, para traducirlos en la interfaz.
-- El JS inicial pasa de ~50 kB a ~77 kB (27 kB gzip), sobre todo por los dos diccionarios; el visor y el PDF siguen cargándose bajo demanda.
+- El JS inicial pasa de ~50 kB a ~78 kB (27 kB gzip), sobre todo por los dos diccionarios; el visor y el PDF siguen cargándose bajo demanda.
 - Nueva dependencia en ejecución: `pdf-lib` (MIT, sin dependencias nativas). Motivos y alternativas descartadas, en `MEMORY.md`.
 - Los ajustes guardados con la versión 0.1.0 siguen cargando (sin perfil, como «Personalizada»). Los datos del negocio se guardan aparte, con su propia clave de `localStorage`.
 
