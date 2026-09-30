@@ -1,6 +1,7 @@
 import { formatDuration, formatEuro, formatNumber } from '../quote/format';
 import { isMaterialId, MATERIALS } from '../quote/materials';
 import { computeQuote, type Quote } from '../quote/model';
+import { applyPrinter, CUSTOM_PRINTER, getPrinter, PRINTERS } from '../quote/printers';
 import { DEFAULT_SETTINGS, LIMITS, normalizeSettings, type QuoteSettings } from '../quote/settings';
 import { buildQuoteText } from '../quote/text';
 import { StlAnalyzer } from '../stl/analyzer';
@@ -138,7 +139,7 @@ export function startApp(): void {
     render();
   };
 
-  type FieldKey = Exclude<keyof QuoteSettings, 'material' | 'pricePerKg'>;
+  type FieldKey = Exclude<keyof QuoteSettings, 'material' | 'printerId' | 'pricePerKg'>;
   const fieldSpec: ReadonlyArray<readonly [inputId: string, errorId: string, key: FieldKey | 'price', decimals: number, step: number]> = [
     ['in-price', 'err-price', 'price', 2, 1],
     ['in-infill', 'err-infill', 'infillPercent', 1, 5],
@@ -176,13 +177,46 @@ export function startApp(): void {
     fields.set(key, field);
   }
 
+  // Perfiles de impresora: elegir uno rellena caudal, potencia y cama; editar cualquiera de
+  // esos campos vuelve a «Personalizada» (lo hace `normalizeSettings` al ver que ya no coinciden).
+  const printerSelect = byId<HTMLSelectElement>('in-printer');
+  const printerNote = byId('printer-note');
+  const option = (label: string, value: string): HTMLOptionElement => {
+    const node = document.createElement('option');
+    node.value = value;
+    node.textContent = label;
+    return node;
+  };
+  printerSelect.append(option('Personalizada', CUSTOM_PRINTER), ...PRINTERS.map((printer) => option(printer.name, printer.id)));
+  printerSelect.addEventListener('change', () => {
+    settings = normalizeSettings(applyPrinter(settings, printerSelect.value));
+    saveSettings(settings);
+    syncForm();
+    render();
+    const printer = getPrinter(settings.printerId);
+    announce(
+      printer
+        ? `Perfil ${printer.name} aplicado: caudal, potencia y cama actualizados.`
+        : 'Perfil personalizado: los valores no cambian.',
+    );
+  });
+
   const syncForm = (): void => {
     for (const [key, field] of fields) {
       field.set(key === 'price' ? settings.pricePerKg[settings.material] : settings[key]);
     }
     for (const radio of materialRadios) radio.checked = radio.value === settings.material;
     infillRange.value = String(settings.infillPercent);
+    syncPrinter();
   };
+
+  function syncPrinter(): void {
+    printerSelect.value = settings.printerId;
+    const printer = getPrinter(settings.printerId);
+    printerNote.textContent = printer
+      ? `Valores de partida orientativos. ${printer.note}`
+      : 'Escribe tus propios valores de caudal, potencia y cama, o elige una impresora para rellenarlos.';
+  }
 
   for (const radio of materialRadios) {
     radio.addEventListener('change', () => {
@@ -209,6 +243,7 @@ export function startApp(): void {
 
   // ── Render ──
   function render(): void {
+    syncPrinter();
     const b = bed();
     viewer?.setBed(b);
     byId('stage-legend').textContent = `Rejilla 10 mm · Cama ${formatNumber(b.x, 0)} × ${formatNumber(b.y, 0)} × ${formatNumber(b.z, 0)} mm`;
