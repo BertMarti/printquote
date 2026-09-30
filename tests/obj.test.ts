@@ -121,7 +121,7 @@ function prismObj(outline: ReadonlyArray<readonly [number, number]>, h: number, 
   const n = outline.length;
   const lines = [...outline.map(([x, y]) => `v ${x} ${y} 0`), ...outline.map(([x, y]) => `v ${x} ${y} ${h}`)];
   const ids = [...Array(n).keys()].map((i) => i + 1);
-  const start = ids.map((_, i) => ids[(i + rotate) % n]);
+  const start = ids.map((_, i) => ((i + rotate) % n) + 1);
   lines.push(`f ${[...start].reverse().join(' ')}`); // base (hacia −Z)
   lines.push(`f ${start.map((i) => i + n).join(' ')}`); // tapa (hacia +Z)
   for (let i = 1; i <= n; i++) lines.push(`f ${i} ${(i % n) + 1} ${(i % n) + 1 + n} ${i + n}`);
@@ -150,8 +150,9 @@ describe('OBJ con caras cóncavas', () => {
       const mesh = parseObj(encode(vertical));
       let sum = 0;
       for (let t = 0; t < mesh.triangleCount; t++) {
-        const p = mesh.positions.subarray(t * 9, t * 9 + 9);
-        sum += Math.abs((p[3]! - p[0]!) * (p[8]! - p[2]!) - (p[5]! - p[2]!) * (p[6]! - p[0]!)) / 2;
+        const p = Array.from(mesh.positions.subarray(t * 9, t * 9 + 9), (value) => value);
+        const c = (k: number): number => p[k] ?? 0;
+        sum += Math.abs((c(3) - c(0)) * (c(8) - c(2)) - (c(5) - c(2)) * (c(6) - c(0))) / 2;
       }
       return sum;
     })();

@@ -136,8 +136,10 @@ export function parseObj(data: ArrayBuffer | Uint8Array): Mesh {
       pos = nl + 1;
       lineNumber++;
       const trimmed = part.trimEnd();
-      if (trimmed.endsWith('\\') && pos < text.length) {
+      if (trimmed.endsWith('\\')) {
+        // Un «\» final sin nada detrás (fin del archivo) simplemente se descarta.
         line += trimmed.slice(0, -1) + ' ';
+        if (pos >= text.length) break;
       } else {
         line += trimmed;
         break;
