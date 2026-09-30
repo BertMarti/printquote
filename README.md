@@ -1,6 +1,6 @@
 # printquote
 
-**Presupuesta una impresión 3D en segundos: arrastra un STL, míralo en 3D y obtén peso, tiempo estimado y precio. Tu archivo no sale de tu navegador.**
+**Presupuesta una impresión 3D en segundos: arrastra un STL, OBJ o 3MF, míralo en 3D y obtén peso, tiempo estimado y precio. Tu archivo no sale de tu navegador.**
 
 [![CI](https://github.com/BertMarti/printquote/actions/workflows/ci.yml/badge.svg)](https://github.com/BertMarti/printquote/actions/workflows/ci.yml)
 [![Despliegue](https://github.com/BertMarti/printquote/actions/workflows/deploy.yml/badge.svg)](https://github.com/BertMarti/printquote/actions/workflows/deploy.yml)
@@ -12,7 +12,7 @@
 
 ## Qué hace
 
-- **Carga STL** binario o ASCII arrastrándolo a la ventana o con «Abrir STL». ¿Sin archivo? «Probar con pieza de ejemplo».
+- **Carga STL** (binario o ASCII), **OBJ** y **3MF** arrastrándolos a la ventana o con «Abrir modelo 3D». ¿Sin archivo? «Probar con pieza de ejemplo».
 - **Mide la pieza**: volumen, superficie, caja envolvente (X × Y × Z en mm) y número de triángulos.
 - **Avisa** si la malla parece abierta o tiene las normales invertidas, si no cabe en tu cama (por defecto 220 × 220 × 250 mm) o si mide menos de 1 mm (¿exportada en metros o pulgadas?).
 - **Visor 3D** con la pieza apoyada en la cama, rejilla de 10 mm, órbita, zoom y «Restablecer vista».
@@ -34,7 +34,7 @@ Todas las fórmulas viven en [`src/quote/`](src/quote) como funciones puras y co
 | Caja | Mínimos y máximos de X, Y y Z. |
 | ¿Malla cerrada? | Cada arista debe compartirse por exactamente dos triángulos y el volumen con signo no debe ser ≈ 0. Si es negativo, las normales están invertidas. Antes se sueldan los vértices a menos de 10⁻⁴ mm (más lejos del origen, 10⁻⁶ × la coordenada) para no dar falsos avisos por redondeos del exportador. |
 
-Se asume que el STL está en **milímetros**. Para saber si cabe en la cama se permite girar la pieza 90° sobre Z.
+Se asume que el STL y el OBJ están en **milímetros** (no guardan unidades); el 3MF sí las guarda y se convierten a mm. Para saber si cabe en la cama se permite girar la pieza 90° sobre Z.
 
 ### Presupuesto ([`src/quote/model.ts`](src/quote/model.ts))
 
@@ -74,7 +74,7 @@ Relleno 20 % · 2 perímetros de 0,45 mm · caudal 8 mm³/s · sobrecarga 5 min 
 
 ## Privacidad
 
-El STL se lee con la API de archivos del navegador y se procesa en tu equipo. No hay servidor, ni analítica, ni cookies: la web es estática (GitHub Pages) y **tu archivo no sale de tu navegador**. Los ajustes se guardan solo en el `localStorage` de tu navegador.
+El STL, OBJ o 3MF se lee con la API de archivos del navegador y se procesa en tu equipo. No hay servidor, ni analítica, ni cookies: la web es estática (GitHub Pages) y **tu archivo no sale de tu navegador**. Los ajustes se guardan solo en el `localStorage` de tu navegador.
 
 ## Uso en local
 
@@ -104,13 +104,14 @@ npm run dev        # http://localhost:5173/printquote/
 - **Vitest** para tests y **ESLint** (flat config con `typescript-eslint`).
 - **GitHub Actions**: CI en Ubuntu y Windows, y despliegue en **GitHub Pages**.
 - Parser STL propio: distingue binario y ASCII por el contenido y el tamaño, no solo por la cabecera `solid`. Lee el ASCII byte a byte (sin picos de memoria) y tolera BOM, CR/LF mezclados y nombres de sólido con palabras clave.
+- **OBJ y 3MF:** el OBJ (`v`/`f`, caras de más de 3 vértices trianguladas en abanico, índices negativos) y el 3MF (ZIP leído a mano y descomprimido con `DecompressionStream`, sin dependencias; varios objetos, transformaciones de `item` y `component`, unidades, y componentes en otros `.model` como los de Bambu Studio) pasan por el mismo análisis geométrico y los mismos avisos que el STL. Un 3MF de 250 000 triángulos se lee en ~1 s.
 - **Rendimiento:** el parseo y la geometría corren en un **Web Worker** (la interfaz no se congela con STL grandes; si el navegador no puede crear el worker, se hace en el hilo principal). three.js se carga bajo demanda: el JS inicial pesa ~26 kB y el visor llega en su propio archivo.
 
 ## Estructura
 
 ```text
 src/
-  stl/        parser STL (binario y ASCII), geometría (volumen, área, caja, aristas abiertas) y Web Worker
+  stl/        parsers STL, OBJ y 3MF (ZIP + XML), geometría (volumen, área, caja, aristas abiertas) y Web Worker
   quote/      modelo de coste, materiales, ajustes, formato es-ES y presupuesto en texto
   viewer/     visor three.js (cama, cámara, luces)
   ui/         controles, almacenamiento, hoja de impresión y arranque de la app

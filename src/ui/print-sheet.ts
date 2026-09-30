@@ -2,11 +2,12 @@ import { formatDuration, formatEuro, formatNumber } from '../quote/format';
 import { MATERIALS } from '../quote/materials';
 import type { Quote } from '../quote/model';
 import type { QuoteSettings } from '../quote/settings';
-import type { MeshStats, StlFormat } from '../stl/types';
+import type { MeshFormat, MeshStats } from '../stl/types';
+import { formatLabel } from './format-label';
 
 export interface PrintSheetData {
   readonly fileName: string;
-  readonly format: StlFormat;
+  readonly format: MeshFormat;
   readonly stats: MeshStats;
   readonly settings: QuoteSettings;
   readonly quote: Quote;
@@ -55,7 +56,7 @@ export function renderPrintSheet(container: HTMLElement, data: PrintSheetData): 
   const file = el(
     'p',
     'ps-file',
-    `${fileName} · STL ${format === 'binary' ? 'binario' : 'ASCII'} · ${formatNumber(stats.triangleCount, 0)} triángulos`,
+    `${fileName} · ${formatLabel(format)} · ${formatNumber(stats.triangleCount, 0)} triángulos`,
   );
 
   const nodes: HTMLElement[] = [head, title, file];

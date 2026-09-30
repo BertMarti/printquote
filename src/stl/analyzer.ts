@@ -1,5 +1,5 @@
-import { analyzeStl, type AnalyzedStl, type AnalyzeRequest, type AnalyzeResponse } from './analyze';
-import { StlParseError } from './parse';
+import { analyzeModel, type AnalyzedStl, type AnalyzeRequest, type AnalyzeResponse } from './analyze';
+import { ModelParseError } from './errors';
 
 /** Lo mínimo que se usa de un Worker (permite probarlo con un doble en Node). */
 export interface WorkerLike {
@@ -20,7 +20,7 @@ interface Pending {
 }
 
 /**
- * Analiza STL en un Web Worker. Si el navegador no puede crear el worker (o este
+ * Analiza modelos 3D (STL, OBJ, 3MF) en un Web Worker. Si el navegador no puede crear el worker (o este
  * falla al arrancar), hace el trabajo en el hilo principal: más lento, pero funciona.
  */
 export class StlAnalyzer {
@@ -31,16 +31,16 @@ export class StlAnalyzer {
 
   constructor(private readonly createWorker: () => WorkerLike = createStlWorker) {}
 
-  /** Lee y mide el STL. El buffer se transfiere al worker: no se debe reutilizar después. */
-  analyze(buffer: ArrayBuffer): Promise<AnalyzedStl> {
+  /** Lee y mide el modelo. El buffer se transfiere al worker: no se debe reutilizar después. */
+  analyze(buffer: ArrayBuffer, fileName?: string): Promise<AnalyzedStl> {
     const worker = this.ensureWorker();
     if (!worker) {
-      return new Promise((resolve) => resolve(analyzeStl(buffer)));
+      return analyzeModel(buffer, fileName);
     }
     const id = this.nextId++;
     return new Promise<AnalyzedStl>((resolve, reject) => {
       this.pending.set(id, { resolve, reject });
-      worker.postMessage({ id, buffer }, [buffer]);
+      worker.postMessage(fileName === undefined ? { id, buffer } : { id, buffer, fileName }, [buffer]);
     });
   }
 
@@ -77,7 +77,7 @@ export class StlAnalyzer {
     if (response.ok) {
       pending.resolve(response.result);
     } else {
-      pending.reject(response.parseError ? new StlParseError(response.message) : new Error(response.message));
+      pending.reject(response.parseError ? new ModelParseError(response.message) : new Error(response.message));
     }
   }
 

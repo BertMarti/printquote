@@ -1,7 +1,8 @@
+import { ModelParseError } from './errors';
 import type { Mesh } from './types';
 
 /** Error de lectura de STL con un mensaje pensado para mostrarse tal cual a la persona usuaria. */
-export class StlParseError extends Error {
+export class StlParseError extends ModelParseError {
   constructor(message: string) {
     super(message);
     this.name = 'StlParseError';

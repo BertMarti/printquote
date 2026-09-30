@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { analyzeStl, handleAnalyzeRequest, type AnalyzeRequest, type AnalyzeResponse } from '../src/stl/analyze';
 import { StlAnalyzer, type WorkerLike } from '../src/stl/analyzer';
-import { StlParseError } from '../src/stl/parse';
+import { ModelParseError } from '../src/stl/errors';
 import { binaryStl, cubeTriangles, encode } from './helpers/mesh';
 
 /** Doble de Worker: responde de forma asíncrona usando el mismo manejador que el worker real. */
@@ -18,8 +18,9 @@ class FakeWorker implements WorkerLike {
         this.onError?.(new Event('error'));
         return;
       }
-      const { response } = handleAnalyzeRequest(message);
-      this.onMessage?.({ data: response } as MessageEvent<AnalyzeResponse>);
+      void handleAnalyzeRequest(message).then(({ response }) => {
+        this.onMessage?.({ data: response } as MessageEvent<AnalyzeResponse>);
+      });
     });
   }
 
@@ -32,8 +33,8 @@ class FakeWorker implements WorkerLike {
 }
 
 describe('handleAnalyzeRequest (lo que corre dentro del worker)', () => {
-  it('devuelve malla y geometría y transfiere el buffer de posiciones', () => {
-    const { response, transfer } = handleAnalyzeRequest({ id: 7, buffer: binaryStl(cubeTriangles(20)) });
+  it('devuelve malla y geometría y transfiere el buffer de posiciones', async () => {
+    const { response, transfer } = await handleAnalyzeRequest({ id: 7, buffer: binaryStl(cubeTriangles(20)) });
     expect(response.id).toBe(7);
     expect(response.ok).toBe(true);
     if (!response.ok) return;
@@ -41,8 +42,8 @@ describe('handleAnalyzeRequest (lo que corre dentro del worker)', () => {
     expect(transfer).toEqual([response.result.mesh.positions.buffer]);
   });
 
-  it('convierte los errores de lectura en un mensaje serializable', () => {
-    const { response, transfer } = handleAnalyzeRequest({ id: 1, buffer: encode('hola').buffer as ArrayBuffer });
+  it('convierte los errores de lectura en un mensaje serializable', async () => {
+    const { response, transfer } = await handleAnalyzeRequest({ id: 1, buffer: encode('hola').buffer as ArrayBuffer });
     expect(response).toMatchObject({ id: 1, ok: false, parseError: true });
     expect(transfer).toEqual([]);
   });
@@ -58,9 +59,9 @@ describe('StlAnalyzer', () => {
     expect(worker.transfers).toEqual([[buffer]]);
   });
 
-  it('los errores de lectura llegan como StlParseError con el mensaje en español', async () => {
+  it('los errores de lectura llegan como ModelParseError con el mensaje en español', async () => {
     const analyzer = new StlAnalyzer(() => new FakeWorker());
-    await expect(analyzer.analyze(new ArrayBuffer(0))).rejects.toThrow(StlParseError);
+    await expect(analyzer.analyze(new ArrayBuffer(0))).rejects.toThrow(ModelParseError);
     await expect(analyzer.analyze(new ArrayBuffer(0))).rejects.toThrow(/vacío/);
   });
 
