@@ -111,7 +111,7 @@ export function buildQuoteDocument(input: QuoteDocumentInput): QuoteDocument {
   ];
   if (quote.copies > 1) breakdownRows.push([labels.perCopy, formatEuro(quote.totalPerCopy)]);
 
-  const vatDecimals = tax.vatPercent % 1 === 0 ? 0 : 1;
+  const vatDecimals = tax.vatPercent % 1 === 0 ? 0 : Math.round(tax.vatPercent * 10) === tax.vatPercent * 10 ? 1 : 2;
   return {
     title: labels.title,
     businessName: business.name || labels.noBusinessName,

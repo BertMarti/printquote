@@ -586,7 +586,7 @@ export function startApp(): void {
     error: byId('err-vat'),
     min: BUSINESS_LIMITS.vatPercent.min,
     max: BUSINESS_LIMITS.vatPercent.max,
-    decimals: 1,
+    decimals: 2,
     step: 1,
     onValue: (value) => void updateBusiness({ vatPercent: value }),
   });

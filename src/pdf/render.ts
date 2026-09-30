@@ -10,6 +10,8 @@ const CONTENT_W = PAGE_W - 2 * MARGIN;
 const COLUMN_W = 240;
 const RIGHT_W = 232;
 const COLUMN_GAP = CONTENT_W - COLUMN_W - RIGHT_W;
+/** Líneas del emisor (NIF, dirección, contacto) que caben sobre la vista 3D. */
+const MAX_ISSUER_LINES = 10;
 
 // «Hoja técnica suiza» sobre papel blanco: tinta, gris, línea fina y un único acento naranja.
 const INK = rgb(0.067, 0.067, 0.067);
@@ -24,7 +26,19 @@ interface Fonts {
   readonly monoBold: PDFFont;
 }
 
-/** Las fuentes estándar solo llevan WinAnsi (español, francés, alemán…); lo demás se sustituye por «?». */
+/** Letras sin descomposición Unicode que tienen un equivalente evidente en el alfabeto latino básico. */
+const LATIN_FALLBACK: Readonly<Record<string, string>> = {
+  ł: 'l', Ł: 'L', đ: 'd', Đ: 'D', ı: 'i', İ: 'I', ħ: 'h', Ħ: 'H', ŧ: 't', Ŧ: 'T',
+};
+/** Sin anchura o de formato (unión de emojis, selector de variante…): no se dibujan. */
+const INVISIBLE = /[\p{Cf}\p{Variation_Selector}]/gu;
+
+/**
+ * Las fuentes estándar solo llevan WinAnsi (español, francés, alemán… con sus acentos, «¿¡€»). Lo que
+ * falta se transcribe sin marcas (ć → c, ł → l, ș → s) y, si aun así no está, sale como «?».
+ * ponytail: sin fuente incrustada no hay cirílico, griego ni CJK; pdf-lib no trae ninguna con cobertura
+ * amplia y una fuente aparte (fontkit + TTF) pesaría cientos de kB.
+ */
 class Sanitizer {
   private readonly sets = new Map<PDFFont, Set<number>>();
 
@@ -34,10 +48,16 @@ class Sanitizer {
       set = new Set(font.getCharacterSet());
       this.sets.set(font, set);
     }
+    const has = (char: string): boolean => set.has(char.codePointAt(0) ?? -1);
     let out = '';
-    for (const char of text.normalize('NFC').replace(/\s+/g, ' ')) {
-      const code = char.codePointAt(0) ?? 0x3f;
-      out += set.has(code) ? char : '?';
+    for (const char of text.normalize('NFC').replace(INVISIBLE, '').replace(/\s+/g, ' ')) {
+      if (has(char)) {
+        out += char;
+        continue;
+      }
+      // Guiones raros (p. ej. el que no permite salto de línea) → «-»; el resto, sin marcas diacríticas.
+      const plain = LATIN_FALLBACK[char] ?? (/\p{Pd}/u.test(char) ? '-' : char.normalize('NFD').replace(/\p{M}/gu, ''));
+      out += plain !== '' && [...plain].every(has) ? plain : '?';
     }
     return out;
   }
@@ -133,6 +153,11 @@ export async function renderQuotePdf(doc: QuoteDocument): Promise<Uint8Array> {
   const rightW = MARGIN + CONTENT_W - rightX;
   let left = top;
   const issuer = doc.issuerLines.flatMap((line) => draw.wrap(line, fonts.sans, 9.5, COLUMN_W));
+  // Una dirección interminable no puede empujar la vista 3D fuera de la página.
+  if (issuer.length > MAX_ISSUER_LINES) {
+    issuer.length = MAX_ISSUER_LINES;
+    issuer[MAX_ISSUER_LINES - 1] = draw.truncate(`${issuer[MAX_ISSUER_LINES - 1] ?? ''}...`, fonts.sans, 9.5, COLUMN_W);
+  }
   if (issuer.length > 0) {
     left = draw.title(doc.issuerTitle, leftX, left, COLUMN_W);
     for (const line of issuer) {
