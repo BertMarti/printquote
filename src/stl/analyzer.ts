@@ -47,7 +47,7 @@ export class StlAnalyzer {
   dispose(): void {
     this.worker?.terminate();
     this.worker = null;
-    this.rejectAll(new Error('Análisis cancelado.'));
+    this.rejectAll(new ModelParseError('err.cancelled'));
   }
 
   private ensureWorker(): WorkerLike | null {
@@ -61,7 +61,7 @@ export class StlAnalyzer {
         this.workerFailed = true;
         this.worker?.terminate();
         this.worker = null;
-        this.rejectAll(new Error('El proceso de lectura en segundo plano ha fallado.'));
+        this.rejectAll(new ModelParseError('err.worker'));
       });
       this.worker = worker;
     } catch {
@@ -77,7 +77,9 @@ export class StlAnalyzer {
     if (response.ok) {
       pending.resolve(response.result);
     } else {
-      pending.reject(response.parseError ? new ModelParseError(response.message) : new Error(response.message));
+      pending.reject(
+        response.parseError ? new ModelParseError(response.parseError.code, response.parseError.params) : new Error(response.message),
+      );
     }
   }
 

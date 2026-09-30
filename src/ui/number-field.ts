@@ -1,3 +1,4 @@
+import { getLocale, t } from '../i18n';
 import { parseDecimal } from '../quote/format';
 
 export interface NumberFieldOptions {
@@ -13,14 +14,16 @@ export interface NumberFieldOptions {
   readonly onValue: (value: number) => void;
 }
 
-const inputFormats = new Map<number, Intl.NumberFormat>();
+const inputFormats = new Map<string, Intl.NumberFormat>();
 
-/** Valor para un campo editable: coma decimal, sin separador de miles, sin ceros sobrantes. */
+/** Valor para un campo editable: separador decimal del idioma, sin separador de miles, sin ceros sobrantes. */
 export function formatInputValue(value: number, decimals: number): string {
-  let format = inputFormats.get(decimals);
+  const locale = getLocale();
+  const key = `${locale}:${decimals}`;
+  let format = inputFormats.get(key);
   if (!format) {
-    format = new Intl.NumberFormat('es-ES', { maximumFractionDigits: decimals, useGrouping: false });
-    inputFormats.set(decimals, format);
+    format = new Intl.NumberFormat(locale, { maximumFractionDigits: decimals, useGrouping: false });
+    inputFormats.set(key, format);
   }
   return format.format(value);
 }
@@ -58,8 +61,8 @@ export class NumberField {
 
   private rangeMessage(): string {
     const { min, max, integer, decimals } = this.options;
-    const kind = integer ? 'un número entero' : 'un número';
-    return `Introduce ${kind} entre ${formatInputValue(min, decimals)} y ${formatInputValue(max, decimals)}.`;
+    const kind = t(integer ? 'field.kind.integer' : 'field.kind.number');
+    return t('field.range', { kind, min: formatInputValue(min, decimals), max: formatInputValue(max, decimals) });
   }
 
   private onInput(): void {

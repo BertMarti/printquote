@@ -57,7 +57,7 @@ Flujo de trabajo:
 4. No subas claves, tokens, `.env` ni datos personales. El repositorio es público.
 5. No añadas dependencias sin justificarlo en «Decisiones» de `MEMORY.md`.
 6. Si algo es ambiguo, elige la opción más simple, anótala en `MEMORY.md` y sigue.
-7. La interfaz y la documentación, en español. El código (nombres), en inglés.
+7. La interfaz está en español e inglés (diccionarios en `src/i18n/`; ningún texto visible en el código sin pasar por `t()`) y la documentación, en español. El código (nombres), en inglés.
 
 ## Terminado significa
 - Lint y tests en verde en local y en el CI.

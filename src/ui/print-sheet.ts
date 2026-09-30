@@ -1,3 +1,4 @@
+import { getLocale, t } from '../i18n';
 import { formatDuration, formatEuro, formatNumber } from '../quote/format';
 import { MATERIALS } from '../quote/materials';
 import type { Quote } from '../quote/model';
@@ -45,18 +46,18 @@ export function renderPrintSheet(container: HTMLElement, data: PrintSheetData): 
   const { fileName, format, stats, settings, quote, image } = data;
   const material = MATERIALS[settings.material];
   const size = stats.bounds.size;
-  const date = new Intl.DateTimeFormat('es-ES', { dateStyle: 'long' }).format(new Date());
+  const date = new Intl.DateTimeFormat(getLocale(), { dateStyle: 'long' }).format(new Date());
 
   const head = el('header', 'ps-head');
   const meta = el('div', 'ps-meta');
   meta.append(el('div', undefined, date), el('div', undefined, 'bertmarti.github.io/printquote'));
   head.append(el('div', 'ps-brand', 'printquote'), meta);
 
-  const title = el('h1', 'ps-title', 'Presupuesto de impresión 3D');
+  const title = el('h1', 'ps-title', t('doc.title'));
   const file = el(
     'p',
     'ps-file',
-    `${fileName} · ${formatLabel(format)} · ${formatNumber(stats.triangleCount, 0)} triángulos`,
+    t('doc.fileInfo', { name: fileName, format: formatLabel(format), n: formatNumber(stats.triangleCount, 0) }),
   );
 
   const nodes: HTMLElement[] = [head, title, file];
@@ -65,50 +66,43 @@ export function renderPrintSheet(container: HTMLElement, data: PrintSheetData): 
     const figure = el('figure', 'ps-figure');
     const img = el('img');
     img.src = image;
-    img.alt = `Vista 3D de ${fileName}`;
+    img.alt = t('doc.view3d', { name: fileName });
     figure.append(img);
     nodes.push(figure);
   }
 
   const grid = el('div', 'ps-grid');
   grid.append(
-    table('Pieza', [
-      ['Dimensiones (X × Y × Z)', `${formatNumber(size.x, 1)} × ${formatNumber(size.y, 1)} × ${formatNumber(size.z, 1)} mm`],
-      ['Volumen', `${formatNumber(stats.volume / 1000, 2)} cm³`],
-      ['Superficie', `${formatNumber(stats.surfaceArea / 100, 2)} cm²`],
-      ['Volumen impreso por copia', `${formatNumber(quote.printedVolume / 1000, 2)} cm³`],
-      ['Peso por copia', `${formatNumber(quote.weightGrams, 1)} g`],
+    table(t('doc.part'), [
+      [t('doc.dimensions'), `${formatNumber(size.x, 1)} × ${formatNumber(size.y, 1)} × ${formatNumber(size.z, 1)} mm`],
+      [t('doc.volume'), `${formatNumber(stats.volume / 1000, 2)} cm³`],
+      [t('doc.area'), `${formatNumber(stats.surfaceArea / 100, 2)} cm²`],
+      [t('doc.printedVolume'), `${formatNumber(quote.printedVolume / 1000, 2)} cm³`],
+      [t('doc.weightPerCopy'), `${formatNumber(quote.weightGrams, 1)} g`],
     ]),
-    table('Ajustes', [
-      ['Material', `${material.name} · ${formatNumber(material.density, 2)} g/cm³`],
-      ['Precio del material', `${formatEuro(settings.pricePerKg[settings.material])}/kg`],
-      ['Relleno · perímetros', `${formatNumber(settings.infillPercent, 0)} % · ${formatNumber(settings.perimeters, 0)} × ${formatNumber(settings.lineWidth, 2)} mm`],
-      ['Caudal volumétrico', `${formatNumber(settings.flowRate, 1)} mm³/s`],
-      ['Potencia · electricidad', `${formatNumber(settings.powerWatts, 0)} W · ${formatNumber(settings.energyPrice, 3)} €/kWh`],
+    table(t('doc.settings'), [
+      [t('doc.material'), `${material.name} · ${formatNumber(material.density, 2)} g/cm³`],
+      [t('doc.materialPrice'), `${formatEuro(settings.pricePerKg[settings.material])}/kg`],
+      [t('doc.infillPerimeters'), `${formatNumber(settings.infillPercent, 0)} % · ${formatNumber(settings.perimeters, 0)} × ${formatNumber(settings.lineWidth, 2)} mm`],
+      [t('doc.flow'), `${formatNumber(settings.flowRate, 1)} mm³/s`],
+      [t('doc.powerEnergy'), `${formatNumber(settings.powerWatts, 0)} W · ${formatNumber(settings.energyPrice, 3)} €/kWh`],
     ]),
   );
   nodes.push(grid);
 
   const breakdown: Row[] = [
-    ['Copias', formatNumber(quote.copies, 0)],
-    ['Peso total', `${formatNumber(quote.totalWeightGrams, 1)} g`],
-    ['Tiempo total (estimación)', formatDuration(quote.totalHours)],
-    ['Material', formatEuro(quote.materialCost)],
-    ['Energía', `${formatNumber(quote.energyKwh, 2)} kWh · ${formatEuro(quote.energyCost)}`],
-    ['Subtotal', formatEuro(quote.subtotal)],
-    [`Margen (${formatNumber(settings.marginPercent, 0)} %)`, formatEuro(quote.marginAmount)],
+    [t('doc.copies'), formatNumber(quote.copies, 0)],
+    [t('doc.weightTotal'), `${formatNumber(quote.totalWeightGrams, 1)} g`],
+    [t('doc.timeTotal'), formatDuration(quote.totalHours)],
+    [t('doc.material'), formatEuro(quote.materialCost)],
+    [t('doc.energy'), `${formatNumber(quote.energyKwh, 2)} kWh · ${formatEuro(quote.energyCost)}`],
+    [t('doc.subtotal'), formatEuro(quote.subtotal)],
+    [t('doc.margin', { pct: formatNumber(settings.marginPercent, 0) }), formatEuro(quote.marginAmount)],
   ];
-  if (quote.copies > 1) breakdown.push(['Precio por copia', formatEuro(quote.totalPerCopy)]);
-  nodes.push(table('Desglose', breakdown, ['Total', formatEuro(quote.total)]));
+  if (quote.copies > 1) breakdown.push([t('doc.perCopyPrice'), formatEuro(quote.totalPerCopy)]);
+  nodes.push(table(t('doc.breakdown'), breakdown, [t('doc.total'), formatEuro(quote.total)]));
 
-  nodes.push(
-    el(
-      'p',
-      'ps-note',
-      'El tiempo de impresión es una estimación basada en un caudal volumétrico medio; el laminador dará la cifra real. ' +
-        'El archivo se ha procesado en el navegador y no se ha enviado a ningún servidor.',
-    ),
-  );
+  nodes.push(el('p', 'ps-note', t('doc.printNote')));
 
   container.replaceChildren(...nodes);
 }

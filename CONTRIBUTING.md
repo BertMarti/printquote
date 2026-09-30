@@ -42,7 +42,7 @@ Antes de abrir un PR: `npm run lint && npm test && npm run build` en verde. El C
 
 ## Dónde está cada cosa
 
-La interfaz y la documentación van en español; los nombres del código, en inglés.
+La interfaz está en español e inglés y la documentación, en español; los nombres del código, en inglés.
 
 | Qué | Dónde | Cómo se prueba |
 |---|---|---|
@@ -52,10 +52,19 @@ La interfaz y la documentación van en español; los nombres del código, en ing
 | Fórmulas del presupuesto (cáscara, relleno, peso, tiempo, energía, margen, redondeo) | `src/quote/model.ts` | `tests/quote.test.ts`, `tests/quote-edge.test.ts` |
 | Materiales y densidades | `src/quote/materials.ts` | `tests/quote.test.ts` |
 | Ajustes, valores por defecto y rangos (`LIMITS`) | `src/quote/settings.ts` | `tests/quote.test.ts` |
-| Formato es-ES y lectura de números | `src/quote/format.ts` | `tests/format.test.ts` |
+| Formato de números y moneda según el idioma, y lectura de números | `src/quote/format.ts` | `tests/format.test.ts`, `tests/i18n.test.ts` |
+| Textos e idiomas (diccionarios `es`/`en`, `t()`, idioma inicial) | `src/i18n/` | `tests/i18n.test.ts`, `tests/ui-i18n.test.ts` |
+| Perfiles de impresora | `src/quote/printers.ts` | `tests/printers.test.ts` |
+| Lectura de OBJ y 3MF (ZIP y XML a mano) | `src/stl/obj.ts`, `src/stl/threemf.ts`, `src/stl/zip.ts`, `src/stl/xml.ts`, `src/stl/model.ts` | `tests/obj.test.ts`, `tests/threemf.test.ts`, `tests/zip.test.ts` |
+| IVA y datos del negocio | `src/quote/tax.ts`, `src/quote/business.ts` | `tests/pdf.test.ts`, `tests/pdf-ui.test.ts` |
+| Presupuesto en PDF (contenido puro y dibujo con pdf-lib) | `src/pdf/` | `tests/pdf.test.ts` |
 | Texto para copiar | `src/quote/text.ts` | `tests/format.test.ts` |
 | Interfaz, campos, hoja de impresión | `index.html`, `src/ui/`, `src/styles.css` | `tests/ui.test.ts` (carga el `index.html` real con happy-dom), `tests/meta.test.ts` |
 | Visor three.js | `src/viewer/` | a mano en el navegador (`npm run dev`) |
+
+### Textos e idiomas
+
+Todo texto que ve una persona sale de `src/i18n/es.ts` (idioma de referencia) y `src/i18n/en.ts`, que deben tener las mismas claves y los mismos `{marcadores}` (lo comprueba el compilador y `tests/i18n.test.ts`). En el código se usa `t('clave', { marcador: valor })`. En `index.html` el texto en español va escrito tal cual y se marca con `data-i18n="clave"` (o `data-i18n-attr="atributo:clave"`); el test comprueba que coincide con el diccionario. Los errores de lectura llevan un código (`ModelParseError`) y se traducen en la interfaz. Para añadir un idioma: una constante en `src/i18n/`, su entrada en `DICTIONARIES` y `LOCALES`, y un botón en la cabecera.
 
 ### Cómo testear una fórmula
 

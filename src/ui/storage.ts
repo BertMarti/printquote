@@ -1,3 +1,4 @@
+import { isLang, type Lang } from '../i18n';
 import { normalizeBusiness, type BusinessProfile } from '../quote/business';
 import { DEFAULT_SETTINGS, normalizeSettings, type QuoteSettings } from '../quote/settings';
 
@@ -56,5 +57,25 @@ export function clearBusiness(): void {
     window.localStorage.removeItem(BUSINESS_KEY);
   } catch {
     // Ídem.
+  }
+}
+
+const LANG_KEY = 'printquote:idioma:v1';
+
+/** Idioma elegido a mano, si lo hay. */
+export function loadLang(): Lang | null {
+  try {
+    const raw = window.localStorage.getItem(LANG_KEY);
+    return isLang(raw) ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveLang(lang: Lang): void {
+  try {
+    window.localStorage.setItem(LANG_KEY, lang);
+  } catch {
+    // Modo privado o almacenamiento lleno: se usará el idioma del navegador.
   }
 }

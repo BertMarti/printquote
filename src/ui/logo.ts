@@ -1,3 +1,4 @@
+import type { Key } from '../i18n/es';
 import { isValidLogo } from '../quote/business';
 
 /** Lado mayor del logotipo guardado, en píxeles: de sobra para un PDF y ligero para localStorage. */
@@ -7,8 +8,12 @@ export const LOGO_MAX_FILE_BYTES = 8 * 1024 * 1024;
 
 const ACCEPTED = ['image/png', 'image/jpeg', 'image/webp'];
 
-/** Error con un mensaje listo para mostrar. */
-export class LogoError extends Error {}
+/** Error con la clave del mensaje que se muestra (se traduce al mostrarlo). */
+export class LogoError extends Error {
+  constructor(readonly code: Key) {
+    super(code);
+  }
+}
 
 /** Tamaño final: el lado mayor se limita a `max` sin ampliar ni deformar. */
 export function logoSize(width: number, height: number, max = LOGO_MAX_SIDE): { width: number; height: number } {
@@ -26,7 +31,7 @@ function load(file: File): Promise<HTMLImageElement> {
     };
     image.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new LogoError('No se ha podido leer la imagen. Prueba con otro archivo PNG o JPEG.'));
+      reject(new LogoError('err.logo.read'));
     };
     image.src = url;
   });
@@ -38,13 +43,13 @@ function load(file: File): Promise<HTMLImageElement> {
  */
 export async function prepareLogo(file: File): Promise<string> {
   if (!ACCEPTED.includes(file.type)) {
-    throw new LogoError('Formato no admitido: usa una imagen PNG, JPEG o WebP.');
+    throw new LogoError('err.logo.format');
   }
   if (file.size > LOGO_MAX_FILE_BYTES) {
-    throw new LogoError('La imagen pesa demasiado (máximo 8 MB). Reduce su tamaño y vuelve a probar.');
+    throw new LogoError('err.logo.size');
   }
   const image = await load(file);
-  if (!image.naturalWidth || !image.naturalHeight) throw new LogoError('La imagen está vacía.');
+  if (!image.naturalWidth || !image.naturalHeight) throw new LogoError('err.logo.empty');
 
   const jpeg = file.type === 'image/jpeg';
   for (const side of [LOGO_MAX_SIDE, 240, 120]) {
@@ -53,7 +58,7 @@ export async function prepareLogo(file: File): Promise<string> {
     canvas.width = width;
     canvas.height = height;
     const context = canvas.getContext('2d');
-    if (!context) throw new LogoError('Tu navegador no puede procesar imágenes.');
+    if (!context) throw new LogoError('err.logo.canvas');
     if (jpeg) {
       context.fillStyle = '#ffffff'; // JPEG no tiene transparencia
       context.fillRect(0, 0, width, height);
@@ -62,5 +67,5 @@ export async function prepareLogo(file: File): Promise<string> {
     const dataUrl = canvas.toDataURL(jpeg ? 'image/jpeg' : 'image/png', 0.9);
     if (isValidLogo(dataUrl)) return dataUrl;
   }
-  throw new LogoError('La imagen sigue siendo demasiado pesada para guardarla. Prueba con una más sencilla.');
+  throw new LogoError('err.logo.heavy');
 }

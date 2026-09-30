@@ -19,6 +19,7 @@
 - **Perfiles de impresora**: elige Bambu Lab A1 o P1S, Prusa MK4 o MINI+, Creality Ender-3 V3 o K1, Elegoo Neptune 4 (o «Personalizada») y se rellenan caudal, potencia y cama con valores de partida **orientativos**; al editar cualquiera de ellos vuelve a «Personalizada».
 - **Presupuesto en vivo**: material, relleno, perímetros, caudal, energía, margen y copias. Cualquier cambio recalcula al instante.
 - **Copiar presupuesto** en texto plano, **Imprimir** una hoja limpia con la vista 3D y el desglose, o **Descargar PDF**: un presupuesto de una página con el nombre y el logotipo de tu negocio, tus datos de contacto, número, fecha, validez, desglose e **IVA** (21 % por defecto, configurable). Los datos del negocio se rellenan una vez en el bloque plegable «Datos del negocio» y se guardan en tu navegador.
+- **Español e inglés**: el idioma inicial sale de tu navegador (`navigator.language`), se cambia con el selector ES / EN de la cabecera y se recuerda. Textos, avisos, errores, números, moneda, fechas y PDF cambian de idioma (la moneda sigue siendo el euro).
 - Recuerda tus ajustes en este navegador (`localStorage`). Modo claro y oscuro automático.
 
 ## Cómo se calcula
@@ -106,7 +107,8 @@ npm run dev        # http://localhost:5173/printquote/
 - Parser STL propio: distingue binario y ASCII por el contenido y el tamaño, no solo por la cabecera `solid`. Lee el ASCII byte a byte (sin picos de memoria) y tolera BOM, CR/LF mezclados y nombres de sólido con palabras clave.
 - **OBJ y 3MF:** el OBJ (`v`/`f`, caras de más de 3 vértices trianguladas en abanico, índices negativos) y el 3MF (ZIP leído a mano y descomprimido con `DecompressionStream`, sin dependencias; varios objetos, transformaciones de `item` y `component`, unidades, y componentes en otros `.model` como los de Bambu Studio) pasan por el mismo análisis geométrico y los mismos avisos que el STL. Un 3MF de 250 000 triángulos se lee en ~1 s.
 - **PDF:** [`pdf-lib`](https://pdf-lib.js.org/) (MIT, JavaScript puro, sin dependencias nativas) dibuja el PDF con fuentes estándar (Helvetica y Courier) y se carga con `import()` solo al pulsar «Descargar PDF»: no pesa en el JS inicial (~425 kB, 178 kB gzip, en su propio archivo). El contenido se calcula aparte en una función pura (`src/pdf/document.ts`) y el IVA en `src/quote/tax.ts` (cuota redondeada a céntimos; el total con IVA es siempre base + cuota).
-- **Rendimiento:** el parseo y la geometría corren en un **Web Worker** (la interfaz no se congela con STL grandes; si el navegador no puede crear el worker, se hace en el hilo principal). three.js se carga bajo demanda: el JS inicial pesa ~26 kB y el visor llega en su propio archivo.
+- **Idiomas:** diccionarios tipados en `src/i18n/` (`es.ts` de referencia y `en.ts`), sin dependencias; formato con `Intl.NumberFormat` / `Intl.DateTimeFormat` (`es-ES` y `en-GB`). Un test falla si a un idioma le falta una clave o usa otros `{marcadores}`, y otro comprueba que el HTML estático coincide con el diccionario. Los errores de lectura viajan como código + datos desde el Web Worker y se traducen en la interfaz.
+- **Rendimiento:** el parseo y la geometría corren en un **Web Worker** (la interfaz no se congela con STL grandes; si el navegador no puede crear el worker, se hace en el hilo principal). three.js se carga bajo demanda: el JS inicial pesa ~77 kB (27 kB gzip; casi la mitad son los dos diccionarios de textos) y el visor y el PDF llegan en sus propios archivos.
 
 ## Estructura
 

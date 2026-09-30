@@ -1,4 +1,4 @@
-const LOCALE = 'es-ES';
+import { getLocale } from '../i18n';
 
 /**
  * Valor listo para formatear: lo no finito pasa a 0 y lo que se mostraría como «-0,00»
@@ -9,26 +9,34 @@ function displayable(value: number, decimals: number): number {
   return Math.abs(value) < 0.5 * 10 ** -decimals ? 0 : value;
 }
 
-const numberFormats = new Map<number, Intl.NumberFormat>();
+const numberFormats = new Map<string, Intl.NumberFormat>();
 
-/** Número con formato es-ES (coma decimal) y un nº fijo de decimales. */
+/** Número con el formato del idioma activo (es-ES: coma decimal; en-GB: punto) y un nº fijo de decimales. */
 export function formatNumber(value: number, decimals = 2): string {
-  let format = numberFormats.get(decimals);
+  const locale = getLocale();
+  const key = `${locale}:${decimals}`;
+  let format = numberFormats.get(key);
   if (!format) {
-    format = new Intl.NumberFormat(LOCALE, {
+    format = new Intl.NumberFormat(locale, {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
     });
-    numberFormats.set(decimals, format);
+    numberFormats.set(key, format);
   }
   return format.format(displayable(value, decimals));
 }
 
-const euroFormat = new Intl.NumberFormat(LOCALE, { style: 'currency', currency: 'EUR' });
+const euroFormats = new Map<string, Intl.NumberFormat>();
 
-/** Importe en euros con formato es-ES, p. ej. «12,34 €». */
+/** Importe en euros con el formato del idioma activo, p. ej. «12,34 €» o «€12.34». */
 export function formatEuro(value: number): string {
-  return euroFormat.format(displayable(value, 2));
+  const locale = getLocale();
+  let format = euroFormats.get(locale);
+  if (!format) {
+    format = new Intl.NumberFormat(locale, { style: 'currency', currency: 'EUR' });
+    euroFormats.set(locale, format);
+  }
+  return format.format(displayable(value, 2));
 }
 
 /** Duración legible a partir de horas: «45 min», «2 h 05 min». */

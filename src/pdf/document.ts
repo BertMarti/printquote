@@ -1,3 +1,4 @@
+import { getLang } from '../i18n';
 import type { BusinessProfile } from '../quote/business';
 import { validUntil } from '../quote/business';
 import { formatDuration, formatEuro, formatNumber } from '../quote/format';
@@ -6,6 +7,7 @@ import type { Quote } from '../quote/model';
 import type { QuoteSettings } from '../quote/settings';
 import { computeTax, type TaxedTotal } from '../quote/tax';
 import type { MeshStats } from '../stl/types';
+import { pdfLabels } from './labels';
 
 /** Fila «etiqueta — valor» de una tabla del PDF. */
 export type PdfRow = readonly [label: string, value: string];
@@ -47,42 +49,6 @@ export interface PdfLabels {
   readonly dateLocale: string;
 }
 
-export const PDF_LABELS_ES: PdfLabels = {
-  title: 'Presupuesto',
-  number: 'Nº',
-  date: 'Fecha',
-  validUntil: 'Válido hasta',
-  issuer: 'Emisor',
-  taxId: 'NIF/CIF',
-  piece: 'Pieza',
-  file: 'Archivo',
-  dimensions: 'Dimensiones (X × Y × Z)',
-  volume: 'Volumen',
-  material: 'Material',
-  infill: 'Relleno · perímetros',
-  copies: 'Copias',
-  breakdown: 'Desglose',
-  weight: 'Peso total',
-  time: 'Tiempo total',
-  timeEstimate: 'estimación',
-  materialCost: 'Material',
-  energyCost: 'Energía',
-  subtotal: 'Subtotal',
-  margin: 'Margen',
-  perCopy: 'Precio por copia (sin IVA)',
-  taxBase: 'Base imponible',
-  vat: 'IVA',
-  totalWithVat: 'Total con IVA',
-  noBusinessName: 'Presupuesto de impresión 3D',
-  noteEstimate:
-    'El tiempo de impresión es una estimación basada en un caudal volumétrico medio; el laminador dará la cifra real.',
-  noteValidity: 'Presupuesto válido hasta la fecha indicada. No incluye otros gastos que no se detallen.',
-  footer: 'Generado con printquote · bertmarti.github.io/printquote',
-  pdfTitle: 'Presupuesto de impresión 3D',
-  language: 'es-ES',
-  dateLocale: 'es-ES',
-};
-
 /** Contenido del PDF ya calculado y formateado; el dibujo se hace en `render.ts`. */
 export interface QuoteDocument {
   readonly title: string;
@@ -123,7 +89,7 @@ export interface QuoteDocumentInput {
 export function buildQuoteDocument(input: QuoteDocumentInput): QuoteDocument {
   const { business, fileName, stats, settings, quote, image } = input;
   const date = input.date ?? new Date();
-  const labels = input.labels ?? PDF_LABELS_ES;
+  const labels = input.labels ?? pdfLabels(getLang());
   const material = MATERIALS[settings.material];
   const { size } = stats.bounds;
   const tax = computeTax(quote.total, business.vatPercent);

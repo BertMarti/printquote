@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { applyPrinter, CUSTOM_PRINTER, getPrinter, isPrinterId, matchesPrinter, PRINTERS } from '../src/quote/printers';
+import { applyPrinter, CUSTOM_PRINTER, getPrinter, isPrinterId, matchesPrinter, PRINTERS, printerNote } from '../src/quote/printers';
 import { DEFAULT_SETTINGS, LIMITS, normalizeSettings } from '../src/quote/settings';
 import { startApp } from '../src/ui/app';
 import { loadSettings, saveSettings } from '../src/ui/storage';
@@ -27,8 +27,8 @@ describe('datos de los perfiles', () => {
       expect(axis).toBeGreaterThanOrEqual(LIMITS.bedX.min);
       expect(axis).toBeLessThanOrEqual(LIMITS.bedX.max);
     }
-    expect(printer.note).toMatch(/fabricante/);
-    expect(printer.note).toMatch(/estimaciones/);
+    expect(printerNote(printer)).toMatch(/fabricante/);
+    expect(printerNote(printer)).toMatch(/estimaciones/);
   });
 });
 

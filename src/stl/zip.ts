@@ -44,12 +44,12 @@ export function readZipDirectory(bytes: Uint8Array): Map<string, ZipEntry> {
   const dirSize = view.getUint32(endAt + 12, true);
   let pos = view.getUint32(endAt + 16, true);
   if (total === 0xffff || dirSize === 0xffffffff || pos === 0xffffffff) {
-    throw new ModelParseError('El ZIP del 3MF usa ZIP64 (más de 4 GB o 65 535 archivos), que no está soportado.');
+    throw new ModelParseError('err.zip.zip64');
   }
 
   for (let i = 0; i < total; i++) {
     if (pos + 46 > bytes.length || view.getUint32(pos, true) !== SIG_CENTRAL) {
-      throw new ModelParseError('El ZIP del 3MF está dañado: el directorio central no es válido.');
+      throw new ModelParseError('err.zip.directory');
     }
     const flags = view.getUint16(pos + 8, true);
     const method = view.getUint16(pos + 10, true);
@@ -62,10 +62,10 @@ export function readZipDirectory(bytes: Uint8Array): Map<string, ZipEntry> {
     const name = decoder.decode(bytes.subarray(pos + 46, pos + 46 + nameLength));
     pos += 46 + nameLength + extraLength + commentLength;
 
-    if (flags & 1) throw new ModelParseError('El 3MF está cifrado con contraseña y no se puede leer.');
+    if (flags & 1) throw new ModelParseError('err.zip.encrypted');
     if (name.endsWith('/')) continue; // carpeta
     if (localOffset + 30 > bytes.length || view.getUint32(localOffset, true) !== SIG_LOCAL) {
-      throw new ModelParseError(`El ZIP del 3MF está dañado: falta la cabecera de «${name}».`);
+      throw new ModelParseError('err.zip.header', { name });
     }
     // Las longitudes de nombre y extra de la cabecera local pueden diferir de las del directorio.
     const dataOffset = localOffset + 30 + view.getUint16(localOffset + 26, true) + view.getUint16(localOffset + 28, true);
@@ -96,37 +96,35 @@ function scanLocalHeaders(bytes: Uint8Array, view: DataView, decoder: TextDecode
     const extraLength = view.getUint16(pos + 28, true);
     const name = decoder.decode(bytes.subarray(pos + 30, pos + 30 + nameLength));
     const dataOffset = pos + 30 + nameLength + extraLength;
-    if (flags & 1) throw new ModelParseError('El 3MF está cifrado con contraseña y no se puede leer.');
+    if (flags & 1) throw new ModelParseError('err.zip.encrypted');
     if (flags & 8) {
-      throw new ModelParseError(
-        'El ZIP del 3MF está cortado o dañado (le falta el directorio central) y no se puede recorrer.',
-      );
+      throw new ModelParseError('err.zip.noDirectory');
     }
     if (dataOffset + compressedSize > bytes.length) {
-      throw new ModelParseError('El ZIP del 3MF está cortado: el archivo termina antes de lo esperado.');
+      throw new ModelParseError('err.zip.truncated');
     }
     if (!name.endsWith('/')) entries.set(zipKey(name), { name, method, compressedSize, size, dataOffset });
     pos = dataOffset + compressedSize;
   }
-  if (entries.size === 0) throw new ModelParseError('El archivo no es un ZIP válido (¿es realmente un 3MF?).');
+  if (entries.size === 0) throw new ModelParseError('err.zip.invalid');
   return entries;
 }
 
 /** Contenido descomprimido de una entrada. */
 export async function readZipEntry(bytes: Uint8Array, entry: ZipEntry, maxBytes = MAX_ENTRY_BYTES): Promise<Uint8Array> {
   if (entry.size > maxBytes) {
-    throw new ModelParseError(`«${entry.name}» ocupa ${Math.round(entry.size / 1048576)} MB descomprimido: es demasiado grande.`);
+    throw new ModelParseError('err.zip.tooBig', { name: entry.name, mb: Math.round(entry.size / 1048576) });
   }
   if (entry.dataOffset + entry.compressedSize > bytes.length) {
-    throw new ModelParseError('El ZIP del 3MF está cortado: el archivo termina antes de lo esperado.');
+    throw new ModelParseError('err.zip.truncated');
   }
   const raw = bytes.subarray(entry.dataOffset, entry.dataOffset + entry.compressedSize);
   if (entry.method === 0) return raw;
   if (entry.method !== 8) {
-    throw new ModelParseError(`El 3MF usa un método de compresión (${entry.method}) que no está soportado; solo «deflate».`);
+    throw new ModelParseError('err.zip.method', { method: entry.method });
   }
   if (typeof DecompressionStream === 'undefined') {
-    throw new ModelParseError('Tu navegador no sabe descomprimir archivos ZIP (falta DecompressionStream). Actualízalo para abrir 3MF.');
+    throw new ModelParseError('err.zip.noStreams');
   }
 
   try {
@@ -140,7 +138,7 @@ export async function readZipEntry(bytes: Uint8Array, entry: ZipEntry, maxBytes 
       total += value.length;
       if (total > maxBytes) {
         await reader.cancel();
-        throw new ModelParseError(`«${entry.name}» descomprimido supera los ${Math.round(maxBytes / 1048576)} MB: es demasiado grande.`);
+        throw new ModelParseError('err.zip.exceeds', { name: entry.name, mb: Math.round(maxBytes / 1048576) });
       }
       chunks.push(value);
     }
@@ -153,6 +151,6 @@ export async function readZipEntry(bytes: Uint8Array, entry: ZipEntry, maxBytes 
     return out;
   } catch (error) {
     if (error instanceof ModelParseError) throw error;
-    throw new ModelParseError(`No se ha podido descomprimir «${entry.name}»: el 3MF está dañado.`);
+    throw new ModelParseError('err.zip.inflate', { name: entry.name });
   }
 }

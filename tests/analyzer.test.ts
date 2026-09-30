@@ -44,7 +44,7 @@ describe('handleAnalyzeRequest (lo que corre dentro del worker)', () => {
 
   it('convierte los errores de lectura en un mensaje serializable', async () => {
     const { response, transfer } = await handleAnalyzeRequest({ id: 1, buffer: encode('hola').buffer as ArrayBuffer });
-    expect(response).toMatchObject({ id: 1, ok: false, parseError: true });
+    expect(response).toMatchObject({ id: 1, ok: false, parseError: { code: 'err.stl.small' } });
     expect(transfer).toEqual([]);
   });
 });
@@ -63,6 +63,8 @@ describe('StlAnalyzer', () => {
     const analyzer = new StlAnalyzer(() => new FakeWorker());
     await expect(analyzer.analyze(new ArrayBuffer(0))).rejects.toThrow(ModelParseError);
     await expect(analyzer.analyze(new ArrayBuffer(0))).rejects.toThrow(/vacío/);
+    // El código y los datos cruzan el worker para poder traducir el mensaje en la interfaz.
+    await expect(analyzer.analyze(new ArrayBuffer(0))).rejects.toMatchObject({ code: 'err.empty' });
   });
 
   it('peticiones simultáneas: cada una recibe su resultado', async () => {

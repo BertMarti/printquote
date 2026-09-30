@@ -1,3 +1,5 @@
+import type { ErrorKey } from '../i18n/es';
+import type { Params } from '../i18n/interpolate';
 import { ModelParseError } from './errors';
 import type { Mesh } from './types';
 import { attributes, scanXml } from './xml';
@@ -49,7 +51,7 @@ export function parseTransform(text: string | undefined): Matrix {
   if (text === undefined || text.trim() === '') return IDENTITY;
   const parts = text.trim().split(/\s+/).map(Number);
   if (parts.length !== 12 || parts.some((n) => !Number.isFinite(n))) {
-    throw new ModelParseError(`El 3MF tiene una transformación no válida («${text.slice(0, 60)}»): deben ser 12 números.`);
+    throw new ModelParseError('err.3mf.transform', { text: text.slice(0, 60) });
   }
   return parts as unknown as Matrix;
 }
@@ -108,8 +110,8 @@ interface ModelFile {
   readonly build: BuildItem[];
 }
 
-function fail(message: string): never {
-  throw new ModelParseError(message);
+function fail(code: ErrorKey, params: Params = {}): never {
+  throw new ModelParseError(code, params);
 }
 
 /** Recorre el XML de un `.model` y lo deja en objetos con sus mallas, componentes y elementos de la plantilla. */
@@ -145,7 +147,7 @@ function parseModelXml(path: string, text: string): ModelFile {
       case 'object': {
         const a = attributes(tag.rawAttributes);
         const id = a['id'];
-        if (id === undefined) fail(`Un objeto de «${path}» no tiene identificador (id).`);
+        if (id === undefined) fail('err.3mf.objectId', { path });
         const type = (a['type'] ?? 'model').toLowerCase();
         // Soportes, superficies y «otros» no son piezas que se impriman como tal.
         current = { id, printable: type === 'model', components: [] };
@@ -157,18 +159,18 @@ function parseModelXml(path: string, text: string): ModelFile {
         break;
       }
       case 'mesh':
-        if (!current) fail(`Hay una malla fuera de un objeto en «${path}».`);
+        if (!current) fail('err.3mf.meshOutside', { path });
         vertices = new Growable((n) => new Float32Array(n));
         triangles = new Growable((n) => new Int32Array(n));
         vertexCount = 0;
         break;
       case 'vertex': {
-        if (!vertices) fail(`Hay un vértice fuera de una malla en «${path}».`);
+        if (!vertices) fail('err.3mf.vertexOutside', { path });
         const a = attributes(tag.rawAttributes);
         for (const axis of ['x', 'y', 'z'] as const) {
           const value = Number(a[axis]);
           if (a[axis] === undefined || !Number.isFinite(Math.fround(value))) {
-            fail(`El vértice ${vertexCount + 1} de «${path}» tiene una coordenada ${axis.toUpperCase()} no válida.`);
+            fail('err.3mf.badCoord', { n: vertexCount + 1, path, axis: axis.toUpperCase() });
           }
           vertices?.push(value);
         }
@@ -176,21 +178,21 @@ function parseModelXml(path: string, text: string): ModelFile {
         break;
       }
       case 'triangle': {
-        if (!triangles) fail(`Hay un triángulo fuera de una malla en «${path}».`);
+        if (!triangles) fail('err.3mf.triangleOutside', { path });
         const a = attributes(tag.rawAttributes);
         for (const key of ['v1', 'v2', 'v3'] as const) {
           const value = Number(a[key]);
           if (a[key] === undefined || !Number.isInteger(value) || value < 0) {
-            fail(`Un triángulo de «${path}» tiene un índice de vértice (${key}) no válido.`);
+            fail('err.3mf.badIndex', { path, key });
           }
           triangles?.push(value);
         }
         break;
       }
       case 'component': {
-        if (!current) fail(`Hay un componente fuera de un objeto en «${path}».`);
+        if (!current) fail('err.3mf.componentOutside', { path });
         const a = attributes(tag.rawAttributes);
-        if (a['objectid'] === undefined) fail(`Un componente de «${path}» no indica el objeto al que apunta (objectid).`);
+        if (a['objectid'] === undefined) fail('err.3mf.componentId', { path });
         current.components.push({ objectId: a['objectid'], path: a['path'], transform: parseTransform(a['transform']) });
         break;
       }
@@ -200,7 +202,7 @@ function parseModelXml(path: string, text: string): ModelFile {
       case 'item': {
         if (!inBuild) break;
         const a = attributes(tag.rawAttributes);
-        if (a['objectid'] === undefined) fail('Un elemento de la plantilla de impresión no indica el objeto (objectid).');
+        if (a['objectid'] === undefined) fail('err.3mf.itemId');
         if (a['printable'] === '0' || a['printable']?.toLowerCase() === 'false') break;
         build.push({ objectId: a['objectid'], path: a['path'], transform: parseTransform(a['transform']) });
         break;
@@ -246,7 +248,7 @@ function scale(factor: number): Matrix {
  */
 export async function parse3mf(data: ArrayBuffer | Uint8Array): Promise<Mesh> {
   const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
-  if (bytes.byteLength === 0) fail('El archivo está vacío.');
+  if (bytes.byteLength === 0) fail('err.empty');
 
   const entries = readZipDirectory(bytes);
   const decoder = new TextDecoder('utf-8');
@@ -256,7 +258,7 @@ export async function parse3mf(data: ArrayBuffer | Uint8Array): Promise<Mesh> {
   const rootPath = rootModelPath(relsEntry ? await read(relsEntry) : null);
   const rootEntry = entries.get(zipKey(rootPath));
   if (!rootEntry) {
-    fail(`El 3MF no contiene el modelo («${rootPath.replace(/^\//, '')}»): parece dañado o no es un 3MF.`);
+    fail('err.3mf.noModel', { path: rootPath.replace(/^\//, '') });
   }
 
   const files = new Map<string, ModelFile>();
@@ -265,7 +267,7 @@ export async function parse3mf(data: ArrayBuffer | Uint8Array): Promise<Mesh> {
     const cached = files.get(key);
     if (cached) return cached;
     const entry = entries.get(key);
-    if (!entry) fail(`El 3MF hace referencia a «${path.replace(/^\//, '')}», que no está dentro del archivo.`);
+    if (!entry) fail('err.3mf.missingFile', { path: path.replace(/^\//, '') });
     const file = parseModelXml(path, await read(entry));
     files.set(key, file);
     return file;
@@ -275,9 +277,9 @@ export async function parse3mf(data: ArrayBuffer | Uint8Array): Promise<Mesh> {
   const instances: Instance[] = [];
 
   const visit = async (file: ModelFile, objectId: string, matrix: Matrix, depth: number, topLevel: boolean): Promise<void> => {
-    if (depth > MAX_DEPTH) fail('El 3MF tiene objetos que se contienen a sí mismos (referencias circulares).');
+    if (depth > MAX_DEPTH) fail('err.3mf.circular');
     const object = file.objects.get(objectId);
-    if (!object) fail(`El 3MF hace referencia al objeto ${objectId}, que no existe.`);
+    if (!object) fail('err.3mf.missingObject', { id: objectId });
     if (topLevel && !object.printable) return;
 
     if (object.mesh) {
@@ -312,7 +314,7 @@ function meshFromInstances(instances: readonly Instance[]): Mesh {
   let triangleCount = 0;
   for (const { mesh } of instances) triangleCount += mesh.triangles.length / 3;
   if (triangleCount === 0) {
-    fail('El 3MF no contiene ninguna pieza imprimible: no tiene triángulos en la plantilla de impresión.');
+    fail('err.3mf.empty');
   }
 
   const positions = new Float32Array(triangleCount * 9);
@@ -329,7 +331,7 @@ function meshFromInstances(instances: readonly Instance[]): Mesh {
       if (flip) corner.reverse();
       for (const v of corner) {
         if (v >= vertexTotal) {
-          fail(`Un triángulo usa el vértice ${v + 1}, pero la malla solo tiene ${vertexTotal} vértices.`);
+          fail('err.3mf.vertexRange', { index: v + 1, count: vertexTotal });
         }
         const x = vertices[v * 3] ?? 0, y = vertices[v * 3 + 1] ?? 0, z = vertices[v * 3 + 2] ?? 0;
         positions[out++] = x * (m0 ?? 1) + y * (m3 ?? 0) + z * (m6 ?? 0) + (tx ?? 0);
