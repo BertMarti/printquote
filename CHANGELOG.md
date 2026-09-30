@@ -6,6 +6,7 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 
 ### Añadido
 
+- **Metadatos al cambiar de idioma** (#18): `description`, `og:title`, `og:description`, `og:image:alt`, `og:locale` y las etiquetas `twitter:*` (nuevas: título, descripción, imagen y texto alternativo) salen de los diccionarios y cambian con el idioma.
 - **PDF con fuente incrustada** (#17): el PDF lleva Noto Sans y JetBrains Mono (licencia OFL, con su licencia en `src/pdf/fonts/`) mediante `@pdf-lib/fontkit`, así que el cirílico y el griego se ven bien en lugar de «?». Las fuentes y fontkit solo se descargan al pulsar «Descargar PDF»; el JS inicial no crece.
 
 ## [0.2.0] - 2026-09-30

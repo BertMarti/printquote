@@ -7,7 +7,7 @@ const html = readFileSync(join(root, 'index.html'), 'utf8');
 const PAGES_URL = 'https://bertmarti.github.io/printquote/';
 
 function meta(attr: 'name' | 'property', key: string): string | undefined {
-  const tag = html.match(new RegExp(`<meta[ \\n\\r]+${attr}="${key}"[ \\n\\r]+content="([^"]*)"`));
+  const tag = html.match(new RegExp(`<meta[^>]*\\b${attr}="${key}"[^>]*\\bcontent="([^"]*)"`));
   return tag?.[1];
 }
 
@@ -25,6 +25,10 @@ describe('metadatos de la página', () => {
     expect(meta('property', 'og:url')).toBe(PAGES_URL);
     expect(meta('property', 'og:image')).toMatch(new RegExp(`^${PAGES_URL}`));
     expect(meta('name', 'twitter:card')).toBe('summary_large_image');
+    for (const key of ['twitter:title', 'twitter:description', 'twitter:image', 'twitter:image:alt']) {
+      expect(meta('name', key), key).toBeTruthy();
+    }
+    expect(meta('name', 'twitter:image')).toBe(meta('property', 'og:image'));
   });
 
   it('la imagen de Open Graph existe en public/', () => {

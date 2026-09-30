@@ -84,6 +84,7 @@ describe('diccionarios', () => {
 });
 
 describe('HTML estático', () => {
+  document.head.innerHTML = html.match(/<head>([\s\S]*)<\/head>/)?.[1] ?? '';
   document.body.innerHTML = (html.match(/<body>([\s\S]*)<\/body>/)?.[1] ?? '').replace(/<script[\s\S]*?<\/script>/g, '');
 
   it('cada data-i18n / data-i18n-attr apunta a una clave que existe', () => {
@@ -123,6 +124,44 @@ describe('HTML estático', () => {
     setLang('es');
     applyStaticTranslations();
     expect(document.body.innerHTML).toBe(before);
+  });
+});
+
+describe('metadatos de la cabecera al cambiar de idioma', () => {
+  const content = (selector: string): string | null => document.head.querySelector(selector)?.getAttribute('content') ?? null;
+  const metas = [
+    'meta[name="description"]',
+    'meta[property="og:title"]',
+    'meta[property="og:description"]',
+    'meta[property="og:image:alt"]',
+    'meta[property="og:locale"]',
+    'meta[name="twitter:title"]',
+    'meta[name="twitter:description"]',
+    'meta[name="twitter:image:alt"]',
+  ];
+
+  it('description, Open Graph y Twitter salen de los diccionarios en cada idioma', () => {
+    for (const lang of ['en', 'es'] as const) {
+      setLang(lang);
+      applyStaticTranslations();
+      expect(content('meta[name="description"]')).toBe(tIn(lang, 'meta.description'));
+      expect(content('meta[property="og:title"]')).toBe(tIn(lang, 'meta.title'));
+      expect(content('meta[name="twitter:title"]')).toBe(tIn(lang, 'meta.title'));
+      expect(content('meta[property="og:description"]')).toBe(tIn(lang, 'meta.description'));
+      expect(content('meta[name="twitter:description"]')).toBe(tIn(lang, 'meta.description'));
+      expect(content('meta[property="og:image:alt"]')).toBe(tIn(lang, 'meta.ogImageAlt'));
+      expect(content('meta[name="twitter:image:alt"]')).toBe(tIn(lang, 'meta.ogImageAlt'));
+      expect(content('meta[property="og:locale"]')).toBe(lang === 'es' ? 'es_ES' : 'en_GB');
+    }
+  });
+
+  it('en inglés no queda ninguna metaetiqueta de texto en español', () => {
+    setLang('en');
+    applyStaticTranslations();
+    for (const selector of metas) expect(content(selector), selector).toBeTruthy();
+    for (const selector of metas.filter((m) => !m.includes('locale'))) {
+      expect(content(selector), selector).not.toMatch(/Arrastra|presupuesto|Interfaz de/);
+    }
   });
 });
 
