@@ -1,4 +1,6 @@
 import { formatDuration, formatEuro, formatNumber } from '../quote/format';
+import { buildQuoteDocument } from '../pdf/document';
+import { BUSINESS_LIMITS, nextQuoteNumber, normalizeBusiness, type BusinessProfile } from '../quote/business';
 import { isMaterialId, MATERIALS } from '../quote/materials';
 import { computeQuote, type Quote } from '../quote/model';
 import { applyPrinter, CUSTOM_PRINTER, getPrinter, PRINTERS } from '../quote/printers';
@@ -13,7 +15,8 @@ import { supportsWebGL } from '../viewer/webgl';
 import { formatLabel } from './format-label';
 import { NumberField } from './number-field';
 import { renderPrintSheet } from './print-sheet';
-import { clearSettings, loadSettings, saveSettings } from './storage';
+import { LogoError, prepareLogo } from './logo';
+import { clearBusiness, clearSettings, loadBusiness, loadSettings, saveBusiness, saveSettings } from './storage';
 
 const SAMPLE_FILE = 'soporte-movil.stl';
 const MAX_FILE_BYTES = 300 * 1024 * 1024;
@@ -54,6 +57,18 @@ function warningText(warning: MeshWarning, size: Vec3, bed: Vec3): string {
   }
 }
 
+/** Descarga un archivo generado en el navegador. */
+function download(blob: Blob, fileName: string): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
 async function copyText(text: string): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(text);
@@ -83,6 +98,7 @@ export function startApp(): void {
   const resetCameraButton = byId<HTMLButtonElement>('reset-camera');
   const copyButton = byId<HTMLButtonElement>('copy-button');
   const printButton = byId<HTMLButtonElement>('print-button');
+  const pdfButton = byId<HTMLButtonElement>('pdf-button');
   const infillRange = byId<HTMLInputElement>('in-infill-range');
   const materialRadios = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="material"]'));
   const out = (id: string): HTMLElement => byId(`out-${id}`);
@@ -93,6 +109,8 @@ export function startApp(): void {
   };
 
   let settings = loadSettings();
+  let business = loadBusiness();
+  let pdfBusy = false;
   let part: LoadedPart | null = null;
   let quote: Quote | null = null;
   let viewer: Viewer | null = null;
@@ -256,6 +274,7 @@ export function startApp(): void {
     resetCameraButton.disabled = !hasPart || !viewer;
     copyButton.disabled = !hasPart;
     printButton.disabled = !hasPart;
+    if (!pdfBusy) pdfButton.disabled = !hasPart;
 
     const warningsList = byId('warnings');
     if (!part) {
@@ -472,7 +491,137 @@ export function startApp(): void {
     window.print();
   });
 
+  // ── Datos del negocio y presupuesto en PDF ──
+  const bizText = [
+    ['in-biz-name', 'name'],
+    ['in-biz-taxid', 'taxId'],
+    ['in-biz-address', 'address'],
+    ['in-biz-phone', 'phone'],
+    ['in-biz-email', 'email'],
+    ['in-biz-web', 'web'],
+    ['in-biz-number', 'quoteNumber'],
+  ] as const;
+  const bizInputs = bizText.map(([id, key]) => [byId<HTMLInputElement | HTMLTextAreaElement>(id), key] as const);
+  const logoInput = byId<HTMLInputElement>('in-biz-logo');
+  const logoPreview = byId('logo-preview');
+  const logoImg = byId<HTMLImageElement>('logo-img');
+  const logoStatus = byId('logo-status');
+  const logoHint = logoStatus.textContent ?? '';
+
+  const updateBusiness = (patch: Partial<BusinessProfile>): boolean => {
+    business = normalizeBusiness({ ...business, ...patch });
+    return saveBusiness(business);
+  };
+
+  const syncBusiness = (): void => {
+    for (const [input, key] of bizInputs) input.value = business[key];
+    validityField.set(business.validityDays);
+    vatField.set(business.vatPercent);
+    logoPreview.hidden = business.logo === null;
+    if (business.logo) logoImg.src = business.logo;
+    else logoImg.removeAttribute('src');
+  };
+
+  for (const [input, key] of bizInputs) {
+    input.addEventListener('input', () => updateBusiness({ [key]: input.value }));
+    // Al salir del campo se muestra lo que de verdad se ha guardado (recortado, o el número por defecto si se vació).
+    input.addEventListener('change', () => (input.value = business[key]));
+  }
+
+  const validityField = new NumberField({
+    input: byId<HTMLInputElement>('in-biz-validity'),
+    error: byId('err-validity'),
+    min: BUSINESS_LIMITS.validityDays.min,
+    max: BUSINESS_LIMITS.validityDays.max,
+    integer: true,
+    decimals: 0,
+    step: 1,
+    onValue: (value) => void updateBusiness({ validityDays: value }),
+  });
+  const vatField = new NumberField({
+    input: byId<HTMLInputElement>('in-biz-vat'),
+    error: byId('err-vat'),
+    min: BUSINESS_LIMITS.vatPercent.min,
+    max: BUSINESS_LIMITS.vatPercent.max,
+    decimals: 1,
+    step: 1,
+    onValue: (value) => void updateBusiness({ vatPercent: value }),
+  });
+
+  logoInput.addEventListener('change', () => {
+    const file = logoInput.files?.[0];
+    logoInput.value = '';
+    if (!file) return;
+    logoStatus.textContent = 'Procesando la imagen…';
+    prepareLogo(file)
+      .then((logo) => {
+        const saved = updateBusiness({ logo });
+        syncBusiness();
+        logoStatus.textContent = saved
+          ? 'Logotipo cargado. Se queda en este navegador.'
+          : 'Logotipo cargado, pero el navegador no deja guardarlo: tendrás que subirlo de nuevo la próxima vez.';
+      })
+      .catch((error: unknown) => {
+        logoStatus.textContent = error instanceof LogoError ? error.message : 'No se ha podido cargar la imagen.';
+      });
+  });
+  byId('logo-remove').addEventListener('click', () => {
+    updateBusiness({ logo: null });
+    syncBusiness();
+    logoStatus.textContent = 'Logotipo quitado.';
+    logoInput.focus();
+  });
+  byId('reset-business').addEventListener('click', () => {
+    clearBusiness();
+    business = normalizeBusiness(undefined);
+    syncBusiness();
+    logoStatus.textContent = logoHint;
+    announce('Datos del negocio borrados.');
+  });
+  byId('settings-form').addEventListener('submit', (event) => event.preventDefault());
+
+  const pdfFileName = (): string => `presupuesto-${business.quoteNumber.replace(/[^A-Za-z0-9._-]+/g, '-')}.pdf`;
+
+  pdfButton.addEventListener('click', () => {
+    if (!part || !quote || pdfBusy) return;
+    const label = pdfButton.textContent;
+    pdfBusy = true;
+    pdfButton.disabled = true;
+    pdfButton.textContent = 'Generando PDF…';
+    announce('Generando el PDF…');
+    const current = { part, quote, settings, business };
+    void (async () => {
+      try {
+        // pdf-lib (~500 kB) solo se descarga la primera vez que se pide un PDF.
+        const { renderQuotePdf } = await import('../pdf/render');
+        const bytes = await renderQuotePdf(
+          buildQuoteDocument({
+            business: current.business,
+            fileName: current.part.fileName,
+            stats: current.part.stats,
+            settings: current.settings,
+            quote: current.quote,
+            image: viewer ? viewer.snapshot() : null,
+          }),
+        );
+        const name = pdfFileName();
+        download(new Blob([bytes as BlobPart], { type: 'application/pdf' }), name);
+        // El número sube solo tras descargar: el siguiente presupuesto ya sale con el nuevo.
+        updateBusiness({ quoteNumber: nextQuoteNumber(current.business.quoteNumber) });
+        syncBusiness();
+        announce(`PDF descargado: ${name}. El próximo número de presupuesto es ${business.quoteNumber}.`);
+      } catch {
+        showNotice('No se ha podido crear el PDF', 'Ha ocurrido un error al generar el documento. Vuelve a intentarlo; si sigue fallando, usa «Imprimir» y guarda como PDF.');
+      } finally {
+        pdfBusy = false;
+        pdfButton.textContent = label;
+        pdfButton.disabled = !part;
+      }
+    })();
+  });
+
   syncForm();
+  syncBusiness();
   render();
 
   // Enlace directo a la demo con la pieza cargada: …/printquote/#ejemplo

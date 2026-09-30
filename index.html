@@ -194,6 +194,62 @@
               <div class="row"><dt>Margen <span class="sub" id="out-margin-pct"></span></dt><dd><span class="num" id="out-margin">—</span><span class="unit">€</span></dd></div>
             </dl>
           </section>
+
+          <section class="block" aria-labelledby="h-business">
+            <details class="details" id="business-details">
+              <summary><span class="block-title" id="h-business"><span class="block-num">06</span>Datos del negocio</span></summary>
+              <p class="caption caption--plain">Salen en el PDF del presupuesto. Se guardan solo en este navegador: no se envían a ningún servidor.</p>
+              <div class="field field--text">
+                <label for="in-biz-name">Nombre del negocio</label>
+                <input id="in-biz-name" type="text" maxlength="80" autocomplete="organization" spellcheck="false" />
+              </div>
+              <div class="field field--text">
+                <label for="in-biz-taxid">NIF / CIF</label>
+                <input id="in-biz-taxid" type="text" maxlength="30" autocomplete="off" spellcheck="false" />
+              </div>
+              <div class="field field--text">
+                <label for="in-biz-address">Dirección</label>
+                <textarea id="in-biz-address" rows="2" maxlength="200" autocomplete="street-address"></textarea>
+              </div>
+              <div class="field field--text">
+                <label for="in-biz-phone">Teléfono</label>
+                <input id="in-biz-phone" type="tel" maxlength="30" autocomplete="tel" />
+              </div>
+              <div class="field field--text">
+                <label for="in-biz-email">Correo electrónico</label>
+                <input id="in-biz-email" type="email" maxlength="80" autocomplete="email" spellcheck="false" />
+              </div>
+              <div class="field field--text">
+                <label for="in-biz-web">Web</label>
+                <input id="in-biz-web" type="text" inputmode="url" maxlength="80" autocomplete="url" spellcheck="false" />
+              </div>
+              <div class="field field--text">
+                <label for="in-biz-logo">Logotipo <span class="sub">(opcional)</span></label>
+                <input id="in-biz-logo" type="file" accept="image/png,image/jpeg,image/webp" aria-describedby="logo-status" />
+                <div class="logo-preview" id="logo-preview" hidden>
+                  <img id="logo-img" alt="Logotipo del negocio" />
+                  <button type="button" class="link-button" id="logo-remove">Quitar logotipo</button>
+                </div>
+                <p class="field-note" id="logo-status" aria-live="polite">PNG, JPEG o WebP. Se reduce y se queda en este navegador.</p>
+              </div>
+              <div class="field field--text">
+                <label for="in-biz-number">Nº del próximo presupuesto</label>
+                <input id="in-biz-number" type="text" maxlength="30" autocomplete="off" spellcheck="false" aria-describedby="hint-number" />
+                <p class="field-note" id="hint-number">Sube solo al descargar cada PDF.</p>
+              </div>
+              <div class="field">
+                <label for="in-biz-validity">Validez del presupuesto <span class="sr-only">en días</span></label>
+                <div class="input-unit"><input id="in-biz-validity" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" aria-describedby="err-validity" /><span class="unit" aria-hidden="true">días</span></div>
+                <p class="field-error" id="err-validity" aria-live="polite"></p>
+              </div>
+              <div class="field">
+                <label for="in-biz-vat">IVA <span class="sr-only">en porcentaje</span></label>
+                <div class="input-unit"><input id="in-biz-vat" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-vat" /><span class="unit" aria-hidden="true">%</span></div>
+                <p class="field-error" id="err-vat" aria-live="polite"></p>
+              </div>
+              <button type="button" class="link-button" id="reset-business">Borrar los datos del negocio</button>
+            </details>
+          </section>
         </form>
 
         <section class="summary" aria-labelledby="total-label">
@@ -205,6 +261,7 @@
           <div class="summary-actions">
             <button type="button" class="button button--inverse" id="copy-button" disabled>Copiar presupuesto</button>
             <button type="button" class="button button--inverse" id="print-button" disabled>Imprimir</button>
+            <button type="button" class="button button--inverse button--wide" id="pdf-button" disabled>Descargar PDF</button>
           </div>
           <p class="sr-only" id="live-status" role="status" aria-live="polite"></p>
         </section>
