@@ -5,10 +5,13 @@
 
 ### v0.2.0 (hito en curso, agente builder)
 Una rama y un PR por issue, cada rama parte de la anterior y todos van contra `main`:
-- #5 Perfiles de impresora (rama `agent/builder-5-perfiles`): hecho, PR abierto.
-- #6 3MF y OBJ, #7 PDF con datos del negocio, #8 interfaz en inglés: pendientes (ver «Siguiente paso»).
+- #5 Perfiles de impresora (rama `agent/builder-5-perfiles`, PR #11): hecho, CI en verde.
+- #6 3MF y OBJ (rama `agent/builder-6-3mf-obj`): hecho, PR abierto (parte de la rama de #5).
+- #7 PDF con datos del negocio, #8 interfaz en inglés: pendientes (ver «Siguiente paso»).
 
 **#5 Perfiles de impresora.** `src/quote/printers.ts` (único archivo de datos, tipado, con `note` de origen por perfil): Bambu Lab A1 y P1S, Prusa MK4 y MINI+, Creality Ender-3 V3 y K1, Elegoo Neptune 4. Selector «Impresora» al principio del bloque 03; elegir un perfil rellena caudal, potencia y cama; editar cualquiera de esos campos vuelve a «Personalizada». `QuoteSettings.printerId` se guarda en localStorage (misma clave `printquote:ajustes:v1`; los ajustes antiguos sin perfil cargan como «Personalizada»).
+
+**#6 OBJ y 3MF.** `src/stl/obj.ts`, `zip.ts`, `xml.ts`, `threemf.ts` y `model.ts` (detección de formato y punto de entrada `parseModel`). `analyzeModel` (asíncrono) sustituye a `analyzeStl` en el worker y en el respaldo del hilo principal; `analyzeStl` sigue existiendo para STL síncrono. El análisis (volumen, aristas abiertas, avisos) es el mismo para los tres formatos. Botón «Abrir modelo 3D», selector `.stl,.obj,.3mf`, la ficha muestra «OBJ · n triángulos» / «3MF · …». `ModelParseError` (en `errors.ts`) es la base de los errores de lectura; `StlParseError` la extiende. `Mesh.format` pasa a `'binary' | 'ascii' | 'obj' | '3mf'`.
 
 ### MVP y revisiones anteriores (v0.1.0)
 MVP completo en la rama `agent/builder` (PR abierto a `main`, pendiente de revisión del lead):
@@ -62,11 +65,15 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 (docs): La guía de uso explica el aviso de unidades tal como es en el código (solo salta por debajo de 1 mm): un STL en pulgadas de una pieza grande no avisa, y se indica al lector que compruebe las dimensiones. La sobrecarga de 5 min por copia no es editable en la interfaz y así se dice.
 - 2026-09-30 (builder, #5): El perfil no se «detecta» comparando valores: `printerId` se guarda, y `normalizeSettings` lo mantiene solo mientras caudal, potencia y cama coinciden con el perfil (si no, pasa a `custom`). Así editar un campo vuelve a «Personalizada» sin lógica extra en la interfaz, y un perfil que ya no exista (o valores retocados a mano en localStorage) se degrada bien. Si alguien vuelve a escribir a mano los valores de un perfil, sigue en «Personalizada» (intencionado, es lo más simple).
 - 2026-09-30 (builder, #5): Valores de perfiles = cama de la ficha del fabricante; caudal y potencia son estimaciones redondeadas de uso normal con PLA (muy por debajo del máximo publicitario) y así se rotula en la interfaz («Valores de partida orientativos») y en la nota de cada perfil. La Ender-3 V3 usa las medidas de la V3 SE (220 × 220 × 250); la nota avisa de que KE y CoreXZ difieren.
+- 2026-09-30 (builder, #6): Sin dependencias para 3MF. ZIP leído a mano (directorio central; si falta, recorre cabeceras locales con tamaños) y descompresión con `DecompressionStream('deflate-raw')` (Node ≥ 18 y todos los navegadores actuales). No se usa `DOMParser` porque no existe en un Web Worker ni en Node: `xml.ts` es un lector lineal de etiquetas (sin árbol, no expande entidades de DOCTYPE), suficiente para 3MF. Límite de 400 MB por entrada descomprimida (también si la cabecera miente) contra «bombas» ZIP. No se admite ZIP64 ni cifrado (error claro).
+- 2026-09-30 (builder, #6): Detección de formato por contenido primero (firma ZIP → 3MF; el nombre solo desempata texto). Un STL binario nunca se toma por OBJ.
+- 2026-09-30 (builder, #6): 3MF: se toman los `item` de `build` que sean `printable` y de tipo `model` (los soportes, superficies y «otros» se omiten); transformación de 12 números con convención de vector fila, componiendo componente → objeto padre → item; unidades del modelo a mm (las del archivo de cada malla se convierten a las de la plantilla); una transformación con determinante negativo (espejo) invierte el orden de los vértices para que el volumen no salga negativo. Soporta `p:path` (componentes en otros `.model`, como los de Bambu Studio/PrusaSlicer). Sin `build`, usa los objetos que nadie referencia.
+- 2026-09-30 (builder, #6): OBJ: se juntan todos los objetos/grupos en una malla; caras poligonales trianguladas en abanico (bien para polígonos convexos; un polígono cóncavo puede dar una triangulación incorrecta, límite conocido). Sin unidades: se asume mm, como el STL.
 - 2026-09-30 (qa): Imagen Open Graph = copia de `docs/captura.png` en `public/og.png` (1440 × 900), URL absoluta de GitHub Pages.
 
 ## Siguiente paso
 00. Alberto: borrar la rama remota `agent/builder` (ya fusionada en `main`, SHA 5b0a29b: se puede recrear). Mientras exista, Git impide crear ramas `agent/builder/…`, y las de v0.2.0 se llaman `agent/builder-<n>-<slug>`. El borrado lo denegó el sistema de permisos del agente.
-0. builder (v0.2.0): tras #5, seguir con #6 (3MF y OBJ), #7 (PDF) y #8 (inglés). Alberto fusiona los PR en ese orden.
+0. builder (v0.2.0): tras #5 y #6, seguir con #7 (PDF) y #8 (inglés). Alberto fusiona los PR en ese orden (#11 antes que el de #6).
 1. lead: revisar y fusionar el PR de `agent/builder`; comprobar que el despliegue a Pages funciona tras el merge.
 2. lead: tras fusionar #1, revisar y fusionar el PR #2 de `agent/qa` (base `agent/builder`; si GitHub lo retarga a `main` al borrar la rama, vale igual).
 3. Pendiente de una persona (no automatizable aquí): probar con lector de pantalla real (NVDA/VoiceOver) y la hoja de impresión en Firefox y Safari; comprobar la vista previa del enlace (og.png) una vez desplegado.
@@ -76,6 +83,7 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 ## Problemas conocidos
 - El chunk del visor pesa ~560 kB (139 kB gzip) por three.js; se carga aparte con `import()` y `chunkSizeWarningLimit` sigue en 800 kB.
 - Modelo de coste simplificado: no incluye soportes, balsa ni purga; la cáscara (área × grosor) sobreestima en piezas muy detalladas.
+- OBJ: los polígonos cóncavos (caras de más de 3 vértices) se trianguan en abanico y pueden salir mal; los OBJ y 3MF no se han probado con archivos reales de laminadores (solo con los construidos en los tests y una prueba manual en Chrome).
 - Mallas muy grandes (> 400 000 triángulos) no dibujan las aristas marcadas, por rendimiento. Con mallas grandes (< 400 000) el `EdgesGeometry` y las normales del visor se calculan aún en el hilo principal (unos cientos de ms de bloqueo tras la lectura).
 - Si falla la lectura de un archivo, se mantiene la pieza anterior en pantalla junto al aviso de error (intencionado, pero puede confundir).
 - El enlace `#ejemplo` solo se atiende al cargar la página (no escucha `hashchange`).
@@ -87,3 +95,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 qa (agent/qa): revisión y endurecimiento (parser, soldado con tolerancia, Web Worker, carga diferida de three.js, redondeo por líneas, accesibilidad, Open Graph, aviso de unidades), 57 → 132 tests; PR #2 contra agent/builder.
 - 2026-09-30 docs · Claude Code Sonnet (agent/docs): `docs/USO.md` y `CONTRIBUTING.md`, sección «Documentación» y «Cómo se ha hecho» del README, fila docs de AGENTS.md; sin cambios de código; PR contra agent/qa.
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder-5-perfiles): #5 perfiles de impresora (`printers.ts`, selector, persistencia, tests) y actualización de AGENTS.md con el flujo por issues del hito.
+- 2026-09-30 builder · Claude Code Sonnet (agent/builder-6-3mf-obj): #6 soporte de OBJ y 3MF (parsers, ZIP a mano, detección de formato, avisos iguales que STL, interfaz y tests).
