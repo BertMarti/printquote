@@ -1,14 +1,14 @@
-/** Formato de origen del archivo STL. */
-export type StlFormat = 'binary' | 'ascii';
+/** Formato de origen del archivo: STL binario o ASCII, OBJ o 3MF. */
+export type MeshFormat = 'binary' | 'ascii' | 'obj' | '3mf';
 
 /**
- * Malla triangular sin indexar tal como viene en el STL.
+ * Malla triangular sin indexar tal como viene en el archivo.
  * `positions` guarda 9 números por triángulo (x, y, z de sus tres vértices), en mm.
  */
 export interface Mesh {
   readonly positions: Float32Array;
   readonly triangleCount: number;
-  readonly format: StlFormat;
+  readonly format: MeshFormat;
 }
 
 export interface Vec3 {
