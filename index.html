@@ -6,7 +6,7 @@
     <title>printquote · presupuesto de impresión 3D</title>
     <meta
       name="description"
-      content="Arrastra un STL, míralo en 3D y obtén peso, tiempo estimado y precio de impresión. Todo ocurre en tu navegador."
+      content="Arrastra un STL, OBJ o 3MF, míralo en 3D y obtén peso, tiempo estimado y precio de impresión. Todo ocurre en tu navegador."
     />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#f6f5f2" media="(prefers-color-scheme: light)" />
@@ -19,7 +19,7 @@
     <meta property="og:locale" content="es_ES" />
     <meta property="og:site_name" content="printquote" />
     <meta property="og:title" content="printquote · presupuesto de impresión 3D" />
-    <meta property="og:description" content="Arrastra un STL, míralo en 3D y obtén peso, tiempo estimado y precio de impresión. Todo ocurre en tu navegador." />
+    <meta property="og:description" content="Arrastra un STL, OBJ o 3MF, míralo en 3D y obtén peso, tiempo estimado y precio de impresión. Todo ocurre en tu navegador." />
     <meta property="og:url" content="https://bertmarti.github.io/printquote/" />
     <meta property="og:image" content="https://bertmarti.github.io/printquote/og.png" />
     <meta property="og:image:type" content="image/png" />
@@ -44,9 +44,9 @@
         <span>Tu archivo no sale de tu navegador</span>
       </p>
       <div class="tb-cell tb-actions">
-        <button type="button" class="button button--primary" id="open-button">Abrir STL</button>
+        <button type="button" class="button button--primary" id="open-button">Abrir modelo 3D</button>
         <button type="button" class="button" id="sample-button">Probar con pieza de ejemplo</button>
-        <input type="file" id="file-input" accept=".stl,model/stl,application/sla" hidden />
+        <input type="file" id="file-input" accept=".stl,.obj,.3mf,model/stl,application/sla,model/obj,model/3mf,application/vnd.ms-package.3dmanufacturing-3dmodel+xml" hidden />
       </div>
     </header>
 
@@ -75,8 +75,8 @@
         <p class="stage-hint" aria-hidden="true"><span class="hint-mouse">Arrastra para girar · rueda para acercar · botón derecho para desplazar</span><span class="hint-touch">Un dedo para girar · pellizca para acercar · dos dedos para desplazar</span></p>
 
         <div class="empty" id="empty-state">
-          <p class="empty-title">Arrastra un archivo STL aquí</p>
-          <p class="empty-text">o usa «Abrir STL». ¿No tienes ninguno a mano? Prueba con la pieza de ejemplo.</p>
+          <p class="empty-title">Arrastra un modelo 3D aquí</p>
+          <p class="empty-text">STL, OBJ o 3MF. También puedes usar «Abrir modelo 3D». ¿No tienes ninguno a mano? Prueba con la pieza de ejemplo.</p>
         </div>
 
         <p class="stage-loading" id="stage-loading" aria-hidden="true" hidden></p>
@@ -212,7 +212,7 @@
     </main>
 
     <div class="drop-overlay" id="drop-overlay" hidden>
-      <p>Suelta el STL para calcular</p>
+      <p>Suelta el archivo para calcular</p>
     </div>
 
     <article class="print-sheet" id="print-sheet" aria-hidden="true"></article>

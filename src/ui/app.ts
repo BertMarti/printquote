@@ -6,10 +6,11 @@ import { DEFAULT_SETTINGS, LIMITS, normalizeSettings, type QuoteSettings } from 
 import { buildQuoteText } from '../quote/text';
 import { StlAnalyzer } from '../stl/analyzer';
 import { meshWarnings, type MeshWarning } from '../stl/geometry';
-import { StlParseError } from '../stl/parse';
+import { ModelParseError } from '../stl/errors';
 import type { Mesh, MeshStats, Vec3 } from '../stl/types';
 import type { Viewer, ViewerTheme } from '../viewer/viewer';
 import { supportsWebGL } from '../viewer/webgl';
+import { formatLabel } from './format-label';
 import { NumberField } from './number-field';
 import { renderPrintSheet } from './print-sheet';
 import { clearSettings, loadSettings, saveSettings } from './storage';
@@ -47,7 +48,7 @@ function warningText(warning: MeshWarning, size: Vec3, bed: Vec3): string {
     case 'inverted':
       return 'Las normales parecen invertidas (volumen negativo). Se usa el valor absoluto, pero conviene revisar la malla.';
     case 'tiny':
-      return `La pieza mide solo ${formatNumber(Math.max(size.x, size.y, size.z), 3)} mm en su lado mayor. printquote asume que el STL está en milímetros: si se exportó en metros o pulgadas, cambia las unidades al exportar.`;
+      return `La pieza mide solo ${formatNumber(Math.max(size.x, size.y, size.z), 3)} mm en su lado mayor. printquote asume que el modelo está en milímetros: si se exportó en metros o pulgadas, cambia las unidades al exportar.`;
     case 'too-big':
       return `La pieza (${formatNumber(size.x, 1)} × ${formatNumber(size.y, 1)} × ${formatNumber(size.z, 1)} mm) no cabe en la cama de ${formatNumber(bed.x, 0)} × ${formatNumber(bed.y, 0)} × ${formatNumber(bed.z, 0)} mm, ni siquiera girándola.`;
   }
@@ -357,23 +358,22 @@ export function startApp(): void {
     try {
       const buffer = await getBuffer();
       // El parseo y la geometría van en un Web Worker: la interfaz sigue respondiendo.
-      const { mesh, stats } = await analyzer.analyze(buffer);
+      const { mesh, stats } = await analyzer.analyze(buffer, fileName);
       if (ticket !== loadTicket) return; // ya se ha pedido otro archivo
       part = { fileName, mesh, stats };
       viewer?.setPart(mesh.positions);
 
       byId('file-name').textContent = fileName;
-      byId('file-detail').textContent =
-        `STL ${mesh.format === 'binary' ? 'binario' : 'ASCII'} · ${formatNumber(mesh.triangleCount, 0)} triángulos`;
+      byId('file-detail').textContent = `${formatLabel(mesh.format)} · ${formatNumber(mesh.triangleCount, 0)} triángulos`;
       document.title = `${fileName} · printquote`;
       render();
       // El total se anuncia solo: su contenedor es una región viva.
       announce(`Pieza cargada: ${fileName}.`);
     } catch (error) {
       if (ticket !== loadTicket) return;
-      const message = error instanceof StlParseError
+      const message = error instanceof ModelParseError
         ? error.message
-        : 'Ha ocurrido un error inesperado al leer el archivo. Prueba a exportarlo de nuevo como STL.';
+        : 'Ha ocurrido un error inesperado al leer el archivo. Prueba a exportarlo de nuevo como STL, OBJ o 3MF.';
       showNotice(`No se ha podido leer «${fileName}»`, message);
     } finally {
       if (ticket === loadTicket) {
@@ -402,7 +402,7 @@ export function startApp(): void {
   const loadSample = (): void => {
     void loadBuffer(SAMPLE_FILE, async () => {
       const response = await fetch(`${import.meta.env.BASE_URL}samples/${SAMPLE_FILE}`);
-      if (!response.ok) throw new StlParseError('No se ha podido descargar la pieza de ejemplo.');
+      if (!response.ok) throw new ModelParseError('No se ha podido descargar la pieza de ejemplo.');
       return response.arrayBuffer();
     });
   };
