@@ -219,3 +219,35 @@ describe('PDF en inglés', () => {
     expect(spanish.dateLocale).toBe('es-ES');
   });
 });
+
+describe('idioma en caliente: textos ocultos o para lectores de pantalla', () => {
+  beforeEach(() => {
+    vi.stubGlobal('Worker', undefined);
+    window.localStorage.clear();
+    document.body.innerHTML = body;
+    document.head.innerHTML = '<meta name="description" content="" />';
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(binaryStl(cubeTriangles(20)).slice(0))));
+  });
+  afterEach(() => {
+    setNavigatorLanguages(['es-ES', 'es']);
+    setLang('es');
+    vi.unstubAllGlobals();
+  });
+
+  it('el indicador de lectura en curso se traduce si se cambia de idioma mientras se lee', async () => {
+    startApp();
+    $('sample-button').click();
+    expect($('stage-loading').textContent).toBe('Leyendo «soporte-movil.stl»…');
+    click('en');
+    expect($('stage-loading').textContent).toBe('Reading “soporte-movil.stl”…');
+    await until(() => $('out-total').textContent !== '—');
+  });
+
+  it('el último anuncio para lectores de pantalla no se queda en el idioma anterior', async () => {
+    startApp();
+    $('sample-button').click();
+    await until(() => ($('live-status').textContent ?? '').startsWith('Pieza cargada'));
+    click('en');
+    expect($('live-status').textContent).toBe('');
+  });
+});
