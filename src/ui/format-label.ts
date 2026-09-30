@@ -1,15 +1,7 @@
+import { t } from '../i18n';
 import type { MeshFormat } from '../stl/types';
 
-/** Nombre del formato del archivo para mostrarlo: «STL binario», «OBJ»… */
+/** Nombre del formato del archivo en el idioma activo: «STL binario», «OBJ»… */
 export function formatLabel(format: MeshFormat): string {
-  switch (format) {
-    case 'binary':
-      return 'STL binario';
-    case 'ascii':
-      return 'STL ASCII';
-    case 'obj':
-      return 'OBJ';
-    case '3mf':
-      return '3MF';
-  }
+  return t(`format.${format}`);
 }

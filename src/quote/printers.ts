@@ -1,3 +1,5 @@
+import { t } from '../i18n';
+import type { Key } from '../i18n/es';
 import type { QuoteSettings } from './settings';
 
 /** Datos de partida de una impresora. Todos son orientativos (ver `note`). */
@@ -12,16 +14,15 @@ export interface PrinterProfile {
   readonly bedX: number;
   readonly bedY: number;
   readonly bedZ: number;
-  /** De dónde salen los valores y cuánto fiarse de ellos. */
-  readonly note: string;
+  /** De dónde salen los valores y cuánto fiarse de ellos: claves de texto que se unen en una nota (ver `printerNote`). */
+  readonly note: readonly Key[];
 }
 
 /** Identificador del perfil «Personalizada»: los valores los pone la persona usuaria. */
 export const CUSTOM_PRINTER = 'custom';
 
-const BED_NOTE = 'Volumen de impresión según la ficha técnica del fabricante.';
-const ESTIMATE_NOTE =
-  'Caudal y potencia son estimaciones para un uso normal con PLA, no valores medidos: calíbralos con tu laminador y tu vatímetro.';
+const BED: Key = 'printer.note.bed';
+const ESTIMATE: Key = 'printer.note.estimate';
 
 /**
  * Perfiles precargados. Los valores de cama vienen de las fichas técnicas de cada
@@ -37,7 +38,7 @@ export const PRINTERS: readonly PrinterProfile[] = [
     bedX: 256,
     bedY: 256,
     bedZ: 256,
-    note: `${BED_NOTE} ${ESTIMATE_NOTE}`,
+    note: [BED, ESTIMATE],
   },
   {
     id: 'bambu-p1s',
@@ -47,7 +48,7 @@ export const PRINTERS: readonly PrinterProfile[] = [
     bedX: 256,
     bedY: 256,
     bedZ: 256,
-    note: `${BED_NOTE} Es una máquina cerrada y con cámara calefactada: la potencia real sube con ABS o ASA. ${ESTIMATE_NOTE}`,
+    note: [BED, 'printer.note.p1s', ESTIMATE],
   },
   {
     id: 'prusa-mk4',
@@ -57,7 +58,7 @@ export const PRINTERS: readonly PrinterProfile[] = [
     bedX: 250,
     bedY: 210,
     bedZ: 220,
-    note: `${BED_NOTE} ${ESTIMATE_NOTE}`,
+    note: [BED, ESTIMATE],
   },
   {
     id: 'prusa-mini',
@@ -67,7 +68,7 @@ export const PRINTERS: readonly PrinterProfile[] = [
     bedX: 180,
     bedY: 180,
     bedZ: 180,
-    note: `${BED_NOTE} ${ESTIMATE_NOTE}`,
+    note: [BED, ESTIMATE],
   },
   {
     id: 'creality-ender3-v3',
@@ -77,7 +78,7 @@ export const PRINTERS: readonly PrinterProfile[] = [
     bedX: 220,
     bedY: 220,
     bedZ: 250,
-    note: `${BED_NOTE} Se usan las medidas de la Ender-3 V3 SE; otras variantes (KE, CoreXZ) tienen otra altura: comprueba tu modelo. ${ESTIMATE_NOTE}`,
+    note: [BED, 'printer.note.ender3v3', ESTIMATE],
   },
   {
     id: 'creality-k1',
@@ -87,7 +88,7 @@ export const PRINTERS: readonly PrinterProfile[] = [
     bedX: 220,
     bedY: 220,
     bedZ: 250,
-    note: `${BED_NOTE} Es una máquina cerrada de alta velocidad. ${ESTIMATE_NOTE}`,
+    note: [BED, 'printer.note.k1', ESTIMATE],
   },
   {
     id: 'elegoo-neptune4',
@@ -97,9 +98,14 @@ export const PRINTERS: readonly PrinterProfile[] = [
     bedX: 225,
     bedY: 225,
     bedZ: 265,
-    note: `${BED_NOTE} ${ESTIMATE_NOTE}`,
+    note: [BED, ESTIMATE],
   },
 ];
+
+/** Nota de origen de un perfil en el idioma activo. */
+export function printerNote(printer: PrinterProfile): string {
+  return printer.note.map((key) => t(key)).join(' ');
+}
 
 const BY_ID: ReadonlyMap<string, PrinterProfile> = new Map(PRINTERS.map((printer) => [printer.id, printer]));
 
