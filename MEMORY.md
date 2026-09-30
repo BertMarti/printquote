@@ -6,12 +6,15 @@
 ### v0.2.0 (hito en curso, agente builder)
 Una rama y un PR por issue, cada rama parte de la anterior y todos van contra `main`:
 - #5 Perfiles de impresora (rama `agent/builder-5-perfiles`, PR #11): hecho, CI en verde.
-- #6 3MF y OBJ (rama `agent/builder-6-3mf-obj`): hecho, PR abierto (parte de la rama de #5).
-- #7 PDF con datos del negocio, #8 interfaz en inglés: pendientes (ver «Siguiente paso»).
+- #6 3MF y OBJ (rama `agent/builder-6-3mf-obj`, PR #12): hecho.
+- #7 PDF con datos del negocio (rama `agent/builder-7-pdf`): hecho, PR abierto (parte de la rama de #6).
+- #8 interfaz en inglés: pendiente (ver «Siguiente paso»).
 
 **#5 Perfiles de impresora.** `src/quote/printers.ts` (único archivo de datos, tipado, con `note` de origen por perfil): Bambu Lab A1 y P1S, Prusa MK4 y MINI+, Creality Ender-3 V3 y K1, Elegoo Neptune 4. Selector «Impresora» al principio del bloque 03; elegir un perfil rellena caudal, potencia y cama; editar cualquiera de esos campos vuelve a «Personalizada». `QuoteSettings.printerId` se guarda en localStorage (misma clave `printquote:ajustes:v1`; los ajustes antiguos sin perfil cargan como «Personalizada»).
 
 **#6 OBJ y 3MF.** `src/stl/obj.ts`, `zip.ts`, `xml.ts`, `threemf.ts` y `model.ts` (detección de formato y punto de entrada `parseModel`). `analyzeModel` (asíncrono) sustituye a `analyzeStl` en el worker y en el respaldo del hilo principal; `analyzeStl` sigue existiendo para STL síncrono. El análisis (volumen, aristas abiertas, avisos) es el mismo para los tres formatos. Botón «Abrir modelo 3D», selector `.stl,.obj,.3mf`, la ficha muestra «OBJ · n triángulos» / «3MF · …». `ModelParseError` (en `errors.ts`) es la base de los errores de lectura; `StlParseError` la extiende. `Mesh.format` pasa a `'binary' | 'ascii' | 'obj' | '3mf'`.
+
+**#7 Presupuesto en PDF.** Bloque plegable «06 Datos del negocio» (`<details>`, plegado por defecto): nombre, NIF/CIF, dirección, teléfono, correo, web, logotipo opcional, nº del próximo presupuesto, validez (días, 30 por defecto) e IVA (%, 21 por defecto); todo en `localStorage` (`printquote:negocio:v1`, aparte de los ajustes). Botón «Descargar PDF» (fila propia bajo Copiar/Imprimir). Módulos: `src/quote/tax.ts` (`computeTax`), `src/quote/business.ts` (perfil, normalización, `nextQuoteNumber`, `validUntil`), `src/pdf/document.ts` (contenido calculado y formateado, puro y testeado, con `PdfLabels`), `src/pdf/render.ts` (dibujo con pdf-lib), `src/ui/logo.ts` (reduce el logotipo con canvas), `src/ui/storage.ts` (`loadBusiness`…). El total del presupuesto sin IVA (`quote.total`) es la **base imponible**; IVA = base × tipo, redondeado a céntimos; total con IVA = base + cuota. El panel y el texto copiado siguen mostrando el total sin IVA.
 
 ### MVP y revisiones anteriores (v0.1.0)
 MVP completo en la rama `agent/builder` (PR abierto a `main`, pendiente de revisión del lead):
@@ -69,11 +72,15 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 (builder, #6): Detección de formato por contenido primero (firma ZIP → 3MF; el nombre solo desempata texto). Un STL binario nunca se toma por OBJ.
 - 2026-09-30 (builder, #6): 3MF: se toman los `item` de `build` que sean `printable` y de tipo `model` (los soportes, superficies y «otros» se omiten); transformación de 12 números con convención de vector fila, componiendo componente → objeto padre → item; unidades del modelo a mm (las del archivo de cada malla se convierten a las de la plantilla); una transformación con determinante negativo (espejo) invierte el orden de los vértices para que el volumen no salga negativo. Soporta `p:path` (componentes en otros `.model`, como los de Bambu Studio/PrusaSlicer). Sin `build`, usa los objetos que nadie referencia.
 - 2026-09-30 (builder, #6): OBJ: se juntan todos los objetos/grupos en una malla; caras poligonales trianguladas en abanico (bien para polígonos convexos; un polígono cóncavo puede dar una triangulación incorrecta, límite conocido). Sin unidades: se asume mm, como el STL.
+- 2026-09-30 (builder, #7): **Librería de PDF: `pdf-lib` 1.17.1** (MIT, JavaScript puro, 0 vulnerabilidades en `npm audit`). Motivos: (1) genera PDF en el navegador sin servidor ni canvas intermedio; (2) trae las fuentes estándar (Helvetica, Courier) con WinAnsi, o sea acentos, «€», «×», «³» y «·» sin incrustar fuentes, y `widthOfTextAtSize` para alinear y ajustar líneas; (3) incrusta PNG (con transparencia) y JPEG; (4) ~425 kB (178 kB gzip) en su propio chunk, cargado con `import()` solo al pulsar «Descargar PDF», así que el JS inicial no crece por ella (la parte de la interfaz sí suma ~9 kB). Alternativas descartadas: `jsPDF` (más pesada y con dependencias opcionales de HTML a PDF que no hacen falta), `pdfmake` (incluye fuentes/VFS grandes) y escribir el PDF a mano (habría que llevar las tablas de anchuras de fuente). Inconveniente conocido: `pdf-lib` no se actualiza desde 2021 (estable y sin incidencias conocidas; si se abandonara, el contenido está aislado en `document.ts` y solo `render.ts` habría que reescribir).
+- 2026-09-30 (builder, #7): Las fuentes estándar solo cubren WinAnsi: los caracteres fuera (polaco, chino, emojis…) salen como «?» (nunca falla). Un solo folio A4; los textos de negocio tienen longitud máxima (nombre 80, dirección 200…) y se acortan o parten para que la maqueta no se rompa.
+- 2026-09-30 (builder, #7): El logotipo se acepta como PNG/JPEG/WebP local, se reduce a ≤ 400 px con canvas (PNG, o JPEG si lo era) y se guarda como data URL (≤ 600 000 caracteres); nunca se envía a ningún sitio. Si `localStorage` no deja guardarlo, se avisa.
+- 2026-09-30 (builder, #7): El número de presupuesto es un texto libre (por defecto «AAAA-001») que sube solo (`2026-009` → `2026-010`) tras descargar cada PDF. Decisión sencilla: sin contador aparte ni comprobación de duplicados. Sin campo de cliente en esta versión.
 - 2026-09-30 (qa): Imagen Open Graph = copia de `docs/captura.png` en `public/og.png` (1440 × 900), URL absoluta de GitHub Pages.
 
 ## Siguiente paso
 00. Alberto: borrar la rama remota `agent/builder` (ya fusionada en `main`, SHA 5b0a29b: se puede recrear). Mientras exista, Git impide crear ramas `agent/builder/…`, y las de v0.2.0 se llaman `agent/builder-<n>-<slug>`. El borrado lo denegó el sistema de permisos del agente.
-0. builder (v0.2.0): tras #5 y #6, seguir con #7 (PDF) y #8 (inglés). Alberto fusiona los PR en ese orden (#11 antes que el de #6).
+0. builder (v0.2.0): tras #5, #6 y #7, queda #8 (inglés). Alberto fusiona los PR en orden (#11, #12, el de #7 y el de #8).
 1. lead: revisar y fusionar el PR de `agent/builder`; comprobar que el despliegue a Pages funciona tras el merge.
 2. lead: tras fusionar #1, revisar y fusionar el PR #2 de `agent/qa` (base `agent/builder`; si GitHub lo retarga a `main` al borrar la rama, vale igual).
 3. Pendiente de una persona (no automatizable aquí): probar con lector de pantalla real (NVDA/VoiceOver) y la hoja de impresión en Firefox y Safari; comprobar la vista previa del enlace (og.png) una vez desplegado.
@@ -84,6 +91,7 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - El chunk del visor pesa ~560 kB (139 kB gzip) por three.js; se carga aparte con `import()` y `chunkSizeWarningLimit` sigue en 800 kB.
 - Modelo de coste simplificado: no incluye soportes, balsa ni purga; la cáscara (área × grosor) sobreestima en piezas muy detalladas.
 - OBJ: los polígonos cóncavos (caras de más de 3 vértices) se trianguan en abanico y pueden salir mal; los OBJ y 3MF no se han probado con archivos reales de laminadores (solo con los construidos en los tests y una prueba manual en Chrome).
+- PDF: solo caracteres WinAnsi (el resto sale como «?»); una página; sin campo de cliente. Revisar el PDF impreso/abierto en distintos visores (solo se ha comprobado renderizado con PyMuPDF y la descarga en Chrome).
 - Mallas muy grandes (> 400 000 triángulos) no dibujan las aristas marcadas, por rendimiento. Con mallas grandes (< 400 000) el `EdgesGeometry` y las normales del visor se calculan aún en el hilo principal (unos cientos de ms de bloqueo tras la lectura).
 - Si falla la lectura de un archivo, se mantiene la pieza anterior en pantalla junto al aviso de error (intencionado, pero puede confundir).
 - El enlace `#ejemplo` solo se atiende al cargar la página (no escucha `hashchange`).
@@ -96,3 +104,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 docs · Claude Code Sonnet (agent/docs): `docs/USO.md` y `CONTRIBUTING.md`, sección «Documentación» y «Cómo se ha hecho» del README, fila docs de AGENTS.md; sin cambios de código; PR contra agent/qa.
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder-5-perfiles): #5 perfiles de impresora (`printers.ts`, selector, persistencia, tests) y actualización de AGENTS.md con el flujo por issues del hito.
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder-6-3mf-obj): #6 soporte de OBJ y 3MF (parsers, ZIP a mano, detección de formato, avisos iguales que STL, interfaz y tests).
+- 2026-09-30 builder · Claude Code Sonnet (agent/builder-7-pdf): #7 presupuesto en PDF (pdf-lib bajo demanda, datos del negocio plegables y persistentes, logotipo local, IVA configurable, número de presupuesto correlativo, tests).

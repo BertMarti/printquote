@@ -1,3 +1,4 @@
+import { normalizeBusiness, type BusinessProfile } from '../quote/business';
 import { DEFAULT_SETTINGS, normalizeSettings, type QuoteSettings } from '../quote/settings';
 
 const STORAGE_KEY = 'printquote:ajustes:v1';
@@ -23,6 +24,36 @@ export function saveSettings(settings: QuoteSettings): void {
 export function clearSettings(): void {
   try {
     window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Ídem.
+  }
+}
+
+const BUSINESS_KEY = 'printquote:negocio:v1';
+
+/** Lee los datos del negocio guardados (o los de por defecto). */
+export function loadBusiness(): BusinessProfile {
+  try {
+    const raw = window.localStorage.getItem(BUSINESS_KEY);
+    return normalizeBusiness(raw ? (JSON.parse(raw) as unknown) : undefined);
+  } catch {
+    return normalizeBusiness(undefined);
+  }
+}
+
+/** Guarda los datos del negocio. Devuelve false si el navegador no ha dejado (sin espacio, modo privado…). */
+export function saveBusiness(business: BusinessProfile): boolean {
+  try {
+    window.localStorage.setItem(BUSINESS_KEY, JSON.stringify(business));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function clearBusiness(): void {
+  try {
+    window.localStorage.removeItem(BUSINESS_KEY);
   } catch {
     // Ídem.
   }
