@@ -15,7 +15,7 @@
 - **Carga STL** (binario o ASCII), **OBJ** y **3MF** arrastrándolos a la ventana o con «Abrir modelo 3D». ¿Sin archivo? «Probar con pieza de ejemplo».
 - **Mide la pieza**: volumen, superficie, caja envolvente (X × Y × Z en mm) y número de triángulos.
 - **Avisa** si la malla parece abierta o tiene las normales invertidas, si no cabe en tu cama (por defecto 220 × 220 × 250 mm) o si mide menos de 1 mm (¿exportada en metros o pulgadas?).
-- **Visor 3D** con la pieza apoyada en la cama, rejilla de 10 mm, órbita, zoom y «Restablecer vista».
+- **Visor 3D** con la pieza apoyada en la cama, rejilla de 10 mm, órbita, zoom (rueda, pellizco o teclas + y −) y «Restablecer vista».
 - **Perfiles de impresora**: elige Bambu Lab A1 o P1S, Prusa MK4 o MINI+, Creality Ender-3 V3 o K1, Elegoo Neptune 4 (o «Personalizada») y se rellenan caudal, potencia y cama con valores de partida **orientativos**; al editar cualquiera de ellos vuelve a «Personalizada».
 - **Presupuesto en vivo**: material, relleno, perímetros, caudal, energía, margen y copias. Cualquier cambio recalcula al instante.
 - **Copiar presupuesto** en texto plano, **Imprimir** una hoja limpia con la vista 3D y el desglose, o **Descargar PDF**: un presupuesto de una página con el nombre y el logotipo de tu negocio, tus datos de contacto, número, fecha, validez, desglose e **IVA** (21 % por defecto, configurable). Los datos del negocio se rellenan una vez en el bloque plegable «Datos del negocio» y se guardan en tu navegador. Límites: una página A4, sin campo de cliente, y el PDF incrusta Noto Sans y JetBrains Mono (latino, griego y cirílico); chino, japonés y emojis salen como «?».

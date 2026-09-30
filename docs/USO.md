@@ -110,11 +110,11 @@ La pieza aparece apoyada sobre la cama de impresión. La rejilla fina marca cuad
 | Acción | Ratón | Pantalla táctil | Teclado |
 |---|---|---|---|
 | **Girar** | Arrastrar con el botón izquierdo | Un dedo | Mayús + flechas |
-| **Acercar / alejar** | Rueda | Pellizcar con dos dedos | (no disponible) |
+| **Acercar / alejar** | Rueda | Pellizcar con dos dedos | **+** (o **=**) acerca y **−** (o **_**) aleja |
 | **Desplazar** | Arrastrar con el botón derecho | Dos dedos | Flechas |
 | **Volver a encuadrar** | Botón «Restablecer vista» | Botón «Restablecer vista» | Botón «Restablecer vista» (con Tab y Enter) |
 
-Para usar el teclado, llega hasta el visor con la tecla **Tab** (verás el foco marcado) y pulsa las flechas.
+Para usar el teclado, llega hasta el visor con la tecla **Tab** (verás el foco marcado) y pulsa las flechas, o **+** y **−** para acercar y alejar (cada pulsación cambia la distancia un 15 %; el cambio es inmediato, sin animación, así que respeta la opción de «reducir movimiento»). Con Ctrl, Cmd o Alt no se hace zoom en el visor: siguen siendo el zoom de la página y los atajos del sistema.
 
 Consejos:
 

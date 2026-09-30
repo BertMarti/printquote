@@ -1,5 +1,5 @@
 # MEMORY.md · printquote
-Última actualización: 2026-09-30 por builder (v0.3.0, #20)
+Última actualización: 2026-09-30 por builder (v0.3.0, #21)
 
 ## Estado actual
 
@@ -8,7 +8,8 @@
 - #18 Metadatos en inglés (rama `agent/builder/18-metadatos-en`): hecho, ver abajo.
 - #19 Aviso OBJ de más de 200 vértices (rama `agent/builder/19-aviso-obj`): hecho, ver abajo.
 - #20 Tope de triángulos en 3MF (rama `agent/builder/20-tope-3mf`): hecho, ver abajo.
-- #21 y #22: pendientes.
+- #21 Zoom con teclado (rama `agent/builder/21-zoom-teclado`): hecho, ver abajo.
+- #22: pendiente.
 
 **#17 PDF con fuente incrustada.** `src/pdf/fonts.ts` (`loadFonts`: `fetch` de cuatro `.ttf` con `new URL(…, import.meta.url)`, que Vite emite como recursos aparte), `src/pdf/fonts/` (las cuatro fuentes y las licencias OFL) y `render.ts` (`pdf.registerFontkit(fontkit)`, `embedFont(bytes, { subset: true })`; `renderQuotePdf(doc, fontBytes?)` acepta las fuentes ya cargadas, que es como lo prueban los tests). La transcripción sin marcas (ǎ → a) y el «?» final siguen para lo que las fuentes no cubren. Los tests leen el texto del PDF con la tabla ToUnicode (`tests/helpers/pdf-text.ts`): el PDF ya no lleva cadenas WinAnsi sino identificadores de glifo.
 
@@ -17,6 +18,8 @@
 **#19 Aviso de polígonos grandes.** `parseObj` cuenta en `Mesh.largePolygons` (campo opcional, solo OBJ) las caras de más de `MAX_EAR_CLIPPING` = 200 vértices; `meshWarnings(stats, bed, largePolygons)` añade el aviso `big-polygons`, que la interfaz pinta en la lista de avisos existente (`aria-live="polite"`) con `warn.bigPolygons` (es/en, con `{count}`). Decisión sencilla: se avisa por todo polígono de más de 200 vértices, sin comprobar si es cóncavo (comprobarlo costaría una pasada extra y el aviso ya dice «si alguno es cóncavo»). Sin estilos nuevos: reutiliza el de los demás avisos.
 
 **#20 Tope de triángulos en 3MF.** `MAX_3MF_TRIANGLES` = 6 000 000 en `threemf.ts` (exportado): se acumulan los triángulos de cada instancia al recorrer la plantilla (`visit`) y, al pasar el tope, `ModelParseError('err.3mf.tooManyTriangles', { millions: 6 })` (es/en) **antes** de reservar el `Float32Array` (216 MB a 36 B por triángulo). Por qué 6 M: es lo que cabe en un STL de 300 MB (50 B por triángulo), el límite de archivo de la interfaz, así que los tres formatos tienen el mismo orden de magnitud. El test construye un 3MF sintético con 500 001 `item` de un cubo (6 000 012 triángulos) sin construir esa malla. Límite conocido: un árbol de componentes vacíos (sin triángulos) no suma y no se corta por este tope, solo por la profundidad máxima (32).
+
+**#21 Zoom con teclado.** `src/viewer/zoom.ts` (puro, sin three.js, testeado en `tests/zoom.test.ts`): `keyZoomFactor(evento)` da 1/1,15 para `+` y `=`, 1,15 para `-` y `_`, y `null` con Ctrl/Cmd/Alt (zoom de la página, atajos del sistema) o cualquier otra tecla. `Viewer` escucha `keydown` en el contenedor (que ya es enfocable) y mueve la cámara sobre la línea al objetivo; `controls.update()` la limita a `minDistance`/`maxDistance` y dispara el repintado. Sin animación: el cambio es inmediato, así que `prefers-reduced-motion` se respeta por construcción (la rueda tampoco se anima). La pista visible pasa a «rueda o +/− para acercar» y la etiqueta accesible del visor (`viewer.label`) menciona Más y Menos. Comprobado en el navegador enviando `keydown` sintéticos: 4 × `-` aleja, 30 × `+` llega al mínimo, Ctrl + `-` no se toca. (Las teclas enviadas por la herramienta del navegador llegan sin `key`, por eso no se usaron.)
 
 ### v0.2.0 (fusionado en `main`, PR #11 a #16)
 Una rama y un PR por issue, cada rama parte de la anterior y todos van contra `main`:
@@ -142,7 +145,7 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - Mallas muy grandes (> 400 000 triángulos) no dibujan las aristas marcadas, por rendimiento. Con mallas grandes (< 400 000) el `EdgesGeometry` y las normales del visor se calculan aún en el hilo principal (unos cientos de ms de bloqueo tras la lectura).
 - Si falla la lectura de un archivo, se mantiene la pieza anterior en pantalla junto al aviso de error (intencionado, pero puede confundir).
 - El enlace `#ejemplo` solo se atiende al cargar la página (no escucha `hashchange`).
-- El visor con teclado usa lo que da OrbitControls (flechas desplazan, Mayús + flechas giran); no hay zoom con teclado.
+- El visor con teclado: flechas desplazan y Mayús + flechas giran (OrbitControls), `+`/`-` acercan y alejan (#21).
 
 ## Registro de sesiones
 - 2026-09-29 lead (main): creación del repositorio y reparto del equipo.
@@ -159,3 +162,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder/18-metadatos-en): #18 metadatos Open Graph y Twitter traducidos con `data-i18n-attr`, `twitter:*` completos, tests en los dos idiomas.
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder/19-aviso-obj): #19 aviso de OBJ con polígonos de más de 200 vértices (contador en el parser, `big-polygons`, textos es/en, tests, docs).
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder/20-tope-3mf): #20 tope de 6 millones de triángulos en 3MF con error traducido y test sintético.
+- 2026-09-30 builder · Claude Code Sonnet (agent/builder/21-zoom-teclado): #21 zoom con teclado en el visor (`zoom.ts`, listener en `Viewer`, pista y etiqueta accesible, tests, docs).

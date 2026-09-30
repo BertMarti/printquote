@@ -19,6 +19,7 @@ import {
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import type { Vec3 } from '../stl/types';
+import { keyZoomFactor } from './zoom';
 
 export interface ViewerTheme {
   background: string;
@@ -63,9 +64,10 @@ export class Viewer {
     // Inercia al soltar, salvo que se haya pedido reducir el movimiento.
     this.controls.enableDamping = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.controls.dampingFactor = 0.12;
-    // Teclado (con el foco en el visor): flechas para desplazar, Mayús + flechas para girar.
+    // Teclado (con el foco en el visor): flechas para desplazar, Mayús + flechas para girar y + / − para acercar.
     this.controls.keyRotateSpeed = 15;
     this.controls.listenToKeyEvents(container);
+    container.addEventListener('keydown', this.onKeyDown);
     this.controls.addEventListener('change', () => this.requestRender());
 
     this.scene.add(new HemisphereLight(0xffffff, 0x8a8580, 1.6));
@@ -179,11 +181,22 @@ export class Viewer {
   dispose(): void {
     cancelAnimationFrame(this.frame);
     this.resizeObserver.disconnect();
+    this.container.removeEventListener('keydown', this.onKeyDown);
     this.controls.dispose();
     this.clearPart();
     this.renderer.dispose();
     this.renderer.domElement.remove();
   }
+
+  /** Zoom con el teclado: mueve la cámara sobre la línea al objetivo; `update()` la limita a min/maxDistance. */
+  private readonly onKeyDown = (event: KeyboardEvent): void => {
+    const factor = keyZoomFactor(event);
+    if (factor === null) return;
+    event.preventDefault();
+    const offset = this.camera.position.clone().sub(this.controls.target);
+    this.camera.position.copy(this.controls.target).add(offset.multiplyScalar(factor));
+    this.controls.update();
+  };
 
   private requestRender(): void {
     if (this.frame) return;
