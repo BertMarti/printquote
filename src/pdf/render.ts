@@ -1,6 +1,8 @@
-// Este módulo importa pdf-lib (~500 kB): la interfaz lo carga con import() solo cuando se pide un PDF.
-import { PDFDocument, rgb, StandardFonts, type PDFFont, type PDFImage, type PDFPage } from 'pdf-lib';
+// Este módulo importa pdf-lib y fontkit (~500 kB): la interfaz lo carga con import() solo cuando se pide un PDF.
+import fontkit from '@pdf-lib/fontkit';
+import { PDFDocument, rgb, type PDFFont, type PDFImage, type PDFPage } from 'pdf-lib';
 import type { PdfRow, QuoteDocument } from './document';
+import { loadFonts, type FontBytes } from './fonts';
 
 /** A4 en puntos. */
 const PAGE_W = 595.28;
@@ -26,18 +28,12 @@ interface Fonts {
   readonly monoBold: PDFFont;
 }
 
-/** Letras sin descomposición Unicode que tienen un equivalente evidente en el alfabeto latino básico. */
-const LATIN_FALLBACK: Readonly<Record<string, string>> = {
-  ł: 'l', Ł: 'L', đ: 'd', Đ: 'D', ı: 'i', İ: 'I', ħ: 'h', Ħ: 'H', ŧ: 't', Ŧ: 'T',
-};
 /** Sin anchura o de formato (unión de emojis, selector de variante…): no se dibujan. */
 const INVISIBLE = /[\p{Cf}\p{Variation_Selector}]/gu;
 
 /**
- * Las fuentes estándar solo llevan WinAnsi (español, francés, alemán… con sus acentos, «¿¡€»). Lo que
- * falta se transcribe sin marcas (ć → c, ł → l, ș → s) y, si aun así no está, sale como «?».
- * ponytail: sin fuente incrustada no hay cirílico, griego ni CJK; pdf-lib no trae ninguna con cobertura
- * amplia y una fuente aparte (fontkit + TTF) pesaría cientos de kB.
+ * Las fuentes incrustadas cubren latino, griego y cirílico. Lo que falta (vietnamita, chino, emojis…)
+ * se transcribe sin marcas (ǎ → a) y, si aun así no está, sale como «?».
  */
 class Sanitizer {
   private readonly sets = new Map<PDFFont, Set<number>>();
@@ -56,7 +52,7 @@ class Sanitizer {
         continue;
       }
       // Guiones raros (p. ej. el que no permite salto de línea) → «-»; el resto, sin marcas diacríticas.
-      const plain = LATIN_FALLBACK[char] ?? (/\p{Pd}/u.test(char) ? '-' : char.normalize('NFD').replace(/\p{M}/gu, ''));
+      const plain = /\p{Pd}/u.test(char) ? '-' : char.normalize('NFD').replace(/\p{M}/gu, '');
       out += plain !== '' && [...plain].every(has) ? plain : '?';
     }
     return out;
@@ -64,8 +60,10 @@ class Sanitizer {
 }
 
 /** Bytes de un PDF de presupuesto de una página. */
-export async function renderQuotePdf(doc: QuoteDocument): Promise<Uint8Array> {
+export async function renderQuotePdf(doc: QuoteDocument, fontBytes?: FontBytes): Promise<Uint8Array> {
+  const bytes = fontBytes ?? (await loadFonts());
   const pdf = await PDFDocument.create();
+  pdf.registerFontkit(fontkit);
   pdf.setTitle(doc.metadata.title);
   pdf.setAuthor(doc.metadata.author);
   pdf.setCreator('printquote');
@@ -74,17 +72,19 @@ export async function renderQuotePdf(doc: QuoteDocument): Promise<Uint8Array> {
   pdf.setModificationDate(doc.date);
   pdf.setLanguage(doc.metadata.language);
 
+  // subset: solo viajan los glifos usados (un PDF de ~50 kB en vez de ~250 kB).
+  const embed = (data: Uint8Array): Promise<PDFFont> => pdf.embedFont(data, { subset: true });
   const fonts: Fonts = {
-    sans: await pdf.embedFont(StandardFonts.Helvetica),
-    bold: await pdf.embedFont(StandardFonts.HelveticaBold),
-    mono: await pdf.embedFont(StandardFonts.Courier),
-    monoBold: await pdf.embedFont(StandardFonts.CourierBold),
+    sans: await embed(bytes.sans),
+    bold: await embed(bytes.bold),
+    mono: await embed(bytes.mono),
+    monoBold: await embed(bytes.monoBold),
   };
   const sanitizer = new Sanitizer();
   const page = pdf.addPage([PAGE_W, PAGE_H]);
 
   // Imágenes: si una no se puede leer, el PDF sale igualmente sin ella.
-  const embed = async (dataUrl: string | null): Promise<PDFImage | null> => {
+  const embedImage = async (dataUrl: string | null): Promise<PDFImage | null> => {
     if (!dataUrl) return null;
     try {
       return dataUrl.startsWith('data:image/jpeg') ? await pdf.embedJpg(dataUrl) : await pdf.embedPng(dataUrl);
@@ -92,8 +92,8 @@ export async function renderQuotePdf(doc: QuoteDocument): Promise<Uint8Array> {
       return null;
     }
   };
-  const logo = await embed(doc.logo);
-  const snapshot = await embed(doc.image);
+  const logo = await embedImage(doc.logo);
+  const snapshot = await embedImage(doc.image);
 
   const draw = new Drawer(page, fonts, sanitizer);
 

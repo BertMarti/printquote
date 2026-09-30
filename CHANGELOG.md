@@ -4,6 +4,10 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 
 ## [Sin publicar]
 
+### Añadido
+
+- **PDF con fuente incrustada** (#17): el PDF lleva Noto Sans y JetBrains Mono (licencia OFL, con su licencia en `src/pdf/fonts/`) mediante `@pdf-lib/fontkit`, así que el cirílico y el griego se ven bien en lugar de «?». Las fuentes y fontkit solo se descargan al pulsar «Descargar PDF»; el JS inicial no crece.
+
 ## [0.2.0] - 2026-09-30
 
 Hito v0.2.0: más formatos de entrada, perfiles de impresora, presupuesto en PDF e interfaz en inglés.

@@ -305,7 +305,7 @@ El idioma del PDF es el que tengas activo en la interfaz.
 
 **Límites del PDF** (todo ello, para que quepa siempre en una página):
 
-- **Caracteres no latinos.** El PDF usa las fuentes estándar (Helvetica y Courier), que solo cubren el alfabeto latino occidental. Los acentos, la ñ, la ü, «¿», «¡» y «€» salen bien. Las letras latinas que faltan se transcriben sin marcas (ć → c, ł → l, ș → s), y el resto de caracteres (cirílico, griego, chino, japonés, emojis…) salen como «**?**». Los caracteres invisibles se eliminan. Si tu nombre o dirección usa otro alfabeto, el PDF no saldrá bien.
+- **Alfabetos.** El PDF incrusta las fuentes Noto Sans y JetBrains Mono (licencia libre OFL), que cubren el latino (español, polaco, turco, rumano, checo…), el **griego** y el **cirílico**. Las letras latinas que faltan (vietnamita, por ejemplo) se transcriben sin marcas, y el resto (chino, japonés, árabe, emojis…) salen como «**?**». Los caracteres invisibles se eliminan. Las fuentes se descargan la primera vez que pulsas «Descargar PDF» (unos 230 kB) y hace falta conexión en ese momento.
 - **Dirección.** El bloque del emisor (NIF, dirección, teléfono, correo y web) ocupa como máximo **10 líneas** en el PDF; si tu dirección es tan larga que se pasa, lo que sobra se corta y la última línea acaba en «...». Escribe la dirección de forma breve, en pocas líneas. El formulario admite hasta 200 caracteres.
 - Un solo folio; sin campo de cliente (no hay un espacio para el nombre de quien recibe el presupuesto).
 - Si algo falla al generarlo, verás «No se ha podido crear el PDF» y puedes usar **Imprimir** y guardar la hoja como PDF.
@@ -433,7 +433,7 @@ Al salir de un campo, los valores fuera de rango se ajustan al límite más cerc
 
 ### El PDF sale con signos «?» en lugar de letras
 
-Las fuentes del PDF solo cubren el alfabeto latino occidental. Los acentos y la ñ salen bien; el cirílico, el griego, el chino, el japonés o los emojis no (salen como «?»). Mira los [límites del PDF](#descargar-el-pdf). Si necesitas otro alfabeto, usa **Imprimir** y guarda la hoja como PDF.
+Las fuentes del PDF cubren latino, griego y cirílico. El chino, el japonés, el árabe o los emojis no (salen como «?»). Mira los [límites del PDF](#descargar-el-pdf). Si necesitas otro alfabeto, usa **Imprimir** y guarda la hoja como PDF.
 
 ### Mi dirección sale cortada en el PDF
 

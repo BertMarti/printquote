@@ -1,9 +1,15 @@
 # MEMORY.md · printquote
-Última actualización: 2026-09-30 por docs (documentación de v0.2.0, #10)
+Última actualización: 2026-09-30 por builder (v0.3.0, #17)
 
 ## Estado actual
 
-### v0.2.0 (hito en curso; todas las issues hechas, pendiente de fusionar los PR)
+### v0.3.0 (hito en curso; builder: #17 a #22, una rama y un PR por issue, cada rama parte de la anterior)
+- #17 PDF con fuente incrustada (rama `agent/builder/17-pdf-fuente`): hecho, ver abajo.
+- #18 a #22: pendientes.
+
+**#17 PDF con fuente incrustada.** `src/pdf/fonts.ts` (`loadFonts`: `fetch` de cuatro `.ttf` con `new URL(…, import.meta.url)`, que Vite emite como recursos aparte), `src/pdf/fonts/` (las cuatro fuentes y las licencias OFL) y `render.ts` (`pdf.registerFontkit(fontkit)`, `embedFont(bytes, { subset: true })`; `renderQuotePdf(doc, fontBytes?)` acepta las fuentes ya cargadas, que es como lo prueban los tests). La transcripción sin marcas (ǎ → a) y el «?» final siguen para lo que las fuentes no cubren. Los tests leen el texto del PDF con la tabla ToUnicode (`tests/helpers/pdf-text.ts`): el PDF ya no lleva cadenas WinAnsi sino identificadores de glifo.
+
+### v0.2.0 (fusionado en `main`, PR #11 a #16)
 Una rama y un PR por issue, cada rama parte de la anterior y todos van contra `main`:
 - #5 Perfiles de impresora (rama `agent/builder-5-perfiles`, PR #11): hecho, CI en verde.
 - #6 3MF y OBJ (rama `agent/builder-6-3mf-obj`, PR #12): hecho.
@@ -104,18 +110,21 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 (docs, #10): `docs/USO.md` conserva la numeración 1-13 y añade «Cambiar el idioma» como 14 (las FAQ pasan a la 15) para no romper enlaces ni referencias cruzadas; los perfiles van dentro de la sección 7 y el PDF dentro de la 10.
 - 2026-09-30 (docs, #10): la guía describe los límites tal como están en el código: el PDF transcribe las letras latinas que faltan y el resto sale como «?»; el bloque del emisor (NIF, dirección, teléfono, correo, web) se recorta a 10 líneas por el final, así que una dirección muy larga puede tapar el teléfono, el correo y la web.
 - 2026-09-30 (docs, #10): «Cómo se ha hecho» del README: v0.1.0, lead y builder con Claude Opus, qa y docs con Sonnet; v0.2.0, todo con Sonnet; OpenCode previsto para docs pero sin poder ejecutarse en modo autónomo; Alberto supervisa y fusiona.
+- 2026-09-30 (builder, #17): **Fuentes del PDF: Noto Sans (Regular y Bold) y JetBrains Mono (Regular y Bold)**, licencia SIL OFL 1.1, sin nombre reservado (por eso el recorte puede conservar el nombre; IBM Plex, que sí lo declara, se descartó). Motivos: Noto Sans cubre latino, latino extendido, griego y cirílico con calidad de texto; JetBrains Mono (cifras tabulares, como el Courier que sustituye) cubre latino, griego y casi todo el cirílico (faltan Ѐ Ѝ ѐ ѝ, que se transcriben a Е/И). Se mantiene la pareja sans + monoespaciada de la hoja técnica. Origen: fuentes variables de `github.com/google/fonts` (`ofl/notosans`, `ofl/jetbrainsmono`), fijadas en 400 y 700 con `fonttools varLib.instancer` y recortadas con `pyftsubset` a latino (U+0020-017F y ș ț), griego, cirílico, puntuación general, €, №, ™ y −, con `kern` y sin hinting (comandos en `src/pdf/fonts/LEEME.txt`). Peso: 77 kB + 77 kB + 35 kB + 35 kB = 224 kB en disco (el Noto Sans completo variable pesa 2 MB). Además `subset: true` de pdf-lib: un PDF típico pesa ~30 kB.
+- 2026-09-30 (builder, #17): **Carga bajo demanda**: `@pdf-lib/fontkit` 1.1.1 (MIT, la pareja oficial de pdf-lib, 0 vulnerabilidades) se importa estáticamente desde `render.ts`, que ya es un chunk que solo se pide al pulsar «Descargar PDF»; los `.ttf` se piden con `fetch` en ese momento. El JS inicial no cambia (78,5 kB, 27,3 kB gzip). Coste: el chunk del PDF pasa de 425 kB a 1,14 MB (178 → 507 kB gzip, fontkit arrastra tablas Unicode, brotli y demás) y se descargan 224 kB de fuentes la primera vez; hace falta conexión en ese momento (si falla, sale el aviso de «no se pudo generar el PDF»). Descartado: fuente en base64 dentro del JS (inflaría el chunk), y un PDF sin fuentes incrustadas (no resuelve el cirílico).
+- 2026-09-30 (builder, #17): `tests/*.test.ts` pasan las fuentes a `renderQuotePdf(doc, testFonts)` leídas del disco (Node no puede hacer `fetch` de un `file://`); la prueba de interfaz que pulsa el botón simula `fetch` para los `.ttf` (`fontResponse`). `.gitattributes` marca `*.ttf` como binario.
 
 ## Siguiente paso
-1. Alberto: fusionar los PR en orden #11, #12, #13, #14, #15 y #16 (docs). Cada uno se ha probado sobre el anterior; tras cada fusión conviene comprobar el CI de `main`. Después, borrar la rama remota `agent/builder` (ver 2) y publicar la release **v0.2.0** (etiqueta `v0.2.0`, con el texto de `CHANGELOG.md`; crea también la etiqueta `v0.1.0` si se quiere que funcionen los enlaces de comparación). Después, lead: comprobar el despliegue a Pages y los enlaces de `docs/USO.md`, `CHANGELOG.md` y `CONTRIBUTING.md` en GitHub.
-2. Alberto: borrar la rama remota `agent/builder` (ya fusionada en `main`, SHA 5b0a29b: se puede recrear). Mientras exista, Git impide crear ramas `agent/builder/…`, y las de v0.2.0 se llaman `agent/builder-<n>-<slug>`. El borrado lo denegó el sistema de permisos del agente.
+1. (v0.2.0, ya fusionada) Publicar la release **v0.2.0** (etiqueta `v0.2.0`, con el texto de `CHANGELOG.md`; crea también la etiqueta `v0.1.0` si se quiere que funcionen los enlaces de comparación). Después, lead: comprobar el despliegue a Pages y los enlaces de `docs/USO.md`, `CHANGELOG.md` y `CONTRIBUTING.md` en GitHub.
+2. (hecho) La rama remota `agent/builder` ya no existe: las ramas de v0.3.0 son `agent/builder/<n>-<slug>`.
 3. Pendiente de una persona (no automatizable aquí): probar con lector de pantalla real (NVDA/VoiceOver) y la hoja de impresión en Firefox y Safari; comprobar la vista previa del enlace (og.png) una vez desplegado.
 4. Pendiente de una persona: releer `docs/USO.md` con calma y probar la calibración con su laminador real; los valores de partida (caudal, potencia) son orientativos.
 
 ## Problemas conocidos
 - OBJ: polígonos cóncavos de más de 200 vértices siguen en abanico (recorte de orejas es O(n³)); no hay aviso al usuario.
-- PDF sin fuente incrustada: cirílico, griego, CJK y emojis salen como «?» (transcribir solo cubre alfabeto latino). Sin tope de triángulos totales en 3MF con muchas instancias (un RangeError sale como error genérico).
+- PDF: chino, japonés, árabe y emojis siguen saliendo como «?» (las fuentes cubren latino, griego y cirílico). Sin tope de triángulos totales en 3MF con muchas instancias (un RangeError sale como error genérico).
 - Sin revisar por falta de tiempo: descarga del PDF y hoja de impresión con lector real, foco de teclado del resumen de «Datos del negocio» a ojo, anuncio al pasar a «Personalizada» al editar un campo.
-- El chunk del visor pesa ~560 kB (139 kB gzip) por three.js; se carga aparte con `import()` y `chunkSizeWarningLimit` sigue en 800 kB.
+- El chunk del visor pesa ~560 kB (139 kB gzip) por three.js y el del PDF ~1,1 MB (507 kB gzip, pdf-lib + fontkit); ambos se cargan aparte con `import()` y `chunkSizeWarningLimit` está en 1200 kB.
 - Modelo de coste simplificado: no incluye soportes, balsa ni purga; la cáscara (área × grosor) sobreestima en piezas muy detalladas.
 - Los OBJ y 3MF no se han probado con archivos reales de laminadores (solo con los construidos en los tests y una prueba manual en Chrome).
 - PDF: una página; sin campo de cliente. Revisar el PDF impreso/abierto en distintos visores (solo se ha comprobado renderizado con PyMuPDF y la descarga en Chrome).
@@ -137,3 +146,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder-8-ingles): #8 interfaz en inglés (diccionarios es/en, selector de idioma, formato por idioma, errores con código, PDF y textos traducidos, tests de claves y de interfaz en inglés).
 - 2026-09-30 qa · Claude Code Sonnet (agent/qa-9-revision-v0.2): revisión de v0.2.0 (#9): OBJ cóncavo/índices, PDF (transcripción, IVA, dirección), 3MF/ZIP (unidades, ZIP64), idioma en caliente, contraste y 360 px; PR #15.
 - 2026-09-30 docs · Claude Code Sonnet (agent/docs-10-documentacion-v0.2): #10 documentación de v0.2.0 (`CHANGELOG.md`, `docs/USO.md`, README, CONTRIBUTING y este archivo); sin cambios de código; PR #16 (después de #15).
+- 2026-09-30 builder · Claude Code Sonnet (agent/builder/17-pdf-fuente): #17 PDF con fuente incrustada (Noto Sans + JetBrains Mono subconjunto, fontkit bajo demanda, tests de cirílico y griego con lectura ToUnicode, docs).
