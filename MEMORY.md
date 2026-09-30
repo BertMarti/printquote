@@ -7,14 +7,16 @@
 Una rama y un PR por issue, cada rama parte de la anterior y todos van contra `main`:
 - #5 Perfiles de impresora (rama `agent/builder-5-perfiles`, PR #11): hecho, CI en verde.
 - #6 3MF y OBJ (rama `agent/builder-6-3mf-obj`, PR #12): hecho.
-- #7 PDF con datos del negocio (rama `agent/builder-7-pdf`): hecho, PR abierto (parte de la rama de #6).
-- #8 interfaz en inglés: pendiente (ver «Siguiente paso»).
+- #7 PDF con datos del negocio (rama `agent/builder-7-pdf`, PR #13): hecho.
+- #8 interfaz en inglés (rama `agent/builder-8-ingles`): hecho, PR abierto (parte de la rama de #7).
 
 **#5 Perfiles de impresora.** `src/quote/printers.ts` (único archivo de datos, tipado, con `note` de origen por perfil): Bambu Lab A1 y P1S, Prusa MK4 y MINI+, Creality Ender-3 V3 y K1, Elegoo Neptune 4. Selector «Impresora» al principio del bloque 03; elegir un perfil rellena caudal, potencia y cama; editar cualquiera de esos campos vuelve a «Personalizada». `QuoteSettings.printerId` se guarda en localStorage (misma clave `printquote:ajustes:v1`; los ajustes antiguos sin perfil cargan como «Personalizada»).
 
 **#6 OBJ y 3MF.** `src/stl/obj.ts`, `zip.ts`, `xml.ts`, `threemf.ts` y `model.ts` (detección de formato y punto de entrada `parseModel`). `analyzeModel` (asíncrono) sustituye a `analyzeStl` en el worker y en el respaldo del hilo principal; `analyzeStl` sigue existiendo para STL síncrono. El análisis (volumen, aristas abiertas, avisos) es el mismo para los tres formatos. Botón «Abrir modelo 3D», selector `.stl,.obj,.3mf`, la ficha muestra «OBJ · n triángulos» / «3MF · …». `ModelParseError` (en `errors.ts`) es la base de los errores de lectura; `StlParseError` la extiende. `Mesh.format` pasa a `'binary' | 'ascii' | 'obj' | '3mf'`.
 
 **#7 Presupuesto en PDF.** Bloque plegable «06 Datos del negocio» (`<details>`, plegado por defecto): nombre, NIF/CIF, dirección, teléfono, correo, web, logotipo opcional, nº del próximo presupuesto, validez (días, 30 por defecto) e IVA (%, 21 por defecto); todo en `localStorage` (`printquote:negocio:v1`, aparte de los ajustes). Botón «Descargar PDF» (fila propia bajo Copiar/Imprimir). Módulos: `src/quote/tax.ts` (`computeTax`), `src/quote/business.ts` (perfil, normalización, `nextQuoteNumber`, `validUntil`), `src/pdf/document.ts` (contenido calculado y formateado, puro y testeado, con `PdfLabels`), `src/pdf/render.ts` (dibujo con pdf-lib), `src/ui/logo.ts` (reduce el logotipo con canvas), `src/ui/storage.ts` (`loadBusiness`…). El total del presupuesto sin IVA (`quote.total`) es la **base imponible**; IVA = base × tipo, redondeado a céntimos; total con IVA = base + cuota. El panel y el texto copiado siguen mostrando el total sin IVA.
+
+**#8 Interfaz en inglés.** `src/i18n/`: `es.ts` (referencia, ~300 claves planas) y `en.ts` (`Record<Key, string>`: el compilador exige las mismas claves), `index.ts` (`t`, `tIn`, `setLang`, `onLangChange`, `getLocale`, `detectLang`), `interpolate.ts` (`{marcadores}`), `dom.ts` (`data-i18n` / `data-i18n-attr` en el HTML estático). Selector ES / EN en la cabecera (`aria-pressed`, `lang` en cada botón); idioma inicial = guardado (`printquote:idioma:v1`) o `navigator.languages`; `<html lang>`, título y descripción se actualizan. Formato numérico y de moneda por idioma con `Intl` (`es-ES`; `en-GB`, moneda siempre EUR: «€12.34»). Textos traducidos: interfaz, avisos, errores de lectura, notas de las impresoras, texto para copiar, hoja de impresión y PDF. Al cambiar de idioma se repinta todo (`applyLanguage` en `app.ts`).
 
 ### MVP y revisiones anteriores (v0.1.0)
 MVP completo en la rama `agent/builder` (PR abierto a `main`, pendiente de revisión del lead):
@@ -76,11 +78,16 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 (builder, #7): Las fuentes estándar solo cubren WinAnsi: los caracteres fuera (polaco, chino, emojis…) salen como «?» (nunca falla). Un solo folio A4; los textos de negocio tienen longitud máxima (nombre 80, dirección 200…) y se acortan o parten para que la maqueta no se rompa.
 - 2026-09-30 (builder, #7): El logotipo se acepta como PNG/JPEG/WebP local, se reduce a ≤ 400 px con canvas (PNG, o JPEG si lo era) y se guarda como data URL (≤ 600 000 caracteres); nunca se envía a ningún sitio. Si `localStorage` no deja guardarlo, se avisa.
 - 2026-09-30 (builder, #7): El número de presupuesto es un texto libre (por defecto «AAAA-001») que sube solo (`2026-009` → `2026-010`) tras descargar cada PDF. Decisión sencilla: sin contador aparte ni comprobación de duplicados. Sin campo de cliente en esta versión.
+- 2026-09-30 (builder, #8): i18n sin dependencias: diccionarios planos tipados por `Key = keyof typeof es` (mejor que anidados: búsqueda trivial, `t('clave')` verificado por el compilador). Tests: mismas claves y mismos marcadores en `es`/`en`, ningún texto vacío, ninguna frase larga idéntica en los dos idiomas, ninguna clave huérfana, todas las claves que pide el código existen, y el texto español del HTML estático coincide con `es.ts` (así el HTML sirve de valor por defecto sin JS y no se desvía).
+- 2026-09-30 (builder, #8): Idioma inicial: guardado → primer idioma del navegador que sea `es` o `en` → si el navegador declara otros (fr, de…), **inglés** → si no declara ninguno, español. Los tests fijan `navigator.language = es-ES` en `tests/setup.ts` (happy-dom dice `en-US`).
+- 2026-09-30 (builder, #8): Los errores de lectura pasan de mensajes a `ModelParseError(code, params)`; su `message` sigue siendo español (registros, pruebas y `tests/*`), y la interfaz traduce `code`+`params` en el idioma activo (también los avisos abiertos se vuelven a pintar al cambiar de idioma). El worker envía `{ code, params }` en lugar de un `boolean`; carga solo `es.ts` (no el inglés).
+- 2026-09-30 (builder, #8): La moneda no depende del idioma: siempre euros (`€`), solo cambia el formato (`12,34 €` / `€12.34`). Las unidades («mm», «g», «kWh»…) no se traducen; sí «uds.» → «pcs» y «días» → «days». Los metadatos Open Graph y Twitter del `<head>` siguen en español (los leen rastreadores sin JS); título y descripción sí cambian en el navegador.
+- 2026-09-30 (builder, #8): El JS inicial pasa de ~50 kB a ~77 kB (27 kB gzip) por los dos diccionarios; sigue siendo pequeño frente al visor (139 kB gzip) y al PDF (178 kB gzip), que se cargan bajo demanda.
 - 2026-09-30 (qa): Imagen Open Graph = copia de `docs/captura.png` en `public/og.png` (1440 × 900), URL absoluta de GitHub Pages.
 
 ## Siguiente paso
 00. Alberto: borrar la rama remota `agent/builder` (ya fusionada en `main`, SHA 5b0a29b: se puede recrear). Mientras exista, Git impide crear ramas `agent/builder/…`, y las de v0.2.0 se llaman `agent/builder-<n>-<slug>`. El borrado lo denegó el sistema de permisos del agente.
-0. builder (v0.2.0): tras #5, #6 y #7, queda #8 (inglés). Alberto fusiona los PR en orden (#11, #12, el de #7 y el de #8).
+0. builder (v0.2.0): las cuatro issues están hechas. Alberto fusiona los PR en orden (#11, #12, #13 y el de #8). Después, qa (#9) y docs (#10). Docs debe actualizar `docs/USO.md` (botón «Abrir modelo 3D», OBJ/3MF, perfiles, PDF, IVA, idioma); yo solo he tocado README, CONTRIBUTING y AGENTS.
 1. lead: revisar y fusionar el PR de `agent/builder`; comprobar que el despliegue a Pages funciona tras el merge.
 2. lead: tras fusionar #1, revisar y fusionar el PR #2 de `agent/qa` (base `agent/builder`; si GitHub lo retarga a `main` al borrar la rama, vale igual).
 3. Pendiente de una persona (no automatizable aquí): probar con lector de pantalla real (NVDA/VoiceOver) y la hoja de impresión en Firefox y Safari; comprobar la vista previa del enlace (og.png) una vez desplegado.
@@ -92,6 +99,7 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - Modelo de coste simplificado: no incluye soportes, balsa ni purga; la cáscara (área × grosor) sobreestima en piezas muy detalladas.
 - OBJ: los polígonos cóncavos (caras de más de 3 vértices) se trianguan en abanico y pueden salir mal; los OBJ y 3MF no se han probado con archivos reales de laminadores (solo con los construidos en los tests y una prueba manual en Chrome).
 - PDF: solo caracteres WinAnsi (el resto sale como «?»); una página; sin campo de cliente. Revisar el PDF impreso/abierto en distintos visores (solo se ha comprobado renderizado con PyMuPDF y la descarga en Chrome).
+- Las notas de impresora y demás textos están traducidos, pero `docs/USO.md` sigue en español (documentación); los meta Open Graph también.
 - Mallas muy grandes (> 400 000 triángulos) no dibujan las aristas marcadas, por rendimiento. Con mallas grandes (< 400 000) el `EdgesGeometry` y las normales del visor se calculan aún en el hilo principal (unos cientos de ms de bloqueo tras la lectura).
 - Si falla la lectura de un archivo, se mantiene la pieza anterior en pantalla junto al aviso de error (intencionado, pero puede confundir).
 - El enlace `#ejemplo` solo se atiende al cargar la página (no escucha `hashchange`).
@@ -105,3 +113,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder-5-perfiles): #5 perfiles de impresora (`printers.ts`, selector, persistencia, tests) y actualización de AGENTS.md con el flujo por issues del hito.
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder-6-3mf-obj): #6 soporte de OBJ y 3MF (parsers, ZIP a mano, detección de formato, avisos iguales que STL, interfaz y tests).
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder-7-pdf): #7 presupuesto en PDF (pdf-lib bajo demanda, datos del negocio plegables y persistentes, logotipo local, IVA configurable, número de presupuesto correlativo, tests).
+- 2026-09-30 builder · Claude Code Sonnet (agent/builder-8-ingles): #8 interfaz en inglés (diccionarios es/en, selector de idioma, formato por idioma, errores con código, PDF y textos traducidos, tests de claves y de interfaz en inglés).
