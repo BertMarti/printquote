@@ -10,6 +10,13 @@ const DEFAULT_MODEL = '3D/3dmodel.model';
 /** Un objeto que se contiene a sí mismo (directa o indirectamente) no termina nunca. */
 const MAX_DEPTH = 32;
 
+/**
+ * Tope de triángulos de todo el 3MF (contando cada instancia y cada copia). 6 millones son los que
+ * caben en un STL de 300 MB (el límite de archivo de la interfaz) y ocupan 216 MB como `Float32Array`;
+ * por encima, unas pocas copias de una pieza detallada agotan la memoria y salía un `RangeError` genérico.
+ */
+export const MAX_3MF_TRIANGLES = 6_000_000;
+
 /** Milímetros que mide cada unidad del 3MF. */
 const UNIT_MM: Readonly<Record<string, number>> = {
   micron: 0.001,
@@ -279,6 +286,7 @@ export async function parse3mf(data: ArrayBuffer | Uint8Array): Promise<Mesh> {
 
   const root = await load(rootPath);
   const instances: Instance[] = [];
+  let triangles = 0;
 
   const visit = async (file: ModelFile, objectId: string, matrix: Matrix, depth: number, topLevel: boolean): Promise<void> => {
     if (depth > MAX_DEPTH) fail('err.3mf.circular');
@@ -289,6 +297,8 @@ export async function parse3mf(data: ArrayBuffer | Uint8Array): Promise<Mesh> {
     if (object.mesh) {
       // Del sistema del archivo de la malla al de la plantilla (unidades), luego la matriz, luego a mm.
       const toRoot = composeMatrix(scale(file.unit / root.unit), matrix);
+      triangles += object.mesh.triangles.length / 3;
+      if (triangles > MAX_3MF_TRIANGLES) fail('err.3mf.tooManyTriangles', { millions: MAX_3MF_TRIANGLES / 1_000_000 });
       instances.push({ mesh: object.mesh, matrix: composeMatrix(toRoot, scale(root.unit)) });
     }
     for (const component of object.components) {
