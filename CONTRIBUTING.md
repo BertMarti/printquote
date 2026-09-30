@@ -25,6 +25,7 @@ npm run dev        # http://localhost:5173/printquote/
 | `npm run build` | Comprueba tipos y genera la web estática en `dist/`. |
 | `npm run preview` | Sirve `dist/` en <http://localhost:4173/printquote/>. |
 | `npm run sample` | Regenera la pieza de ejemplo `public/samples/soporte-movil.stl`. |
+| `node scripts/captura.mjs` | Regenera `docs/captura.png` y `public/og.png` con Chrome o Edge headless (con `npm run dev` en marcha). Ejecútalo cuando cambie la interfaz. |
 
 Antes de abrir un PR: `npm run lint && npm test && npm run build` en verde. El CI lo repite en Ubuntu y Windows.
 
@@ -58,10 +59,10 @@ La interfaz está en español e inglés y la documentación, en español; los no
 | Perfiles de impresora | `src/quote/printers.ts` | `tests/printers.test.ts` |
 | Lectura de OBJ y 3MF (ZIP y XML a mano) | `src/stl/obj.ts`, `src/stl/threemf.ts`, `src/stl/zip.ts`, `src/stl/xml.ts`, `src/stl/model.ts` | `tests/obj.test.ts`, `tests/threemf.test.ts`, `tests/zip.test.ts` |
 | IVA y datos del negocio | `src/quote/tax.ts`, `src/quote/business.ts` | `tests/pdf.test.ts`, `tests/pdf-ui.test.ts` |
-| Presupuesto en PDF (contenido puro y dibujo con pdf-lib) | `src/pdf/` | `tests/pdf.test.ts` |
+| Presupuesto en PDF (contenido puro y dibujo con pdf-lib; fuentes Noto Sans y JetBrains Mono incrustadas, con su licencia, en `src/pdf/fonts/`) | `src/pdf/` | `tests/pdf.test.ts` (el texto del PDF se lee con `tests/helpers/pdf-text.ts`) |
 | Texto para copiar | `src/quote/text.ts` | `tests/format.test.ts` |
 | Interfaz, campos, hoja de impresión | `index.html`, `src/ui/`, `src/styles.css` | `tests/ui.test.ts` (carga el `index.html` real con happy-dom), `tests/meta.test.ts` |
-| Visor three.js | `src/viewer/` | a mano en el navegador (`npm run dev`) |
+| Visor three.js (la lógica del zoom con teclado está aparte, en `zoom.ts`) | `src/viewer/` | `tests/zoom.test.ts`; el resto, a mano en el navegador (`npm run dev`) |
 
 ### Textos e idiomas
 

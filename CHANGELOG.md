@@ -6,6 +6,7 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 
 ### Añadido
 
+- **Capturas nuevas** (#22): `docs/captura.png` y `public/og.png` (vista previa al compartir el enlace) muestran la interfaz de v0.2 con la pieza de ejemplo: selector de idioma, «Abrir modelo 3D», perfil de impresora y botón «Descargar PDF». `scripts/captura.mjs` las regenera con Chrome o Edge headless.
 - **Zoom con teclado en el visor** (#21): con el visor enfocado, `+` (o `=`) acerca y `-` (o `_`) aleja un 15 % por pulsación, sin animación (respeta `prefers-reduced-motion`). Indicado en la pista de controles y en la etiqueta accesible del visor.
 - **Tope de triángulos en 3MF** (#20): un 3MF con más de 6 millones de triángulos en total (contando cada instancia y copia) da un error claro y traducido en lugar de un `RangeError` genérico. El límite se comprueba durante la lectura, antes de reservar la memoria.
 - **Aviso de polígonos OBJ muy grandes** (#19): si un OBJ trae caras de más de 200 vértices (que se triangulan en abanico aunque sean cóncavas) se avisa en la lista de avisos, en español e inglés, con el número de caras.
