@@ -30,7 +30,7 @@ Antes de abrir un PR: `npm run lint && npm test && npm run build` en verde. El C
 
 ## Ramas y pull requests
 
-- `main` está protegida: **nunca se hace commit directo**. Crea una rama desde `main` (`feat/...`, `fix/...`, `docs/...`; el equipo de agentes usa `agent/<nombre>`) y abre un pull request.
+- `main` está protegida: **nunca se hace commit directo**. Crea una rama desde `main` (`feat/...`, `fix/...`, `docs/...`; el equipo de agentes usa `agent/<rol>/<n>-<slug>`, con `<n>` el número de su issue) y abre un pull request.
 - Rellena la plantilla del PR (qué cambia, cómo se ha verificado, checklist).
 - Cambios pequeños y con sentido propio, un tema por PR.
 - Actualiza `MEMORY.md` al terminar (estado, decisiones, siguiente paso y una línea en «Registro de sesiones»).

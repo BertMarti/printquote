@@ -35,19 +35,25 @@ Minimalista, claro y preciso, como una ficha técnica.
 - Los tiempos se rotulan siempre como **estimación**.
 
 ## Equipo de agentes y ramas
-Los tres proyectos se desarrollan en paralelo con un equipo de agentes. **Cada agente trabaja solo en su rama** y todo entra en `main` mediante pull request.
+Los tres proyectos se desarrollan en paralelo con un equipo de agentes. El trabajo está **guiado por issues de un hito** (p. ej. v0.2.0) y **todo entra en `main` mediante pull request**, que fusiona Alberto.
 
-| Agente | Herramienta | Rama | Cometido |
+| Agente | Herramienta | Etiqueta de issue | Cometido |
 |---|---|---|---|
-| lead | Claude Code (sesión principal) | `main` (solo merges) | Plan, revisión de PRs, integración, despliegue y documentación final |
-| builder | Claude Code (subagente) | `agent/builder` | Implementa el MVP, los tests básicos, el CI y el despliegue |
-| qa | Claude Code (subagente) | `agent/qa` | Revisa el código, añade tests de casos límite, corrige fallos y accesibilidad |
-| docs | Claude Code (subagente, Sonnet); OpenCode cuando se permita su ejecución autónoma | `agent/docs` | Guía de uso para personas usuarias en `docs/USO.md` |
+| lead | Claude Code (sesión principal) | (crea el hito y las issues) | Plan, revisión de PRs, integración, despliegue y documentación final |
+| builder | Claude Code (Sonnet) | `agent:builder` | Implementa las funciones, con sus tests |
+| qa | Claude Code (Sonnet) | `agent:qa` | Revisa el código, añade tests de casos límite, corrige fallos y accesibilidad |
+| docs | Claude Code (Sonnet); OpenCode cuando se permita su ejecución autónoma | `agent:docs` | Guía de uso (`docs/USO.md`) y documentación para personas usuarias y contribuidoras |
+
+Flujo de trabajo:
+1. Cada agente lee las issues de su hito con su etiqueta (`gh issue list --milestone <hito> --label agent:<rol>`); los criterios de aceptación de la issue son su contrato.
+2. **Una rama y un PR por issue**, con el nombre `agent/<rol>/<n>-<slug>` (p. ej. `agent/builder/5-perfiles`). Si varias issues del mismo agente se solapan, cada rama parte de la anterior para evitar conflictos.
+3. **Los PR van siempre contra `main`** y llevan `Closes #<n>` en la descripción, qué cambia, cómo se verificó y, si depende de otro PR, «Se fusiona después de #<PR>».
+4. Nadie hace commit ni push a `main`, y **nadie fusiona PRs salvo Alberto**.
 
 ## Reglas para todos los agentes
 1. **Lee `MEMORY.md` antes de empezar** y **actualízalo siempre al terminar** (estado, decisiones, siguiente paso y una línea en «Registro de sesiones» con fecha, agente y rama). Una sesión sin `MEMORY.md` actualizado no está terminada.
-2. Nunca hagas commit directo a `main`. Trabaja en tu rama y abre un pull request.
-3. Commits convencionales en español: `feat:`, `fix:`, `test:`, `docs:`, `ci:`, `chore:`, `refactor:`. Cambios pequeños y con sentido propio.
+2. Nunca hagas commit directo a `main`. Trabaja en tu rama (`agent/<rol>/<n>-<slug>`) y abre un pull request contra `main`.
+3. Commits convencionales en español: `feat:`, `fix:`, `test:`, `docs:`, `ci:`, `chore:`, `refactor:`. Cambios pequeños y con sentido propio. El mensaje termina con una línea en blanco y las líneas `Agente: <rol> (<herramienta>)` y `Co-Authored-By: …`.
 4. No subas claves, tokens, `.env` ni datos personales. El repositorio es público.
 5. No añadas dependencias sin justificarlo en «Decisiones» de `MEMORY.md`.
 6. Si algo es ambiguo, elige la opción más simple, anótala en `MEMORY.md` y sigue.
