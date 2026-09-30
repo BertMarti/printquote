@@ -1,4 +1,4 @@
-// Worker que lee el STL y calcula su geometría fuera del hilo principal, para que la
+// Worker que lee el modelo (STL, OBJ o 3MF) y calcula su geometría fuera del hilo principal, para que la
 // interfaz no se congele con archivos de cientos de miles de triángulos.
 import { handleAnalyzeRequest, type AnalyzeRequest } from './analyze';
 
@@ -11,6 +11,5 @@ interface WorkerScope {
 const scope = self as unknown as WorkerScope;
 
 scope.addEventListener('message', (event) => {
-  const { response, transfer } = handleAnalyzeRequest(event.data);
-  scope.postMessage(response, transfer);
+  void handleAnalyzeRequest(event.data).then(({ response, transfer }) => scope.postMessage(response, transfer));
 });
