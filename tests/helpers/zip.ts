@@ -26,7 +26,13 @@ export interface ZipFile {
   readonly name: string;
   readonly data: string | Uint8Array;
   /** 8 = deflate (por defecto), 0 = sin comprimir. */
-  readonly method?: 0 | 8;
+  readonly method?: number;
+  /** Tamaños y CRC tras los datos (bit 3), como hacen los ZIP en flujo; la cabecera local los lleva a 0. */
+  readonly descriptor?: boolean;
+  /** Marca la entrada como cifrada (bit 0). */
+  readonly encrypted?: boolean;
+  /** Pone los tamaños del directorio central a 0xFFFFFFFF, como un ZIP64. */
+  readonly zip64?: boolean;
 }
 
 export interface ZipOptions {
@@ -47,6 +53,7 @@ export async function buildZip(files: readonly ZipFile[], options: ZipOptions = 
     const raw = typeof file.data === 'string' ? encoder.encode(file.data) : file.data;
     const method = file.method ?? 8;
     const body = method === 8 ? await deflateRaw(raw) : raw;
+    const flags = 0x0800 | (file.descriptor ? 8 : 0) | (file.encrypted ? 1 : 0);
     const name = encoder.encode(file.name);
     const crc = crc32(raw);
 
@@ -54,11 +61,13 @@ export async function buildZip(files: readonly ZipFile[], options: ZipOptions = 
     const lv = new DataView(local.buffer);
     lv.setUint32(0, 0x04034b50, true);
     lv.setUint16(4, 20, true);
-    lv.setUint16(6, 0x0800, true); // nombres en UTF-8
+    lv.setUint16(6, flags, true); // nombres en UTF-8
     lv.setUint16(8, method, true);
-    lv.setUint32(14, crc, true);
-    lv.setUint32(18, body.length, true);
-    lv.setUint32(22, raw.length, true);
+    if (!file.descriptor) {
+      lv.setUint32(14, crc, true);
+      lv.setUint32(18, body.length, true);
+      lv.setUint32(22, raw.length, true);
+    }
     lv.setUint16(26, name.length, true);
     local.set(name, 30);
 
@@ -67,18 +76,29 @@ export async function buildZip(files: readonly ZipFile[], options: ZipOptions = 
     ev.setUint32(0, 0x02014b50, true);
     ev.setUint16(4, 20, true);
     ev.setUint16(6, 20, true);
-    ev.setUint16(8, 0x0800, true);
+    ev.setUint16(8, flags, true);
     ev.setUint16(10, method, true);
     ev.setUint32(16, crc, true);
-    ev.setUint32(20, body.length, true);
-    ev.setUint32(24, raw.length, true);
+    ev.setUint32(20, file.zip64 ? 0xffffffff : body.length, true);
+    ev.setUint32(24, file.zip64 ? 0xffffffff : raw.length, true);
     ev.setUint16(28, name.length, true);
     ev.setUint32(42, offset, true);
     entry.set(name, 46);
 
     parts.push(local, body);
+    let written = local.length + body.length;
+    if (file.descriptor) {
+      const tail = new Uint8Array(16);
+      const tv = new DataView(tail.buffer);
+      tv.setUint32(0, 0x08074b50, true);
+      tv.setUint32(4, crc, true);
+      tv.setUint32(8, body.length, true);
+      tv.setUint32(12, raw.length, true);
+      parts.push(tail);
+      written += tail.length;
+    }
     central.push(entry);
-    offset += local.length + body.length;
+    offset += written;
   }
 
   if (!options.noDirectory) {

@@ -141,7 +141,11 @@ function parseModelXml(path: string, text: string): ModelFile {
     switch (tag.name) {
       case 'model': {
         const value = attributes(tag.rawAttributes)['unit'];
-        if (value !== undefined) unit = UNIT_MM[value.trim().toLowerCase()] ?? 1;
+        if (value !== undefined) {
+          const name = value.trim().toLowerCase();
+          if (!Object.hasOwn(UNIT_MM, name)) fail('err.3mf.unit', { unit: value.slice(0, 20) });
+          unit = UNIT_MM[name] ?? 1;
+        }
         break;
       }
       case 'object': {
