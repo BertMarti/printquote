@@ -1,0 +1,339 @@
+# Guía de uso de printquote
+
+Esta guía explica, paso a paso y sin jerga, cómo sacar un presupuesto de impresión 3D con [printquote](https://bertmarti.github.io/printquote/). No necesitas instalar nada ni crear una cuenta.
+
+![printquote: visor 3D a la izquierda y la ficha técnica con el presupuesto a la derecha](captura.png)
+
+## Índice
+
+1. [Qué es printquote](#1-qué-es-printquote)
+2. [Probar con la pieza de ejemplo](#2-probar-con-la-pieza-de-ejemplo)
+3. [Cargar tu propio STL](#3-cargar-tu-propio-stl)
+4. [Manejar el visor 3D](#4-manejar-el-visor-3d)
+5. [Leer la ficha de la pieza y los avisos](#5-leer-la-ficha-de-la-pieza-y-los-avisos)
+6. [Elegir material y precio](#6-elegir-material-y-precio)
+7. [Parámetros de impresión](#7-parámetros-de-impresión)
+8. [Energía y margen](#8-energía-y-margen)
+9. [Copias](#9-copias)
+10. [Copiar e imprimir el presupuesto](#10-copiar-e-imprimir-el-presupuesto)
+11. [Cómo se calcula (con un ejemplo completo)](#11-cómo-se-calcula-con-un-ejemplo-completo)
+12. [Calibrar los valores con tu laminador](#12-calibrar-los-valores-con-tu-laminador)
+13. [Privacidad](#13-privacidad)
+14. [Preguntas frecuentes y solución de problemas](#14-preguntas-frecuentes-y-solución-de-problemas)
+
+---
+
+## 1. Qué es printquote
+
+printquote calcula cuánto cuesta imprimir una pieza en 3D. Arrastras un archivo **STL** (el formato que casi todos los programas de diseño 3D pueden exportar), lo ves en 3D y obtienes:
+
+- cuánto **pesa** la pieza impresa,
+- cuánto **tarda** en imprimirse (siempre es una **estimación**),
+- cuánto **cuesta** el material y la electricidad, y el **precio final** con tu margen.
+
+Todo ocurre en tu navegador: el archivo no se sube a ningún sitio (más detalles en [Privacidad](#13-privacidad)).
+
+Conviene tener claro qué **no** es: printquote es un modelo simplificado para presupuestar rápido. No sustituye al **laminador** (el programa que prepara la pieza para la impresora, como Cura o PrusaSlicer). El laminador siempre dará la cifra real; en la sección [Calibrar](#12-calibrar-los-valores-con-tu-laminador) verás cómo acercar printquote a tus resultados.
+
+## 2. Probar con la pieza de ejemplo
+
+Si no tienes ningún STL a mano:
+
+1. Abre <https://bertmarti.github.io/printquote/>.
+2. Pulsa **«Probar con pieza de ejemplo»** (arriba a la derecha). Se carga un soporte de móvil original de este proyecto.
+
+También puedes abrir directamente la web con la pieza ya cargada con este enlace: <https://bertmarti.github.io/printquote/#ejemplo>.
+
+Con los valores por defecto, la pieza de ejemplo (70 × 90 × 88 mm, 123,83 cm³) sale así: unos **59,3 g**, **1 h 45 min** de impresión estimada y un total de **1,59 €**.
+
+> El enlace `#ejemplo` solo se lee al abrir la página. Si ya tienes la web abierta y añades `#ejemplo` a la dirección, pulsa antes F5 (recargar) para que funcione.
+
+## 3. Cargar tu propio STL
+
+Hay dos formas de cargar un archivo:
+
+- **Arrastrarlo** a cualquier parte de la ventana. Verás el mensaje «Suelta el STL para calcular».
+- Pulsar **«Abrir STL»** y elegirlo en tu equipo. Es la forma habitual en el móvil o la tableta.
+
+Detalles a tener en cuenta:
+
+- Se aceptan STL **binarios y de texto (ASCII)**. printquote los distingue solo.
+- El tamaño máximo es de **300 MB**. Si te pasas, verás el aviso «es demasiado grande».
+- Mientras se lee el archivo aparece «Leyendo…» sobre el visor. La página sigue respondiendo aunque el archivo sea grande.
+- Puedes cargar otro archivo en cualquier momento: sustituye al anterior.
+- Bajo el nombre de la pieza verás el tipo de STL y el número de triángulos, por ejemplo «STL binario · 56 triángulos».
+- printquote **asume que el STL está en milímetros**, que es lo habitual. Si no lo está, mira [Preguntas frecuentes](#14-preguntas-frecuentes-y-solución-de-problemas).
+- Solo se admite el formato STL. Si tu programa usa OBJ, 3MF, STEP u otro, exporta primero a STL.
+- Si el archivo tiene varias piezas separadas, se cuentan todas juntas como una sola.
+
+## 4. Manejar el visor 3D
+
+La pieza aparece apoyada sobre la cama de impresión. La rejilla fina marca cuadrados de **10 mm**. Sobre el visor ves, arriba a la izquierda, el nombre de la pieza y, abajo, sus medidas en X, Y y Z y la leyenda con el tamaño de la cama («Rejilla 10 mm · Cama 220 × 220 × 250 mm»). Una pista con los gestos disponibles te recuerda cómo moverte.
+
+| Acción | Ratón | Pantalla táctil | Teclado |
+|---|---|---|---|
+| **Girar** | Arrastrar con el botón izquierdo | Un dedo | Mayús + flechas |
+| **Acercar / alejar** | Rueda | Pellizcar con dos dedos | (no disponible) |
+| **Desplazar** | Arrastrar con el botón derecho | Dos dedos | Flechas |
+| **Volver a encuadrar** | Botón «Restablecer vista» | Botón «Restablecer vista» | Botón «Restablecer vista» (con Tab y Enter) |
+
+Para usar el teclado, llega hasta el visor con la tecla **Tab** (verás el foco marcado) y pulsa las flechas.
+
+Consejos:
+
+- En el móvil, el visor captura los gestos para girar la pieza. Para desplazar la página, toca la cabecera o la barra fija del total.
+- Si tu sistema tiene activada la opción de «reducir movimiento», el visor no continúa girando al soltar.
+- Si tu navegador no puede mostrar gráficos 3D (WebGL), verás el aviso «Sin vista 3D». El presupuesto funciona igualmente.
+- En piezas con más de 400 000 triángulos no se dibujan las aristas marcadas, para que el visor vaya fluido.
+
+## 5. Leer la ficha de la pieza y los avisos
+
+A la derecha (en el móvil, debajo del visor) está la ficha técnica, dividida en bloques numerados. El bloque **01 · Pieza** muestra:
+
+| Dato | Qué significa |
+|---|---|
+| **Volumen** (cm³) | Cuánto material ocuparía la pieza si fuera completamente maciza. |
+| **Superficie** (cm²) | El área de toda la piel de la pieza. |
+| **Dimensiones** (mm) | Largo, ancho y alto de la caja más pequeña que la envuelve (X × Y × Z). |
+| **Triángulos** | Con cuántos triángulos está construida la malla. Solo es informativo. |
+
+Debajo pueden aparecer **avisos**. Ninguno bloquea el cálculo; son advertencias para que revises la pieza:
+
+| Aviso | Qué quiere decir | Qué hacer |
+|---|---|---|
+| **Malla abierta** («La malla parece abierta o con huecos…») | La pieza tiene agujeros en su superficie, como una caja sin tapa. El volumen, el peso y el precio pueden no ser fiables. | Repara la malla en tu laminador o editor 3D (la mayoría tienen una opción de «reparar»). |
+| **Normales invertidas** («Las normales parecen invertidas…») | Las caras de la pieza «miran hacia dentro». printquote usa el valor absoluto del volumen, así que el cálculo suele salir bien. | Conviene revisar la malla, pero normalmente no cambia el presupuesto. |
+| **No cabe en la cama** («…no cabe en la cama de … ni siquiera girándola») | La pieza es mayor que la cama configurada. Se permite girarla 90° en horizontal. | Comprueba las medidas de la cama (bloque 03), reduce la pieza o divídela en partes. |
+| **Pieza diminuta** («La pieza mide solo … mm en su lado mayor…») | Ningún lado supera 1 mm. Casi seguro el STL se exportó en **metros** u otra unidad. | Vuelve a exportarlo en milímetros. Más detalles en [las preguntas frecuentes](#14-preguntas-frecuentes-y-solución-de-problemas). |
+
+Si la pieza está abierta *y además* tiene las normales invertidas, solo se muestra el aviso de malla abierta.
+
+Si el archivo no se puede leer, aparece un cuadro de error en el visor (por ejemplo, «No parece un STL válido»). En ese caso se mantiene en pantalla la pieza anterior, si había alguna.
+
+## 6. Elegir material y precio
+
+En el bloque **02 · Material** eliges entre cuatro materiales. El número pequeño es la **densidad** (cuánto pesa cada cm³):
+
+| Material | Densidad (g/cm³) | Precio por defecto |
+|---|---|---|
+| PLA | 1,24 | 20 €/kg |
+| PETG | 1,27 | 24 €/kg |
+| ABS | 1,04 | 22 €/kg |
+| TPU | 1,21 | 35 €/kg |
+
+Debajo tienes el **precio del material en euros por kilo**. Pon lo que te cueste tu bobina (por ejemplo, una bobina de 1 kg que compraste por 18 € son 18 €/kg). printquote **recuerda un precio distinto para cada material**: cambiar el precio del PETG no toca el del PLA.
+
+Las densidades no se pueden editar. Si tu filamento es especial (por ejemplo, con fibra de carbono, algo más denso), la diferencia de peso suele ser pequeña.
+
+## 7. Parámetros de impresión
+
+El bloque **03 · Impresión** contiene lo que decide cuánto material y cuánto tiempo gasta la pieza. Estos valores son los mismos que verás en tu laminador.
+
+### Relleno (%)
+
+Lo que hay **dentro** de la pieza. Un relleno del 0 % deja la pieza hueca y uno del 100 % la hace maciza. Se puede escribir el número o usar el deslizador.
+
+| Uso | Punto de partida |
+|---|---|
+| Figuras o piezas decorativas | 10 – 15 % |
+| Uso general (por defecto) | 20 % |
+| Piezas que aguantan esfuerzo | 30 – 50 % |
+
+### Perímetros
+
+Cuántas «paredes» de plástico rodean la pieza por fuera. Más perímetros = pieza más resistente, pero más material y más tiempo. Punto de partida: **2** (por defecto); usa 3 o 4 para piezas resistentes. Debe ser un número entero entre 0 y 20.
+
+### Ancho de línea (mm)
+
+El grosor del «hilo» de plástico que deposita la impresora. Suele ser algo mayor que el diámetro de la boquilla. Con la boquilla estándar de 0,4 mm, el valor habitual es **0,45 mm** (por defecto). Junto con los perímetros da el grosor de pared: 2 × 0,45 mm = 0,9 mm.
+
+### Caudal volumétrico (mm³/s)
+
+Cuánto plástico derrite y deposita la impresora **cada segundo**. Es el dato que decide el tiempo: cuanto mayor, más rápida es la impresión. printquote lo usa para estimar la duración.
+
+| Tipo de impresora | Punto de partida |
+|---|---|
+| Impresión tranquila o impresora sencilla | 4 – 6 mm³/s |
+| Uso normal (por defecto) | 8 mm³/s |
+| Impresoras rápidas y de alto caudal | 12 mm³/s o más |
+
+Es el valor menos universal, porque depende de tu impresora, velocidad, altura de capa y material. Lo mejor es **calibrarlo** con tu laminador: [sección 12](#12-calibrar-los-valores-con-tu-laminador).
+
+### Cama (mm)
+
+El tamaño de la superficie de impresión de tu impresora: ancho (X), fondo (Y) y altura máxima (Z). Por defecto, **220 × 220 × 250 mm**. Se usa solo para avisarte si la pieza no cabe y para dibujar la cama en el visor. Consulta las medidas en la ficha de tu impresora.
+
+### Rangos permitidos
+
+Todos los campos numéricos aceptan coma o punto como separador decimal (`0,45` o `0.45`), pero **no** separadores de miles (escribe `1000`, no `1.000`). Si escribes algo fuera de rango, el campo muestra el error «Introduce un número entre… y…» y, al salir del campo, el valor se limita al mínimo o máximo. Con el teclado, las flechas ↑ y ↓ suben y bajan el valor y Mayús las multiplica por 10.
+
+| Campo | Mínimo | Máximo |
+|---|---|---|
+| Precio del material | 0 | 10 000 €/kg |
+| Relleno | 0 | 100 % |
+| Perímetros (entero) | 0 | 20 |
+| Ancho de línea | 0,1 | 2 mm |
+| Caudal | 0,1 | 200 mm³/s |
+| Cama X, Y, Z | 1 | 5 000 mm |
+| Potencia | 0 | 5 000 W |
+| Electricidad | 0 | 10 €/kWh |
+| Margen | 0 | 1 000 % |
+| Copias (entero) | 1 | 10 000 |
+
+## 8. Energía y margen
+
+El bloque **04 · Costes** reúne el resto:
+
+- **Potencia media (W)**: lo que consume tu impresora de media mientras imprime, contando el calentamiento de la cama y de la boquilla. El valor por defecto es **120 W**. Como orientación, una impresora de sobremesa suele moverse entre 60 y 150 W; si puedes, mídelo con un medidor de enchufe. Con 0 W, no se cuenta energía.
+- **Electricidad (€/kWh)**: el precio de la luz en tu factura. Por defecto **0,15 €/kWh**.
+- **Margen (%)**: lo que añades sobre el coste (material + energía) para cubrir tu trabajo, el desgaste de la impresora y los fallos. Por defecto **30 %**. Con 0 % se cobra solo el coste.
+
+El botón **«Restablecer valores por defecto»**, al final de este bloque, devuelve todos los ajustes a su valor original.
+
+Hay un tiempo fijo de **5 minutos por impresión** para calentar y preparar la impresora. No es editable en la web y se suma siempre, por copia.
+
+## 9. Copias
+
+El campo **Copias** es el número de veces que vas a imprimir la pieza. printquote:
+
+- multiplica el peso, el tiempo y el coste por el número de copias,
+- cuenta cada copia como una impresión distinta (por eso suma los 5 minutos fijos por copia),
+- muestra el **precio por copia** junto al total.
+
+Si imprimes varias copias juntas en una misma cama, el tiempo real puede ser algo menor que el calculado, porque la preparación se hace una sola vez. Como printquote redondea a céntimos línea a línea (ver [sección 11](#11-cómo-se-calcula-con-un-ejemplo-completo)), el total de N copias puede diferir en uno o dos céntimos de N veces el precio de una copia. Con la pieza de ejemplo, 1 copia son 1,59 € y 3 copias son 4,75 € (1,58 € por copia).
+
+## 10. Copiar e imprimir el presupuesto
+
+Los botones están en la parte inferior del panel, junto al **Total** (en el móvil, esa barra queda fija al fondo de la pantalla). Se activan cuando hay una pieza cargada.
+
+- **Copiar presupuesto**: copia al portapapeles un texto plano con la pieza, los ajustes y el desglose, listo para pegar en un correo o mensaje. El botón muestra «Copiado» durante un momento. Si tu navegador bloquea el portapapeles, verás «No se pudo copiar».
+- **Imprimir**: abre el diálogo de impresión con una hoja limpia que incluye una imagen de la pieza en 3D, los datos de la pieza, los ajustes y el desglose con el total. Si quieres un PDF para enviar, elige «Guardar como PDF» como impresora.
+
+El texto y la hoja indican siempre que el tiempo es una estimación.
+
+## 11. Cómo se calcula (con un ejemplo completo)
+
+Resumen de los pasos, por copia:
+
+1. **Grosor de pared** = perímetros × ancho de línea.
+2. **Cáscara** = superficie × grosor de pared (sin pasar nunca del volumen de la pieza). Es el plástico de las paredes y de las tapas superior e inferior.
+3. **Relleno** = porcentaje de relleno × (volumen − cáscara).
+4. **Volumen impreso** = cáscara + relleno.
+5. **Peso** = volumen impreso × densidad del material.
+6. **Coste del material** = peso × precio del kilo.
+7. **Tiempo** = volumen impreso ÷ caudal + 5 minutos.
+8. **Energía** = potencia × tiempo; **coste de energía** = energía × precio del kWh.
+9. **Subtotal** = material + energía (× copias). **Margen** = subtotal × porcentaje. **Total** = subtotal + margen.
+
+### Ejemplo: el soporte de móvil de la pieza de ejemplo
+
+Datos de la pieza: volumen 123 830 mm³ (123,83 cm³) y superficie 32 078 mm² (320,78 cm²). Ajustes por defecto: PLA a 20 €/kg, relleno 20 %, 2 perímetros de 0,45 mm, caudal 8 mm³/s, 120 W, 0,15 €/kWh, margen 30 %, 1 copia.
+
+| Paso | Cuenta | Resultado |
+|---|---|---|
+| Grosor de pared | 2 × 0,45 mm | 0,9 mm |
+| Cáscara | 32 078 mm² × 0,9 mm | 28 870 mm³ |
+| Relleno | 20 % × (123 830 − 28 870) mm³ | 18 992 mm³ |
+| Volumen impreso | 28 870 + 18 992 | 47 862 mm³ (47,86 cm³) |
+| Peso | 47,86 cm³ × 1,24 g/cm³ | **59,3 g** |
+| Material | 0,0593 kg × 20 €/kg | 1,19 € |
+| Tiempo | 47 862 ÷ 8 = 5 983 s (≈ 100 min) + 5 min | **1 h 45 min** (estimación) |
+| Energía | 0,12 kW × 1,745 h | 0,21 kWh |
+| Coste de energía | 0,21 kWh × 0,15 €/kWh | 0,03 € |
+| Subtotal | 1,19 + 0,03 | 1,22 € |
+| Margen | 30 % de 1,22 | 0,37 € |
+| **Total** | 1,22 + 0,37 | **1,59 €** |
+
+**Redondeo:** cada importe (material, energía y margen) se redondea a céntimos por separado y el subtotal y el total son la suma de esas líneas ya redondeadas, como en una factura. Así lo que ves en el desglose siempre suma el total.
+
+**Límites del modelo:** no cuenta soportes, balsa (*raft*), purga de filamento, altura de capa ni la velocidad real de cada movimiento, y la cáscara es una aproximación (sobreestima algo en piezas con muchos detalles finos). Úsalo para presupuestar; para el dato exacto, consulta tu laminador.
+
+## 12. Calibrar los valores con tu laminador
+
+Los valores por defecto son genéricos. Con un único ajuste puedes hacer que printquote se parezca mucho más a tu impresora. Elige una pieza que ya conozcas y sigue estos pasos:
+
+1. **Lamina la pieza** en tu laminador con tu perfil habitual y anota el **peso** (g) y el **tiempo** que te da.
+2. **Carga el mismo STL** en printquote y pon el mismo material, relleno, perímetros y ancho de línea que en el laminador.
+3. **Compara el peso.** Si el de printquote se aleja del real, ajusta el **relleno** hasta que coincidan. Es normal que haga falta un valor algo distinto al del laminador, porque printquote simplifica el cálculo de las paredes. Prueba primero con una pieza y comprueba después con otra distinta para asegurarte de que el ajuste vale en general.
+4. **Calcula tu caudal.** Fíjate en el **volumen impreso** que muestra printquote (bloque 05, en cm³) y aplica:
+
+   ```text
+   caudal (mm³/s) = volumen impreso (cm³) × 1000 ÷ (tiempo del laminador en segundos − 300)
+   ```
+
+   Se restan 300 s (los 5 minutos fijos de preparación) porque printquote los suma aparte.
+
+5. **Escribe el resultado** en el campo «Caudal volumétrico». El tiempo de printquote debería coincidir ahora con el del laminador.
+
+**Ejemplo:** printquote muestra 47,86 cm³ de volumen impreso y tu laminador da 2 h 10 min (7 800 s) para la misma pieza. Caudal = 47 860 ÷ (7 800 − 300) = 47 860 ÷ 7 500 ≈ **6,4 mm³/s**. Escribes 6,4 y el tiempo pasa a ser ≈ 2 h 10 min.
+
+Repite el proceso para cada material o perfil que uses mucho (por ejemplo, un caudal para PLA rápido y otro para ABS). Los ajustes quedan guardados en tu navegador.
+
+Y una vez imprimida la pieza, compara el peso real en una báscula con el de printquote: es la mejor forma de afinar el relleno.
+
+## 13. Privacidad
+
+- El archivo STL se lee con las funciones de tu navegador y se procesa **en tu equipo**. No hay servidor que lo reciba: la web es estática.
+- No hay analítica, ni cookies, ni cuentas.
+- Se guardan **solo tus ajustes** (material, precios, relleno, etc.) en el almacenamiento local de tu navegador (`localStorage`), para que estén ahí la próxima vez. El archivo y el presupuesto no se guardan. Puedes borrarlos con «Restablecer valores por defecto» o limpiando los datos del sitio en tu navegador.
+- Al pulsar «Copiar presupuesto» o «Imprimir», el texto o la hoja se quedan en tu equipo; printquote no envía nada.
+
+## 14. Preguntas frecuentes y solución de problemas
+
+### «No parece un STL válido» o «No se ha podido leer…»
+
+El archivo no es un STL correcto o está dañado o cortado. Comprueba que la extensión es `.stl` y que realmente lo exportaste como STL (no es lo mismo que renombrar un OBJ o un 3MF). Vuelve a exportarlo desde tu programa de diseño y prueba otra vez. Otros mensajes que puedes ver:
+
+- «El archivo está vacío» o «El STL no contiene ningún triángulo»: el archivo se exportó sin geometría.
+- «El archivo termina en mitad de una cara: parece estar cortado»: la descarga o el guardado se interrumpió; guárdalo de nuevo.
+- «El triángulo N tiene coordenadas no válidas»: el archivo contiene números incorrectos; reexpórtalo.
+
+### El archivo es enorme y no carga
+
+El límite es de 300 MB. Los STL grandes suelen ser piezas exportadas con una resolución excesiva. Prueba a exportar con menos detalle o a simplificar la malla en tu programa de diseño. Con archivos de cientos de miles de triángulos, la lectura puede tardar unos segundos; mientras, verás «Leyendo…».
+
+### La pieza sale diminuta o gigantesca (unidades)
+
+printquote lee los números del STL como milímetros. Pero algunos programas exportan en otras unidades:
+
+- Si el STL se exportó en **metros**, una pieza de 10 cm sale de 0,1 mm y verás el aviso de «pieza diminuta». Vuelve a exportarla en milímetros.
+- Si se exportó en **pulgadas**, la pieza sale unas 25 veces más pequeña de lo real. **Solo avisa si la pieza queda por debajo de 1 mm**, así que una pieza grande puede no dar aviso: fíjate siempre en las **Dimensiones** de la ficha y comprueba que tienen sentido.
+- Si se exportó en **centímetros**, la pieza sale 10 veces más pequeña.
+
+La solución siempre es volver a exportar el STL en **milímetros** (casi todos los programas tienen esa opción en el cuadro de exportación).
+
+### La pieza no cabe en la cama
+
+Revisa las medidas de la cama del bloque 03: quizá tienen los valores por defecto (220 × 220 × 250 mm) y tu impresora es distinta. Si la pieza es realmente mayor, tendrás que reducirla o dividirla en partes.
+
+### El tiempo no coincide con el de mi laminador
+
+Es normal: printquote da una **estimación** basada en un caudal medio, mientras que el laminador simula cada movimiento de la impresora. Para acercar ambos, sigue la guía de [calibración](#12-calibrar-los-valores-con-tu-laminador). Aun así, no esperes una coincidencia exacta con todas las piezas: las que tienen muchos detalles, retracciones o cambios de dirección tardan más que las lisas para el mismo volumen.
+
+### El peso no coincide con el de mi laminador
+
+El modelo aproxima las paredes (superficie × grosor) y no cuenta soportes, balsa ni purga. Ajusta el relleno como se explica en la [calibración](#12-calibrar-los-valores-con-tu-laminador). Si tu laminador cuenta soportes o balsa, printquote quedará por debajo.
+
+### El total de varias copias no es exactamente N veces el de una
+
+Por el redondeo a céntimos línea a línea. La diferencia es de uno o dos céntimos como mucho (mira la [sección 9](#9-copias)).
+
+### He puesto un número y se ha cambiado solo
+
+Al salir de un campo, los valores fuera de rango se ajustan al límite más cercano y lo que no es un número se descarta y vuelve al último valor válido. Consulta la tabla de rangos de la [sección 7](#7-parámetros-de-impresión).
+
+### ¿Puedo usarlo sin conexión?
+
+Necesitas conexión para abrir la página (y para la pieza de ejemplo). Una vez cargada, con tu propio STL el cálculo se hace en tu equipo y no envía nada por internet. Sin embargo, printquote no está pensada para funcionar sin conexión: si recargas sin red, es posible que no abra.
+
+### No veo el visor 3D
+
+Verás «Sin vista 3D» si tu navegador o tu equipo no permiten WebGL (por ejemplo, con la aceleración gráfica desactivada). Actívala en los ajustes del navegador o prueba con otro. El presupuesto funciona igualmente sin visor.
+
+### «Copiar presupuesto» no copia
+
+Tu navegador puede estar bloqueando el acceso al portapapeles (por ejemplo, si has denegado el permiso). El botón lo indicará con «No se pudo copiar». Revisa los permisos del sitio y vuelve a intentarlo; si sigue sin funcionar, usa **Imprimir** y guarda la hoja como PDF.
+
+### ¿Dónde informo de un fallo o propongo una mejora?
+
+Abre una incidencia en el repositorio de GitHub: <https://github.com/BertMarti/printquote>. Si quieres colaborar con código, lee la [guía de contribución](../CONTRIBUTING.md).
