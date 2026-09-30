@@ -46,7 +46,7 @@ Los tres proyectos se desarrollan en paralelo con un equipo de agentes. El traba
 
 Flujo de trabajo:
 1. Cada agente lee las issues de su hito con su etiqueta (`gh issue list --milestone <hito> --label agent:<rol>`); los criterios de aceptación de la issue son su contrato.
-2. **Una rama y un PR por issue**, con el nombre `agent/<rol>/<n>-<slug>` (p. ej. `agent/builder/5-perfiles`). Si varias issues del mismo agente se solapan, cada rama parte de la anterior para evitar conflictos.
+2. **Una rama y un PR por issue**, con el nombre `agent/<rol>/<n>-<slug>` (p. ej. `agent/builder/5-perfiles`). Si varias issues del mismo agente se solapan, cada rama parte de la anterior para evitar conflictos. Git no permite crear `agent/<rol>/…` mientras exista en el remoto una rama llamada `agent/<rol>` (caso de la antigua `agent/builder` del MVP): en ese caso se usa `agent/<rol>-<n>-<slug>` hasta que se borre la rama vieja.
 3. **Los PR van siempre contra `main`** y llevan `Closes #<n>` en la descripción, qué cambia, cómo se verificó y, si depende de otro PR, «Se fusiona después de #<PR>».
 4. Nadie hace commit ni push a `main`, y **nadie fusiona PRs salvo Alberto**.
 

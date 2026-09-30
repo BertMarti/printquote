@@ -5,7 +5,7 @@
 
 ### v0.2.0 (hito en curso, agente builder)
 Una rama y un PR por issue, cada rama parte de la anterior y todos van contra `main`:
-- #5 Perfiles de impresora (rama `agent/builder/5-perfiles`): hecho, PR abierto.
+- #5 Perfiles de impresora (rama `agent/builder-5-perfiles`): hecho, PR abierto.
 - #6 3MF y OBJ, #7 PDF con datos del negocio, #8 interfaz en inglés: pendientes (ver «Siguiente paso»).
 
 **#5 Perfiles de impresora.** `src/quote/printers.ts` (único archivo de datos, tipado, con `note` de origen por perfil): Bambu Lab A1 y P1S, Prusa MK4 y MINI+, Creality Ender-3 V3 y K1, Elegoo Neptune 4. Selector «Impresora» al principio del bloque 03; elegir un perfil rellena caudal, potencia y cama; editar cualquiera de esos campos vuelve a «Personalizada». `QuoteSettings.printerId` se guarda en localStorage (misma clave `printquote:ajustes:v1`; los ajustes antiguos sin perfil cargan como «Personalizada»).
@@ -65,6 +65,7 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 (qa): Imagen Open Graph = copia de `docs/captura.png` en `public/og.png` (1440 × 900), URL absoluta de GitHub Pages.
 
 ## Siguiente paso
+00. Alberto: borrar la rama remota `agent/builder` (ya fusionada en `main`, SHA 5b0a29b: se puede recrear). Mientras exista, Git impide crear ramas `agent/builder/…`, y las de v0.2.0 se llaman `agent/builder-<n>-<slug>`. El borrado lo denegó el sistema de permisos del agente.
 0. builder (v0.2.0): tras #5, seguir con #6 (3MF y OBJ), #7 (PDF) y #8 (inglés). Alberto fusiona los PR en ese orden.
 1. lead: revisar y fusionar el PR de `agent/builder`; comprobar que el despliegue a Pages funciona tras el merge.
 2. lead: tras fusionar #1, revisar y fusionar el PR #2 de `agent/qa` (base `agent/builder`; si GitHub lo retarga a `main` al borrar la rama, vale igual).
@@ -85,4 +86,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-29 builder (agent/builder): MVP completo (parser, geometría, presupuesto, visor, UI, tests, CI, Pages, README, captura) y PR abierto a main.
 - 2026-09-30 qa (agent/qa): revisión y endurecimiento (parser, soldado con tolerancia, Web Worker, carga diferida de three.js, redondeo por líneas, accesibilidad, Open Graph, aviso de unidades), 57 → 132 tests; PR #2 contra agent/builder.
 - 2026-09-30 docs · Claude Code Sonnet (agent/docs): `docs/USO.md` y `CONTRIBUTING.md`, sección «Documentación» y «Cómo se ha hecho» del README, fila docs de AGENTS.md; sin cambios de código; PR contra agent/qa.
-- 2026-09-30 builder · Claude Code Sonnet (agent/builder/5-perfiles): #5 perfiles de impresora (`printers.ts`, selector, persistencia, tests) y actualización de AGENTS.md con el flujo por issues del hito.
+- 2026-09-30 builder · Claude Code Sonnet (agent/builder-5-perfiles): #5 perfiles de impresora (`printers.ts`, selector, persistencia, tests) y actualización de AGENTS.md con el flujo por issues del hito.
