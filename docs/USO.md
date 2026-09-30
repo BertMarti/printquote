@@ -8,24 +8,25 @@ Esta guía explica, paso a paso y sin jerga, cómo sacar un presupuesto de impre
 
 1. [Qué es printquote](#1-qué-es-printquote)
 2. [Probar con la pieza de ejemplo](#2-probar-con-la-pieza-de-ejemplo)
-3. [Cargar tu propio STL](#3-cargar-tu-propio-stl)
+3. [Abrir un modelo 3D (STL, OBJ y 3MF)](#3-abrir-un-modelo-3d-stl-obj-y-3mf)
 4. [Manejar el visor 3D](#4-manejar-el-visor-3d)
 5. [Leer la ficha de la pieza y los avisos](#5-leer-la-ficha-de-la-pieza-y-los-avisos)
 6. [Elegir material y precio](#6-elegir-material-y-precio)
 7. [Parámetros de impresión](#7-parámetros-de-impresión)
 8. [Energía y margen](#8-energía-y-margen)
 9. [Copias](#9-copias)
-10. [Copiar e imprimir el presupuesto](#10-copiar-e-imprimir-el-presupuesto)
+10. [Copiar, imprimir y descargar el presupuesto en PDF](#10-copiar-imprimir-y-descargar-el-presupuesto-en-pdf)
 11. [Cómo se calcula (con un ejemplo completo)](#11-cómo-se-calcula-con-un-ejemplo-completo)
 12. [Calibrar los valores con tu laminador](#12-calibrar-los-valores-con-tu-laminador)
 13. [Privacidad](#13-privacidad)
-14. [Preguntas frecuentes y solución de problemas](#14-preguntas-frecuentes-y-solución-de-problemas)
+14. [Cambiar el idioma](#14-cambiar-el-idioma)
+15. [Preguntas frecuentes y solución de problemas](#15-preguntas-frecuentes-y-solución-de-problemas)
 
 ---
 
 ## 1. Qué es printquote
 
-printquote calcula cuánto cuesta imprimir una pieza en 3D. Arrastras un archivo **STL** (el formato que casi todos los programas de diseño 3D pueden exportar), lo ves en 3D y obtienes:
+printquote calcula cuánto cuesta imprimir una pieza en 3D. Arrastras un modelo 3D en formato **STL**, **OBJ** o **3MF** (los que casi todos los programas de diseño 3D y los laminadores pueden exportar), lo ves en 3D y obtienes:
 
 - cuánto **pesa** la pieza impresa,
 - cuánto **tarda** en imprimirse (siempre es una **estimación**),
@@ -48,23 +49,58 @@ Con los valores por defecto, la pieza de ejemplo (70 × 90 × 88 mm, 123,83 cm³
 
 > El enlace `#ejemplo` solo se lee al abrir la página. Si ya tienes la web abierta y añades `#ejemplo` a la dirección, pulsa antes F5 (recargar) para que funcione.
 
-## 3. Cargar tu propio STL
+## 3. Abrir un modelo 3D (STL, OBJ y 3MF)
 
 Hay dos formas de cargar un archivo:
 
-- **Arrastrarlo** a cualquier parte de la ventana. Verás el mensaje «Suelta el STL para calcular».
-- Pulsar **«Abrir STL»** y elegirlo en tu equipo. Es la forma habitual en el móvil o la tableta.
+- **Arrastrarlo** a cualquier parte de la ventana. Verás el mensaje «Suelta el archivo para calcular».
+- Pulsar **«Abrir modelo 3D»** y elegirlo en tu equipo (el selector muestra `.stl`, `.obj` y `.3mf`). Es la forma habitual en el móvil o la tableta.
 
 Detalles a tener en cuenta:
 
-- Se aceptan STL **binarios y de texto (ASCII)**. printquote los distingue solo.
-- El tamaño máximo es de **300 MB**. Si te pasas, verás el aviso «es demasiado grande».
+- El formato se detecta por el **contenido** del archivo, no solo por su nombre: un 3MF es siempre un ZIP, aunque lo hayas renombrado a `.stl`, y un STL binario nunca se confunde con un OBJ. La extensión solo desempata entre archivos de texto.
+- El tamaño máximo es de **300 MB**, el mismo para los tres formatos. Si te pasas, verás el aviso «es demasiado grande».
 - Mientras se lee el archivo aparece «Leyendo…» sobre el visor. La página sigue respondiendo aunque el archivo sea grande.
 - Puedes cargar otro archivo en cualquier momento: sustituye al anterior.
-- Bajo el nombre de la pieza verás el tipo de STL y el número de triángulos, por ejemplo «STL binario · 56 triángulos».
-- printquote **asume que el STL está en milímetros**, que es lo habitual. Si no lo está, mira [Preguntas frecuentes](#14-preguntas-frecuentes-y-solución-de-problemas).
-- Solo se admite el formato STL. Si tu programa usa OBJ, 3MF, STEP u otro, exporta primero a STL.
-- Si el archivo tiene varias piezas separadas, se cuentan todas juntas como una sola.
+- Bajo el nombre de la pieza verás el formato y el número de triángulos, por ejemplo «STL binario · 56 triángulos», «OBJ · 12 triángulos» o «3MF · 12 triángulos».
+- Los tres formatos pasan por **el mismo análisis y los mismos avisos** (volumen, superficie, dimensiones, malla abierta, normales invertidas, cama y pieza diminuta).
+- Si el archivo tiene varias piezas separadas (u objetos), se cuentan todas juntas como una sola.
+- Si tu programa solo exporta otro formato (STEP, FBX…), conviértelo antes a STL, OBJ o 3MF.
+
+### STL
+
+Se aceptan STL **binarios y de texto (ASCII)**; printquote los distingue solo. El STL no guarda unidades, así que printquote **asume que está en milímetros**, que es lo habitual. Si no lo está, mira [Preguntas frecuentes](#15-preguntas-frecuentes-y-solución-de-problemas).
+
+### OBJ
+
+- Se leen los vértices (`v`) y las caras (`f`). Las caras de más de tres vértices se dividen en triángulos (también las cóncavas) y se admiten los índices negativos (relativos al final), como en `f -3 -2 -1`. Las coordenadas de textura y las normales (`f 1/2/3`) se ignoran.
+- Todos los objetos y grupos del archivo se juntan en una sola pieza.
+- Como el STL, el OBJ **no guarda unidades**: se asumen milímetros.
+- Un OBJ sin caras (solo puntos o líneas) da error («El OBJ no contiene caras…»), igual que uno cuyas caras usan vértices que no existen.
+
+### 3MF
+
+El 3MF es el formato que guardan los laminadores modernos (Bambu Studio, PrusaSlicer, Cura…). Es un archivo ZIP que contiene el modelo.
+
+- **Unidades:** a diferencia del STL y el OBJ, el 3MF **sí guarda sus unidades** y printquote las convierte solas a milímetros. Reconoce `micron`, `millimeter`, `centimeter`, `inch`, `foot` y `meter`; si el archivo no indica ninguna, son milímetros (es lo que define el formato). Por ejemplo, un cubo de 2 unidades de lado en un 3MF en pulgadas se mide como 50,8 mm.
+- Se cuentan las piezas de la **plantilla de impresión**: los objetos que colocaste en la cama, con sus posiciones, giros y escalas. Los marcados como no imprimibles y los de tipo soporte, superficie u «otros» se dejan fuera.
+- Se admiten objetos formados por componentes, incluso cuando están en otros archivos del ZIP, como hacen Bambu Studio y PrusaSlicer.
+
+Qué **da error** en un 3MF (se muestra un cuadro en el visor con el motivo y se mantiene la pieza anterior, si había):
+
+| Situación | Mensaje (resumen) |
+|---|---|
+| El archivo no es un ZIP | «El archivo no es un 3MF válido: un 3MF es un ZIP y este no lo es» |
+| Una unidad que no es ninguna de las seis | «El 3MF usa una unidad desconocida…» |
+| ZIP cifrado con contraseña | «El 3MF está cifrado con contraseña…» |
+| ZIP64 (más de 4 GB o 65 535 archivos) | «…usa ZIP64, que no está soportado» |
+| Compresión distinta de «deflate» o «sin comprimir» | «…un método de compresión que no está soportado» |
+| ZIP cortado o dañado | «…está cortado o dañado…» |
+| Falta el modelo o un archivo al que se hace referencia | «El 3MF no contiene el modelo…» o «…hace referencia a … que no está dentro del archivo» |
+| Sin ninguna pieza imprimible | «El 3MF no contiene ninguna pieza imprimible…» |
+| Un archivo interno que, descomprimido, pesa más de 400 MB | «…es demasiado grande» |
+
+Si te sale algún otro error de lectura, vuelve a exportar el archivo desde tu programa o conviértelo a STL.
 
 ## 4. Manejar el visor 3D
 
@@ -104,7 +140,7 @@ Debajo pueden aparecer **avisos**. Ninguno bloquea el cálculo; son advertencias
 | **Malla abierta** («La malla parece abierta o con huecos…») | La pieza tiene agujeros en su superficie, como una caja sin tapa. El volumen, el peso y el precio pueden no ser fiables. | Repara la malla en tu laminador o editor 3D (la mayoría tienen una opción de «reparar»). |
 | **Normales invertidas** («Las normales parecen invertidas…») | Las caras de la pieza «miran hacia dentro». printquote usa el valor absoluto del volumen, así que el cálculo suele salir bien. | Conviene revisar la malla, pero normalmente no cambia el presupuesto. |
 | **No cabe en la cama** («…no cabe en la cama de … ni siquiera girándola») | La pieza es mayor que la cama configurada. Se permite girarla 90° en horizontal. | Comprueba las medidas de la cama (bloque 03), reduce la pieza o divídela en partes. |
-| **Pieza diminuta** («La pieza mide solo … mm en su lado mayor…») | Ningún lado supera 1 mm. Casi seguro el STL se exportó en **metros** u otra unidad. | Vuelve a exportarlo en milímetros. Más detalles en [las preguntas frecuentes](#14-preguntas-frecuentes-y-solución-de-problemas). |
+| **Pieza diminuta** («La pieza mide solo … mm en su lado mayor…») | Ningún lado supera 1 mm. Casi seguro el STL o el OBJ se exportó en **metros** u otra unidad. | Vuelve a exportarlo en milímetros. Más detalles en [las preguntas frecuentes](#15-preguntas-frecuentes-y-solución-de-problemas). |
 
 Si la pieza está abierta *y además* tiene las normales invertidas, solo se muestra el aviso de malla abierta.
 
@@ -128,6 +164,24 @@ Las densidades no se pueden editar. Si tu filamento es especial (por ejemplo, co
 ## 7. Parámetros de impresión
 
 El bloque **03 · Impresión** contiene lo que decide cuánto material y cuánto tiempo gasta la pieza. Estos valores son los mismos que verás en tu laminador.
+
+### Impresora (perfiles)
+
+Lo primero del bloque es el selector **«Impresora»**. Si tienes una de las máquinas de la lista, elígela y se rellenan de golpe el **caudal**, la **potencia** y la **cama**:
+
+| Impresora | Caudal (mm³/s) | Potencia (W) | Cama X × Y × Z (mm) |
+|---|---|---|---|
+| Bambu Lab A1 | 12 | 100 | 256 × 256 × 256 |
+| Bambu Lab P1S | 15 | 110 | 256 × 256 × 256 |
+| Prusa MK4 | 11 | 100 | 250 × 210 × 220 |
+| Prusa MINI+ | 8 | 70 | 180 × 180 × 180 |
+| Creality Ender-3 V3 | 10 | 120 | 220 × 220 × 250 |
+| Creality K1 | 18 | 130 | 220 × 220 × 250 |
+| Elegoo Neptune 4 | 12 | 110 | 225 × 225 × 265 |
+
+Son valores de **partida orientativos**, no medidas de tu máquina: la cama viene de la ficha técnica del fabricante, pero el caudal y la potencia son estimaciones redondeadas de un uso normal con PLA (bastante por debajo de lo que anuncia el fabricante). Debajo del selector verás una nota con el origen de los valores del perfil elegido. Algunas advierten de diferencias entre modelos: la Ender-3 V3 usa las medidas de la V3 SE, y la P1S, al ser cerrada, consume más con ABS o ASA. Para afinar el caudal con tu laminador, mira la [sección 12](#12-calibrar-los-valores-con-tu-laminador).
+
+Si después **cambias a mano** el caudal, la potencia o cualquiera de las tres medidas de la cama, el selector vuelve solo a **«Personalizada»**: ya no son los valores del perfil. «Personalizada» es también la opción inicial (caudal de 8 mm³/s, 120 W y cama de 220 × 220 × 250 mm) y no cambia ningún número al elegirla. La impresora elegida se recuerda junto con el resto de ajustes, y «Restablecer valores por defecto» vuelve a «Personalizada».
 
 ### Relleno (%)
 
@@ -157,11 +211,11 @@ Cuánto plástico derrite y deposita la impresora **cada segundo**. Es el dato q
 | Uso normal (por defecto) | 8 mm³/s |
 | Impresoras rápidas y de alto caudal | 12 mm³/s o más |
 
-Es el valor menos universal, porque depende de tu impresora, velocidad, altura de capa y material. Lo mejor es **calibrarlo** con tu laminador: [sección 12](#12-calibrar-los-valores-con-tu-laminador).
+Es el valor menos universal, porque depende de tu impresora, velocidad, altura de capa y material. Un [perfil de impresora](#impresora-perfiles) te da un punto de partida; lo mejor es **calibrarlo** con tu laminador: [sección 12](#12-calibrar-los-valores-con-tu-laminador).
 
 ### Cama (mm)
 
-El tamaño de la superficie de impresión de tu impresora: ancho (X), fondo (Y) y altura máxima (Z). Por defecto, **220 × 220 × 250 mm**. Se usa solo para avisarte si la pieza no cabe y para dibujar la cama en el visor. Consulta las medidas en la ficha de tu impresora.
+El tamaño de la superficie de impresión de tu impresora: ancho (X), fondo (Y) y altura máxima (Z). Por defecto, **220 × 220 × 250 mm**. Se usa solo para avisarte si la pieza no cabe y para dibujar la cama en el visor. Consulta las medidas en la ficha de tu impresora o elige su [perfil](#impresora-perfiles).
 
 ### Rangos permitidos
 
@@ -184,7 +238,7 @@ Todos los campos numéricos aceptan coma o punto como separador decimal (`0,45` 
 
 El bloque **04 · Costes** reúne el resto:
 
-- **Potencia media (W)**: lo que consume tu impresora de media mientras imprime, contando el calentamiento de la cama y de la boquilla. El valor por defecto es **120 W**. Como orientación, una impresora de sobremesa suele moverse entre 60 y 150 W; si puedes, mídelo con un medidor de enchufe. Con 0 W, no se cuenta energía.
+- **Potencia media (W)**: lo que consume tu impresora de media mientras imprime, contando el calentamiento de la cama y de la boquilla. El valor por defecto es **120 W**. Como orientación, una impresora de sobremesa suele moverse entre 60 y 150 W; si puedes, mídelo con un medidor de enchufe. Con 0 W, no se cuenta energía. Los [perfiles de impresora](#impresora-perfiles) traen una estimación; si tienes un medidor de enchufe, usa tu medida.
 - **Electricidad (€/kWh)**: el precio de la luz en tu factura. Por defecto **0,15 €/kWh**.
 - **Margen (%)**: lo que añades sobre el coste (material + energía) para cubrir tu trabajo, el desgaste de la impresora y los fallos. Por defecto **30 %**. Con 0 % se cobra solo el coste.
 
@@ -202,14 +256,59 @@ El campo **Copias** es el número de veces que vas a imprimir la pieza. printquo
 
 Si imprimes varias copias juntas en una misma cama, el tiempo real puede ser algo menor que el calculado, porque la preparación se hace una sola vez. Como printquote redondea a céntimos línea a línea (ver [sección 11](#11-cómo-se-calcula-con-un-ejemplo-completo)), el total de N copias puede diferir en uno o dos céntimos de N veces el precio de una copia. Con la pieza de ejemplo, 1 copia son 1,59 € y 3 copias son 4,75 € (1,58 € por copia).
 
-## 10. Copiar e imprimir el presupuesto
+## 10. Copiar, imprimir y descargar el presupuesto en PDF
 
 Los botones están en la parte inferior del panel, junto al **Total** (en el móvil, esa barra queda fija al fondo de la pantalla). Se activan cuando hay una pieza cargada.
 
 - **Copiar presupuesto**: copia al portapapeles un texto plano con la pieza, los ajustes y el desglose, listo para pegar en un correo o mensaje. El botón muestra «Copiado» durante un momento. Si tu navegador bloquea el portapapeles, verás «No se pudo copiar».
-- **Imprimir**: abre el diálogo de impresión con una hoja limpia que incluye una imagen de la pieza en 3D, los datos de la pieza, los ajustes y el desglose con el total. Si quieres un PDF para enviar, elige «Guardar como PDF» como impresora.
+- **Imprimir**: abre el diálogo de impresión con una hoja limpia que incluye una imagen de la pieza en 3D, los datos de la pieza, los ajustes y el desglose con el total.
+- **Descargar PDF**: genera un presupuesto listo para enviar a un cliente, con tus datos de negocio y el IVA. Se explica a continuación.
 
-El texto y la hoja indican siempre que el tiempo es una estimación.
+El texto copiado y la hoja impresa muestran el total **sin IVA** (es la base imponible). Los tres indican siempre que el tiempo es una estimación.
+
+### Datos del negocio
+
+Para que el PDF lleve tu nombre y tus datos, rellena el bloque plegable **«06 · Datos del negocio»**, al final del panel (está plegado por defecto; púlsalo para abrirlo). Se rellena una sola vez: todo se guarda en tu navegador y no se envía a ningún sitio.
+
+| Campo | Qué poner | Límite |
+|---|---|---|
+| Nombre del negocio | Sale como título del PDF (si lo dejas vacío, el título es «Presupuesto de impresión 3D») | 80 caracteres |
+| NIF / CIF | Tu identificador fiscal | 30 |
+| Dirección | Admite varias líneas (Intro para saltar de línea) | 200 |
+| Teléfono, correo electrónico, web | Datos de contacto | 30, 80 y 80 |
+| Logotipo (opcional) | Una imagen PNG, JPEG o WebP de hasta 8 MB | ver abajo |
+| Nº del próximo presupuesto | Texto libre; por defecto, el año actual y `001` (por ejemplo `2026-001`) | 30 |
+| Validez del presupuesto | Días de validez a partir de hoy; por defecto 30 | entre 1 y 365 |
+| IVA | Porcentaje; por defecto 21 %; se admiten hasta **2 decimales** (10,55 %) | entre 0 y 100 |
+
+Todos son opcionales: puedes descargar el PDF aunque no hayas rellenado nada. El botón **«Borrar los datos del negocio»** los elimina todos (y el logotipo). «Restablecer valores por defecto» no los toca: son independientes de los ajustes de la pieza.
+
+**Logotipo.** Se carga desde tu equipo: se reduce a un máximo de 400 píxeles de lado directamente en tu navegador, se guarda en él y se dibuja en el PDF. No se envía a ningún servidor. Si tu navegador no deja guardarlo, el programa lo avisa («…tendrás que subirlo de nuevo la próxima vez») y el PDF de esta sesión lo lleva igualmente. Con «Quitar logotipo» lo eliminas.
+
+**Numeración.** Al descargar cada PDF, el número del siguiente presupuesto **sube solo** y conserva los ceros: `2026-009` pasa a `2026-010` y `PQ7`, a `PQ8`. Si el número no lleva ninguna cifra, se le añade `-2`. Puedes cambiarlo a mano cuando quieras. printquote no comprueba duplicados ni guarda un historial.
+
+### Descargar el PDF
+
+Pulsa **«Descargar PDF»** (en su propia fila, debajo de «Copiar presupuesto» e «Imprimir»). El archivo se llama `presupuesto-2026-001.pdf` (con el número del presupuesto; en inglés, `quote-2026-001.pdf`) y se genera en tu navegador. La primera vez tarda un instante porque se descarga el generador de PDF.
+
+El PDF es de **una página A4** y contiene:
+
+1. Cabecera con el nombre y el logotipo del negocio, y el **número**, la **fecha** de hoy y la fecha hasta la que es **válido**.
+2. Los datos del emisor: NIF/CIF, dirección, teléfono, correo y web.
+3. La vista 3D de la pieza y sus datos: archivo, dimensiones, volumen, material y precio por kilo, relleno y perímetros.
+4. El desglose: copias, peso total, tiempo (estimación), material, energía, subtotal, margen y, si hay más de una copia, el precio por copia sin IVA.
+5. **Base imponible**, **IVA** y **Total con IVA**, y las notas de que el tiempo es una estimación y de la validez.
+
+El idioma del PDF es el que tengas activo en la interfaz.
+
+**El IVA.** La base imponible es el total que ves en el panel. La cuota se calcula como base × tipo y se **redondea a céntimos**; el total con IVA es siempre base + cuota, como en una factura. Con la pieza de ejemplo (1,59 €) y el 21 %: IVA 0,33 € y total 1,92 €. Con un 10,55 %: IVA 0,17 € y total 1,76 €. El tipo se rotula en el PDF tal como lo escribiste (por ejemplo «IVA (10,55 %)»).
+
+**Límites del PDF** (todo ello, para que quepa siempre en una página):
+
+- **Caracteres no latinos.** El PDF usa las fuentes estándar (Helvetica y Courier), que solo cubren el alfabeto latino occidental. Los acentos, la ñ, la ü, «¿», «¡» y «€» salen bien. Las letras latinas que faltan se transcriben sin marcas (ć → c, ł → l, ș → s), y el resto de caracteres (cirílico, griego, chino, japonés, emojis…) salen como «**?**». Los caracteres invisibles se eliminan. Si tu nombre o dirección usa otro alfabeto, el PDF no saldrá bien.
+- **Dirección.** El bloque del emisor (NIF, dirección, teléfono, correo y web) ocupa como máximo **10 líneas** en el PDF; si tu dirección es tan larga que se pasa, lo que sobra se corta y la última línea acaba en «...». Escribe la dirección de forma breve, en pocas líneas. El formulario admite hasta 200 caracteres.
+- Un solo folio; sin campo de cliente (no hay un espacio para el nombre de quien recibe el presupuesto).
+- Si algo falla al generarlo, verás «No se ha podido crear el PDF» y puedes usar **Imprimir** y guardar la hoja como PDF.
 
 ## 11. Cómo se calcula (con un ejemplo completo)
 
@@ -273,38 +372,48 @@ Y una vez imprimida la pieza, compara el peso real en una báscula con el de pri
 
 ## 13. Privacidad
 
-- El archivo STL se lee con las funciones de tu navegador y se procesa **en tu equipo**. No hay servidor que lo reciba: la web es estática.
+- El archivo (STL, OBJ o 3MF) se lee con las funciones de tu navegador y se procesa **en tu equipo**. No hay servidor que lo reciba: la web es estática.
 - No hay analítica, ni cookies, ni cuentas.
-- Se guardan **solo tus ajustes** (material, precios, relleno, etc.) en el almacenamiento local de tu navegador (`localStorage`), para que estén ahí la próxima vez. El archivo y el presupuesto no se guardan. Puedes borrarlos con «Restablecer valores por defecto» o limpiando los datos del sitio en tu navegador.
-- Al pulsar «Copiar presupuesto» o «Imprimir», el texto o la hoja se quedan en tu equipo; printquote no envía nada.
+- Se guardan **solo tus preferencias** en el almacenamiento local de tu navegador (`localStorage`), para que estén ahí la próxima vez: los ajustes (material, precios, impresora, relleno, etc.), el idioma y los **datos del negocio** (incluido el logotipo, ya reducido y el número del próximo presupuesto). El archivo 3D y el presupuesto no se guardan. Puedes borrar los ajustes con «Restablecer valores por defecto», los datos del negocio con «Borrar los datos del negocio», o todo limpiando los datos del sitio en tu navegador.
+- Al pulsar «Copiar presupuesto», «Imprimir» o «Descargar PDF», el texto, la hoja o el PDF se quedan en tu equipo; printquote no envía nada (el PDF se genera en tu navegador).
 
-## 14. Preguntas frecuentes y solución de problemas
+## 14. Cambiar el idioma
+
+printquote está en **español** y en **inglés**. En la cabecera hay un selector **ES / EN**: pulsa el idioma que quieras y toda la página cambia al instante, sin recargar (el modelo cargado y tus ajustes se conservan).
+
+- **Idioma inicial:** la primera vez se elige según el idioma de tu navegador: español si es español, inglés si es inglés, y **inglés** si tu navegador solo declara otros idiomas (francés, alemán…).
+- **La elección se recuerda** en este navegador.
+- **Qué cambia:** la interfaz, los avisos y los errores de lectura, las notas de los perfiles de impresora, el texto copiado, la hoja impresa y el **PDF**, así como el formato de números y fechas (`12,34 €` en español, `€12.34` en inglés).
+- **Qué no cambia:** la **moneda** sigue siendo el euro en los dos idiomas, y esta guía está solo en español.
+
+## 15. Preguntas frecuentes y solución de problemas
 
 ### «No parece un STL válido» o «No se ha podido leer…»
 
-El archivo no es un STL correcto o está dañado o cortado. Comprueba que la extensión es `.stl` y que realmente lo exportaste como STL (no es lo mismo que renombrar un OBJ o un 3MF). Vuelve a exportarlo desde tu programa de diseño y prueba otra vez. Otros mensajes que puedes ver:
+El archivo no es un STL (u OBJ o 3MF) correcto, o está dañado o cortado. Comprueba que realmente lo exportaste en ese formato: cambiar la extensión a mano no convierte el archivo. Vuelve a exportarlo desde tu programa de diseño y prueba otra vez. Los errores del 3MF tienen [su propia tabla](#3mf). Otros mensajes que puedes ver:
 
 - «El archivo está vacío» o «El STL no contiene ningún triángulo»: el archivo se exportó sin geometría.
 - «El archivo termina en mitad de una cara: parece estar cortado»: la descarga o el guardado se interrumpió; guárdalo de nuevo.
 - «El triángulo N tiene coordenadas no válidas»: el archivo contiene números incorrectos; reexpórtalo.
+- «Línea N del OBJ: …»: el OBJ tiene una línea mal formada (un vértice sin tres coordenadas, un índice que no es un número…). El mensaje indica la línea.
 
 ### El archivo es enorme y no carga
 
-El límite es de 300 MB. Los STL grandes suelen ser piezas exportadas con una resolución excesiva. Prueba a exportar con menos detalle o a simplificar la malla en tu programa de diseño. Con archivos de cientos de miles de triángulos, la lectura puede tardar unos segundos; mientras, verás «Leyendo…».
+El límite es de 300 MB. Los modelos grandes suelen ser piezas exportadas con una resolución excesiva. Prueba a exportar con menos detalle o a simplificar la malla en tu programa de diseño. Con archivos de cientos de miles de triángulos, la lectura puede tardar unos segundos; mientras, verás «Leyendo…».
 
 ### La pieza sale diminuta o gigantesca (unidades)
 
-printquote lee los números del STL como milímetros. Pero algunos programas exportan en otras unidades:
+printquote lee los números del STL y del OBJ como milímetros, porque esos formatos no guardan unidades. Pero algunos programas exportan en otras unidades:
 
 - Si el STL se exportó en **metros**, una pieza de 10 cm sale de 0,1 mm y verás el aviso de «pieza diminuta». Vuelve a exportarla en milímetros.
 - Si se exportó en **pulgadas**, la pieza sale unas 25 veces más pequeña de lo real. **Solo avisa si la pieza queda por debajo de 1 mm**, así que una pieza grande puede no dar aviso: fíjate siempre en las **Dimensiones** de la ficha y comprueba que tienen sentido.
 - Si se exportó en **centímetros**, la pieza sale 10 veces más pequeña.
 
-La solución siempre es volver a exportar el STL en **milímetros** (casi todos los programas tienen esa opción en el cuadro de exportación).
+La solución siempre es volver a exportar el STL o el OBJ en **milímetros** (casi todos los programas tienen esa opción en el cuadro de exportación). Con un **3MF** no hace falta: guarda sus unidades y se convierten solas (mira la [sección 3](#3mf)).
 
 ### La pieza no cabe en la cama
 
-Revisa las medidas de la cama del bloque 03: quizá tienen los valores por defecto (220 × 220 × 250 mm) y tu impresora es distinta. Si la pieza es realmente mayor, tendrás que reducirla o dividirla en partes.
+Revisa las medidas de la cama del bloque 03: quizá tienen los valores por defecto (220 × 220 × 250 mm) y tu impresora es distinta; elige su [perfil](#impresora-perfiles) o escribe las medidas. Si la pieza es realmente mayor, tendrás que reducirla o dividirla en partes.
 
 ### El tiempo no coincide con el de mi laminador
 
@@ -321,6 +430,18 @@ Por el redondeo a céntimos línea a línea. La diferencia es de uno o dos cént
 ### He puesto un número y se ha cambiado solo
 
 Al salir de un campo, los valores fuera de rango se ajustan al límite más cercano y lo que no es un número se descarta y vuelve al último valor válido. Consulta la tabla de rangos de la [sección 7](#7-parámetros-de-impresión).
+
+### El PDF sale con signos «?» en lugar de letras
+
+Las fuentes del PDF solo cubren el alfabeto latino occidental. Los acentos y la ñ salen bien; el cirílico, el griego, el chino, el japonés o los emojis no (salen como «?»). Mira los [límites del PDF](#descargar-el-pdf). Si necesitas otro alfabeto, usa **Imprimir** y guarda la hoja como PDF.
+
+### Mi dirección sale cortada en el PDF
+
+El bloque del emisor admite como máximo 10 líneas en el PDF. Acorta la dirección o usa menos líneas.
+
+### Los datos del negocio han desaparecido
+
+Se guardan en el navegador y en el equipo donde los escribiste: no se sincronizan entre dispositivos y se pierden si limpias los datos del sitio, usas una ventana privada o pulsas «Borrar los datos del negocio».
 
 ### ¿Puedo usarlo sin conexión?
 

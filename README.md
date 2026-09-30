@@ -18,7 +18,7 @@
 - **Visor 3D** con la pieza apoyada en la cama, rejilla de 10 mm, órbita, zoom y «Restablecer vista».
 - **Perfiles de impresora**: elige Bambu Lab A1 o P1S, Prusa MK4 o MINI+, Creality Ender-3 V3 o K1, Elegoo Neptune 4 (o «Personalizada») y se rellenan caudal, potencia y cama con valores de partida **orientativos**; al editar cualquiera de ellos vuelve a «Personalizada».
 - **Presupuesto en vivo**: material, relleno, perímetros, caudal, energía, margen y copias. Cualquier cambio recalcula al instante.
-- **Copiar presupuesto** en texto plano, **Imprimir** una hoja limpia con la vista 3D y el desglose, o **Descargar PDF**: un presupuesto de una página con el nombre y el logotipo de tu negocio, tus datos de contacto, número, fecha, validez, desglose e **IVA** (21 % por defecto, configurable). Los datos del negocio se rellenan una vez en el bloque plegable «Datos del negocio» y se guardan en tu navegador.
+- **Copiar presupuesto** en texto plano, **Imprimir** una hoja limpia con la vista 3D y el desglose, o **Descargar PDF**: un presupuesto de una página con el nombre y el logotipo de tu negocio, tus datos de contacto, número, fecha, validez, desglose e **IVA** (21 % por defecto, configurable). Los datos del negocio se rellenan una vez en el bloque plegable «Datos del negocio» y se guardan en tu navegador. Límites: una página A4, sin campo de cliente, y los caracteres que no son del alfabeto latino (cirílico, griego, chino, emojis…) salen como «?».
 - **Español e inglés**: el idioma inicial sale de tu navegador (`navigator.language`), se cambia con el selector ES / EN de la cabecera y se recuerda. Textos, avisos, errores, números, moneda, fechas y PDF cambian de idioma (la moneda sigue siendo el euro).
 - Recuerda tus ajustes en este navegador (`localStorage`). Modo claro y oscuro automático.
 
@@ -105,10 +105,10 @@ npm run dev        # http://localhost:5173/printquote/
 - **Vitest** para tests y **ESLint** (flat config con `typescript-eslint`).
 - **GitHub Actions**: CI en Ubuntu y Windows, y despliegue en **GitHub Pages**.
 - Parser STL propio: distingue binario y ASCII por el contenido y el tamaño, no solo por la cabecera `solid`. Lee el ASCII byte a byte (sin picos de memoria) y tolera BOM, CR/LF mezclados y nombres de sólido con palabras clave.
-- **OBJ y 3MF:** el OBJ (`v`/`f`, caras de más de 3 vértices trianguladas en abanico, índices negativos) y el 3MF (ZIP leído a mano y descomprimido con `DecompressionStream`, sin dependencias; varios objetos, transformaciones de `item` y `component`, unidades, y componentes en otros `.model` como los de Bambu Studio) pasan por el mismo análisis geométrico y los mismos avisos que el STL. Un 3MF de 250 000 triángulos se lee en ~1 s.
+- **OBJ y 3MF:** el OBJ (`v`/`f`, caras de más de 3 vértices trianguladas, también las cóncavas, e índices negativos) y el 3MF (ZIP leído a mano y descomprimido con `DecompressionStream`, sin dependencias; varios objetos, transformaciones de `item` y `component`, unidades, y componentes en otros `.model` como los de Bambu Studio) pasan por el mismo análisis geométrico y los mismos avisos que el STL. Un 3MF de 250 000 triángulos se lee en ~1 s.
 - **PDF:** [`pdf-lib`](https://pdf-lib.js.org/) (MIT, JavaScript puro, sin dependencias nativas) dibuja el PDF con fuentes estándar (Helvetica y Courier) y se carga con `import()` solo al pulsar «Descargar PDF»: no pesa en el JS inicial (~425 kB, 178 kB gzip, en su propio archivo). El contenido se calcula aparte en una función pura (`src/pdf/document.ts`) y el IVA en `src/quote/tax.ts` (cuota redondeada a céntimos; el total con IVA es siempre base + cuota).
 - **Idiomas:** diccionarios tipados en `src/i18n/` (`es.ts` de referencia y `en.ts`), sin dependencias; formato con `Intl.NumberFormat` / `Intl.DateTimeFormat` (`es-ES` y `en-GB`). Un test falla si a un idioma le falta una clave o usa otros `{marcadores}`, y otro comprueba que el HTML estático coincide con el diccionario. Los errores de lectura viajan como código + datos desde el Web Worker y se traducen en la interfaz.
-- **Rendimiento:** el parseo y la geometría corren en un **Web Worker** (la interfaz no se congela con STL grandes; si el navegador no puede crear el worker, se hace en el hilo principal). three.js se carga bajo demanda: el JS inicial pesa ~77 kB (27 kB gzip; casi la mitad son los dos diccionarios de textos) y el visor y el PDF llegan en sus propios archivos.
+- **Rendimiento:** el parseo y la geometría corren en un **Web Worker** (la interfaz no se congela con STL grandes; si el navegador no puede crear el worker, se hace en el hilo principal). three.js se carga bajo demanda: el JS inicial pesa ~78 kB (27 kB gzip; casi la mitad son los dos diccionarios de textos) y el visor y el PDF llegan en sus propios archivos.
 
 ## Estructura
 
@@ -134,8 +134,9 @@ Accesibilidad: todos los controles tienen etiqueta, la app se puede usar entera 
 
 ## Documentación
 
-- [**Guía de uso**](docs/USO.md): cómo cargar un STL, leer los avisos, elegir los ajustes y calibrarlos con tu laminador.
-- [**Guía de contribución**](CONTRIBUTING.md): requisitos, comandos, ramas, commits, cómo añadir un material y dónde está cada fórmula.
+- [**Guía de uso**](docs/USO.md): cómo abrir un STL, OBJ o 3MF, leer los avisos, elegir impresora y ajustes, calibrarlos con tu laminador, rellenar los datos del negocio, descargar el PDF y cambiar el idioma.
+- [**Registro de cambios**](CHANGELOG.md): qué trae cada versión (v0.1.0 y v0.2.0).
+- [**Guía de contribución**](CONTRIBUTING.md): requisitos, comandos, ramas, commits, cómo añadir un material, un perfil de impresora, una clave de traducción o un formato de archivo, y dónde está cada fórmula.
 
 ## Contribuir
 
@@ -147,7 +148,14 @@ Accesibilidad: todos los controles tienen etiqueta, la app se puede usar entera 
 
 ## Cómo se ha hecho
 
-printquote se ha construido con un **equipo de agentes de IA** en el que cada agente trabaja en su rama y entrega por pull request: coordinados por un **lead** (Claude Code): **builder** y **qa** con Claude Code (Opus) y **docs** con Claude Code (Sonnet). La documentación estaba prevista para OpenCode, pero no pudo ejecutarse en modo autónomo, así que la hizo Claude Code. **Alberto** supervisa el trabajo, revisa cada pull request y es quien fusiona en `main`. El reparto y las reglas del equipo están en [`AGENTS.md`](AGENTS.md) y la bitácora de decisiones, en [`MEMORY.md`](MEMORY.md).
+printquote se ha construido con un **equipo de agentes de IA** en el que cada agente trabaja en su rama y entrega por pull request, con un **lead** que coordina, **builder** que implementa, **qa** que revisa y **docs** que documenta:
+
+- **v0.1.0 (MVP):** el lead y el builder, con Claude Code (Claude Opus); qa y docs, con Claude Code (Claude Sonnet).
+- **v0.2.0:** todo el trabajo, con Claude Code (Claude Sonnet).
+- La documentación estaba prevista para **OpenCode**, pero no pudo ejecutarse en modo autónomo, así que la hizo Claude Code.
+- **Alberto** supervisa el trabajo, revisa cada pull request y es quien fusiona en `main`.
+
+El reparto y las reglas del equipo están en [`AGENTS.md`](AGENTS.md) y la bitácora de decisiones, en [`MEMORY.md`](MEMORY.md).
 
 ## Licencia
 

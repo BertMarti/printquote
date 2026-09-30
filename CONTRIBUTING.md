@@ -33,6 +33,7 @@ Antes de abrir un PR: `npm run lint && npm test && npm run build` en verde. El C
 - `main` está protegida: **nunca se hace commit directo**. Crea una rama desde `main` (`feat/...`, `fix/...`, `docs/...`; el equipo de agentes usa `agent/<rol>/<n>-<slug>`, con `<n>` el número de su issue) y abre un pull request.
 - Rellena la plantilla del PR (qué cambia, cómo se ha verificado, checklist).
 - Cambios pequeños y con sentido propio, un tema por PR.
+- Anota los cambios visibles para quien use la web en `CHANGELOG.md`, bajo «Sin publicar» ([Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/): Añadido, Cambiado, Corregido…).
 - Actualiza `MEMORY.md` al terminar (estado, decisiones, siguiente paso y una línea en «Registro de sesiones»).
 - No subas claves, tokens ni datos personales: el repositorio es público. No añadas dependencias sin justificarlas en «Decisiones» de `MEMORY.md`.
 
@@ -64,7 +65,7 @@ La interfaz está en español e inglés y la documentación, en español; los no
 
 ### Textos e idiomas
 
-Todo texto que ve una persona sale de `src/i18n/es.ts` (idioma de referencia) y `src/i18n/en.ts`, que deben tener las mismas claves y los mismos `{marcadores}` (lo comprueba el compilador y `tests/i18n.test.ts`). En el código se usa `t('clave', { marcador: valor })`. En `index.html` el texto en español va escrito tal cual y se marca con `data-i18n="clave"` (o `data-i18n-attr="atributo:clave"`); el test comprueba que coincide con el diccionario. Los errores de lectura llevan un código (`ModelParseError`) y se traducen en la interfaz. Para añadir un idioma: una constante en `src/i18n/`, su entrada en `DICTIONARIES` y `LOCALES`, y un botón en la cabecera.
+Todo texto que ve una persona sale de `src/i18n/es.ts` (idioma de referencia) y `src/i18n/en.ts`, que deben tener las mismas claves y los mismos `{marcadores}` (lo comprueba el compilador y `tests/i18n.test.ts`). En el código se usa `t('clave', { marcador: valor })`. En `index.html` el texto en español va escrito tal cual y se marca con `data-i18n="clave"` (o `data-i18n-attr="atributo:clave"`); el test comprueba que coincide con el diccionario. Los errores de lectura llevan un código (`ModelParseError`) y se traducen en la interfaz. Para añadir un idioma: una constante en `src/i18n/`, su entrada en `DICTIONARIES` y `LOCALES`, y un botón en la cabecera. Para añadir un texto, mira [Añadir una clave de traducción](#añadir-una-clave-de-traducción).
 
 ### Cómo testear una fórmula
 
@@ -82,6 +83,37 @@ Las fórmulas de `src/quote/` y `src/stl/geometry.ts` son **funciones puras**: m
 4. **Tests**: revisa `tests/quote.test.ts` y `tests/quote-edge.test.ts` (asumen cuatro materiales en algunos casos, p. ej. `MATERIAL_IDS[i % 4]` y la comparación de `pricePerKg`) y añade un caso con el peso de un relleno del 100 % con la nueva densidad.
 5. **Documentación**: actualiza las tablas de materiales del README y de `docs/USO.md`.
 
+## Añadir un perfil de impresora
+
+Los perfiles son datos: no hay que tocar la interfaz.
+
+1. **`src/quote/printers.ts`**: añade un objeto a `PRINTERS` con `id` (minúsculas y guiones, único y distinto de `custom`), `name`, `flowRate` (mm³/s), `powerWatts` (W), `bedX`, `bedY`, `bedZ` (mm) y `note`. Criterio de los valores: la **cama** sale de la ficha técnica del fabricante; el **caudal** y la **potencia** son estimaciones redondeadas de un uso normal con PLA, muy por debajo del máximo publicitario. Todos dentro de `LIMITS` (`src/quote/settings.ts`).
+2. **`note`** es una lista de claves de texto que se unen en la nota que ve la persona usuaria: usa `[BED, ESTIMATE]` y, si el modelo necesita una advertencia (cerrada, otras variantes con otra altura…), una clave propia `printer.note.<id>` en `src/i18n/es.ts` y `en.ts` (mira [Añadir una clave de traducción](#añadir-una-clave-de-traducción)).
+3. El selector, el guardado en `localStorage` y el paso a «Personalizada» al editar un valor salen solos de esa lista: `normalizeSettings` mantiene el perfil solo mientras caudal, potencia y cama coinciden con él.
+4. **Tests**: `tests/printers.test.ts` recorre `PRINTERS` y comprueba límites, identificadores únicos y que la nota (en español) menciona al fabricante y las estimaciones. Añade el nombre a la lista de modelos de ese test.
+5. **Documentación**: la tabla de perfiles de `docs/USO.md` (sección 7), el README si nombra los modelos y `CHANGELOG.md`.
+
+## Añadir una clave de traducción
+
+Todo texto que ve una persona sale de `src/i18n/`. Para añadir uno:
+
+1. Añade la clave a **`src/i18n/es.ts`** (idioma de referencia) con el formato `grupo.nombre`, por ejemplo `'pdf.footer'`. Los datos variables van como `{marcador}`. Las claves de errores de lectura empiezan por `err.` (las únicas que admite `ModelParseError`).
+2. Añade **la misma clave a `src/i18n/en.ts`**, con los mismos `{marcadores}`. Si falta, el compilador falla (`en` es un `Record<Key, string>`).
+3. Úsala con `t('grupo.nombre', { marcador: valor })`. En `index.html`, escribe el texto en español tal cual y marca el elemento con `data-i18n="grupo.nombre"` (o `data-i18n-attr="atributo:grupo.nombre"`). Si el texto se calcula al pintar (no se escribe una sola vez), hay que repintarlo al cambiar de idioma: `applyLanguage` en `src/ui/app.ts`. Las etiquetas del PDF además pasan por `src/pdf/labels.ts` y `PdfLabels`.
+4. **El test que lo vigila es `tests/i18n.test.ts`**. Falla si: a un idioma le falta una clave, alguna clave usa otros `{marcadores}`, hay un texto vacío, una frase de más de 40 caracteres es idéntica en español e inglés (casi seguro un olvido), hay una clave que no se usa en ningún sitio de `src/` o `index.html` (huérfana), el código pide una clave que no existe, o el español del HTML estático no coincide con el diccionario. Si compones una clave en tiempo de ejecución (como `format.${…}`), hay que añadir su prefijo a `dynamic` en el test de claves huérfanas.
+5. Ejecuta `npm test` y mira la interfaz en los dos idiomas (`npm run dev`, selector ES / EN).
+
+## Añadir un formato de archivo
+
+Los formatos (STL, OBJ, 3MF) solo aportan un lector: el análisis geométrico y los avisos son comunes (`analyzeModel` en `src/stl/analyze.ts`).
+
+1. **Lector** en `src/stl/<formato>.ts`: recibe un `Uint8Array` y devuelve un `Mesh` (`positions` con 9 números por triángulo, **en milímetros**: convierte las unidades si el formato las guarda; si no, se asumen mm). Los errores son `ModelParseError('err.<formato>.<motivo>', { datos })`, con sus claves en español e inglés. Sin dependencias nuevas si se puede (el ZIP y el XML del 3MF se leen a mano).
+2. **`src/stl/types.ts`**: añade el valor a `MeshFormat` y las claves `format.<valor>` en `es.ts` y `en.ts` (es la etiqueta que sale bajo el nombre de la pieza).
+3. **`src/stl/model.ts`**: la extensión en `MODEL_EXTENSIONS`, el tipo en `Kind`, la detección en `detectKind` (el contenido manda; la extensión solo desempata entre textos) y la llamada en `parseModel`.
+4. **`index.html`**: el atributo `accept` del selector de archivos (extensión y tipo MIME) y los textos que enumeran los formatos (`empty.text`, `meta.description`, etc., también en el diccionario).
+5. **Tests**: `tests/<formato>.test.ts` con los archivos construidos en memoria (`tests/helpers/mesh.ts` y `tests/helpers/zip.ts`; no se suben archivos al repositorio), casos de error y de detección, y una prueba en `tests/ui-formats.test.ts` de que la interfaz lo carga y lo rotula.
+6. **Documentación**: la sección 3 de `docs/USO.md` (unidades y qué da error), el README y `CHANGELOG.md`.
+
 ## Reglas de diseño
 
 El diseño es una «hoja técnica suiza» (detalle en [`AGENTS.md`](AGENTS.md)). Lo que más se rompe sin querer:
@@ -92,7 +124,7 @@ El diseño es una «hoja técnica suiza» (detalle en [`AGENTS.md`](AGENTS.md)).
 - Mantén el modo oscuro (`prefers-color-scheme`) y el contraste AA en ambos modos.
 - Los tiempos se rotulan siempre como **estimación**.
 - Accesibilidad: todo control con etiqueta, uso completo con teclado, foco visible y regiones vivas sin repeticiones. El foco usa contorno de tinta.
-- El texto de la interfaz y de los mensajes de error, en español; números con formato es-ES (coma decimal).
+- Todo texto visible sale de `src/i18n/` en español e inglés; números y fechas con `Intl` según el idioma activo (`es-ES`: coma decimal; `en-GB`: punto decimal). La moneda es siempre el euro.
 
 ## Licencia
 
