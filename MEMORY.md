@@ -1,5 +1,5 @@
 # MEMORY.md · printquote
-Última actualización: 2026-09-30 por builder (v0.2.0)
+Última actualización: 2026-09-30 por qa (revisión de v0.2.0, #9)
 
 ## Estado actual
 
@@ -17,6 +17,13 @@ Una rama y un PR por issue, cada rama parte de la anterior y todos van contra `m
 **#7 Presupuesto en PDF.** Bloque plegable «06 Datos del negocio» (`<details>`, plegado por defecto): nombre, NIF/CIF, dirección, teléfono, correo, web, logotipo opcional, nº del próximo presupuesto, validez (días, 30 por defecto) e IVA (%, 21 por defecto); todo en `localStorage` (`printquote:negocio:v1`, aparte de los ajustes). Botón «Descargar PDF» (fila propia bajo Copiar/Imprimir). Módulos: `src/quote/tax.ts` (`computeTax`), `src/quote/business.ts` (perfil, normalización, `nextQuoteNumber`, `validUntil`), `src/pdf/document.ts` (contenido calculado y formateado, puro y testeado, con `PdfLabels`), `src/pdf/render.ts` (dibujo con pdf-lib), `src/ui/logo.ts` (reduce el logotipo con canvas), `src/ui/storage.ts` (`loadBusiness`…). El total del presupuesto sin IVA (`quote.total`) es la **base imponible**; IVA = base × tipo, redondeado a céntimos; total con IVA = base + cuota. El panel y el texto copiado siguen mostrando el total sin IVA.
 
 **#8 Interfaz en inglés.** `src/i18n/`: `es.ts` (referencia, ~300 claves planas) y `en.ts` (`Record<Key, string>`: el compilador exige las mismas claves), `index.ts` (`t`, `tIn`, `setLang`, `onLangChange`, `getLocale`, `detectLang`), `interpolate.ts` (`{marcadores}`), `dom.ts` (`data-i18n` / `data-i18n-attr` en el HTML estático). Selector ES / EN en la cabecera (`aria-pressed`, `lang` en cada botón); idioma inicial = guardado (`printquote:idioma:v1`) o `navigator.languages`; `<html lang>`, título y descripción se actualizan. Formato numérico y de moneda por idioma con `Intl` (`es-ES`; `en-GB`, moneda siempre EUR: «€12.34»). Textos traducidos: interfaz, avisos, errores de lectura, notas de las impresoras, texto para copiar, hoja de impresión y PDF. Al cambiar de idioma se repinta todo (`applyLanguage` en `app.ts`).
+
+**Revisión QA de v0.2.0 (#9, rama agent/qa-9-revision-v0.2, PR #15, se fusiona después de #14).** Hecho:
+- OBJ: caras cóncavas por recorte de orejas (`triangulate` en `obj.ts`; antes en abanico: superficie inflada y visor mal); índices que no caben en 32 bits (se cortaban en el Int32Array); una barra invertida al final del archivo.
+- PDF: letras fuera de WinAnsi transcritas (ć→c, ł→l, ș→s…) y «?» solo si no hay equivalente; caracteres invisibles fuera; IVA con 2 decimales guardado y rotulado igual (10,55 % salía «10,6 %»); dirección larga recortada a 10 líneas. á é í ó ú ñ ü ¿ ¡ € ya iban bien (WinAnsi) y ahora hay test.
+- 3MF/ZIP: unidad desconocida = error (antes milímetros en silencio; «constructor» daba NaN); entrada con tamaños 0xFFFFFFFF = error de ZIP64; mensaje de método de compresión corregido; tests de descriptor de datos (comprimido y sin comprimir), cifrado, ruido, pulgadas con traslación, objetos vacíos y transformación compuesta.
+- Idiomas: el indicador «Leyendo…» y la región viva se traducen/limpian al cambiar de idioma. Revisado en el navegador: sin texto en español en la interfaz en inglés (atributos incluidos), cifras «123.83» y «€1.59».
+- Accesibilidad: contraste AA calculado sobre todo el texto visible en claro y oscuro (con «Datos del negocio» abierto), sin desbordes a 360 px en ES y EN. Sin cambios necesarios.
 
 ### MVP y revisiones anteriores (v0.1.0)
 MVP completo en la rama `agent/builder` (PR abierto a `main`, pendiente de revisión del lead):
@@ -83,9 +90,11 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 (builder, #8): Los errores de lectura pasan de mensajes a `ModelParseError(code, params)`; su `message` sigue siendo español (registros, pruebas y `tests/*`), y la interfaz traduce `code`+`params` en el idioma activo (también los avisos abiertos se vuelven a pintar al cambiar de idioma). El worker envía `{ code, params }` en lugar de un `boolean`; carga solo `es.ts` (no el inglés).
 - 2026-09-30 (builder, #8): La moneda no depende del idioma: siempre euros (`€`), solo cambia el formato (`12,34 €` / `€12.34`). Las unidades («mm», «g», «kWh»…) no se traducen; sí «uds.» → «pcs» y «días» → «days». Los metadatos Open Graph y Twitter del `<head>` siguen en español (los leen rastreadores sin JS); título y descripción sí cambian en el navegador.
 - 2026-09-30 (builder, #8): El JS inicial pasa de ~50 kB a ~77 kB (27 kB gzip) por los dos diccionarios; sigue siendo pequeño frente al visor (139 kB gzip) y al PDF (178 kB gzip), que se cargan bajo demanda.
+- 2026-09-30 (qa, #9): Sin fuente incrustada en el PDF: pdf-lib no trae ninguna con cobertura amplia y fontkit + TTF añadiría una dependencia y cientos de kB; se transcribe lo latino y el resto es «?». Unidad 3MF desconocida = error, no milímetros. IVA limitado a 2 decimales.
 - 2026-09-30 (qa): Imagen Open Graph = copia de `docs/captura.png` en `public/og.png` (1440 × 900), URL absoluta de GitHub Pages.
 
 ## Siguiente paso
+00b. Alberto: fusionar el PR #15 (QA) después de #14. Después docs (#10).
 00. Alberto: borrar la rama remota `agent/builder` (ya fusionada en `main`, SHA 5b0a29b: se puede recrear). Mientras exista, Git impide crear ramas `agent/builder/…`, y las de v0.2.0 se llaman `agent/builder-<n>-<slug>`. El borrado lo denegó el sistema de permisos del agente.
 0. builder (v0.2.0): las cuatro issues están hechas. Alberto fusiona los PR en orden (#11, #12, #13 y el de #8). Después, qa (#9) y docs (#10). Docs debe actualizar `docs/USO.md` (botón «Abrir modelo 3D», OBJ/3MF, perfiles, PDF, IVA, idioma); yo solo he tocado README, CONTRIBUTING y AGENTS.
 1. lead: revisar y fusionar el PR de `agent/builder`; comprobar que el despliegue a Pages funciona tras el merge.
@@ -95,6 +104,9 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 5. Pendiente de una persona: releer `docs/USO.md` con calma y probar la calibración con su laminador real; los valores de partida (caudal, potencia) son orientativos.
 
 ## Problemas conocidos
+- OBJ: polígonos cóncavos de más de 200 vértices siguen en abanico (recorte de orejas es O(n³)); no hay aviso al usuario.
+- PDF sin fuente incrustada: cirílico, griego, CJK y emojis salen como «?» (transcribir solo cubre alfabeto latino). Sin tope de triángulos totales en 3MF con muchas instancias (un RangeError sale como error genérico).
+- Sin revisar por falta de tiempo: descarga del PDF y hoja de impresión con lector real, foco de teclado del resumen de «Datos del negocio» a ojo, anuncio al pasar a «Personalizada» al editar un campo.
 - El chunk del visor pesa ~560 kB (139 kB gzip) por three.js; se carga aparte con `import()` y `chunkSizeWarningLimit` sigue en 800 kB.
 - Modelo de coste simplificado: no incluye soportes, balsa ni purga; la cáscara (área × grosor) sobreestima en piezas muy detalladas.
 - OBJ: los polígonos cóncavos (caras de más de 3 vértices) se trianguan en abanico y pueden salir mal; los OBJ y 3MF no se han probado con archivos reales de laminadores (solo con los construidos en los tests y una prueba manual en Chrome).
@@ -114,3 +126,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder-6-3mf-obj): #6 soporte de OBJ y 3MF (parsers, ZIP a mano, detección de formato, avisos iguales que STL, interfaz y tests).
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder-7-pdf): #7 presupuesto en PDF (pdf-lib bajo demanda, datos del negocio plegables y persistentes, logotipo local, IVA configurable, número de presupuesto correlativo, tests).
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder-8-ingles): #8 interfaz en inglés (diccionarios es/en, selector de idioma, formato por idioma, errores con código, PDF y textos traducidos, tests de claves y de interfaz en inglés).
+- 2026-09-30 qa · Claude Code Sonnet (agent/qa-9-revision-v0.2): revisión de v0.2.0 (#9): OBJ cóncavo/índices, PDF (transcripción, IVA, dirección), 3MF/ZIP (unidades, ZIP64), idioma en caliente, contraste y 360 px; PR #15.
