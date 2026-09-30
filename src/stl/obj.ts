@@ -1,3 +1,5 @@
+import type { ErrorKey } from '../i18n/es';
+import type { Params } from '../i18n/interpolate';
 import { ModelParseError } from './errors';
 import type { Mesh } from './types';
 
@@ -36,9 +38,9 @@ class Growable<T extends Float32Array | Int32Array> {
  */
 export function parseObj(data: ArrayBuffer | Uint8Array): Mesh {
   const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
-  if (bytes.byteLength === 0) throw new ModelParseError('El archivo está vacío.');
+  if (bytes.byteLength === 0) throw new ModelParseError('err.empty');
   for (let i = 0, end = Math.min(bytes.length, SNIFF_BYTES); i < end; i++) {
-    if (bytes[i] === 0) throw new ModelParseError('No parece un OBJ válido: es un archivo binario, no de texto.');
+    if (bytes[i] === 0) throw new ModelParseError('err.obj.binary');
   }
 
   const text = new TextDecoder('utf-8').decode(bytes);
@@ -48,8 +50,8 @@ export function parseObj(data: ArrayBuffer | Uint8Array): Mesh {
   let triangleCount = 0;
   let lineNumber = 0;
 
-  const fail = (message: string): never => {
-    throw new ModelParseError(`Línea ${lineNumber} del OBJ: ${message}`);
+  const fail = (code: ErrorKey, params: Params = {}): never => {
+    throw new ModelParseError(code, { line: lineNumber, ...params });
   };
 
   let pos = 0;
@@ -83,27 +85,27 @@ export function parseObj(data: ArrayBuffer | Uint8Array): Mesh {
 
     if (first === 0x76) {
       // v x y z [w]  (algunos exportadores añaden color: v x y z r g b)
-      if (tokens.length < 4) fail('un vértice necesita tres coordenadas (x y z).');
+      if (tokens.length < 4) fail('err.obj.vertexCoords');
       for (let k = 1; k <= 3; k++) {
         const token = tokens[k] ?? '';
         const value = NUMBER.test(token) ? Number(token) : Number.NaN;
         // Math.fround: 1e39 es finito en JS, pero no cabe en el float de 32 bits en que se guarda.
-        if (!Number.isFinite(Math.fround(value))) fail(`«${token.slice(0, 20)}» no es una coordenada válida.`);
+        if (!Number.isFinite(Math.fround(value))) fail('err.obj.badCoord', { token: token.slice(0, 20) });
         vertices.push(value);
       }
       vertexCount++;
     } else {
       // f v1[/vt1[/vn1]] v2 v3 …
-      if (tokens.length < 4) fail('una cara necesita al menos 3 vértices.');
+      if (tokens.length < 4) fail('err.obj.faceVertices');
       const face: number[] = [];
       for (let k = 1; k < tokens.length; k++) {
         const ref = (tokens[k] ?? '').split('/')[0] ?? '';
-        if (!INTEGER.test(ref)) fail(`«${(tokens[k] ?? '').slice(0, 20)}» no es un índice de vértice válido.`);
+        if (!INTEGER.test(ref)) fail('err.obj.badIndex', { token: (tokens[k] ?? '').slice(0, 20) });
         const index = Number(ref);
-        if (index === 0) fail('los índices de vértice empiezan en 1 (o son negativos, relativos al final).');
+        if (index === 0) fail('err.obj.zeroIndex');
         // Positivo: 1 = primer vértice. Negativo: −1 = el último leído hasta ahora.
         const absolute = index > 0 ? index - 1 : vertexCount + index;
-        if (absolute < 0) fail(`el índice ${index} apunta antes del primer vértice.`);
+        if (absolute < 0) fail('err.obj.beforeFirst', { index });
         face.push(absolute);
       }
       const a = face[0] ?? 0;
@@ -116,9 +118,9 @@ export function parseObj(data: ArrayBuffer | Uint8Array): Mesh {
     }
   }
 
-  if (vertexCount === 0) throw new ModelParseError('El OBJ no contiene vértices.');
+  if (vertexCount === 0) throw new ModelParseError('err.obj.noVertices');
   if (triangleCount === 0) {
-    throw new ModelParseError('El OBJ no contiene caras: solo tiene vértices, líneas o puntos, no una superficie.');
+    throw new ModelParseError('err.obj.noFaces');
   }
 
   // Los índices positivos pueden apuntar a vértices que aparecen después: se validan al final.
@@ -126,9 +128,7 @@ export function parseObj(data: ArrayBuffer | Uint8Array): Mesh {
   for (let i = 0; i < triangleCount * 3; i++) {
     const v = faceIndices.data[i] ?? 0;
     if (v >= vertexCount) {
-      throw new ModelParseError(
-        `Una cara usa el vértice ${v + 1}, pero el OBJ solo tiene ${vertexCount} vértices.`,
-      );
+      throw new ModelParseError('err.obj.outOfRange', { index: v + 1, count: vertexCount });
     }
     positions[i * 3] = vertices.data[v * 3] ?? 0;
     positions[i * 3 + 1] = vertices.data[v * 3 + 1] ?? 0;

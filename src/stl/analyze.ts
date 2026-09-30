@@ -1,3 +1,5 @@
+import type { ErrorKey } from '../i18n/es';
+import type { Params } from '../i18n/interpolate';
 import { ModelParseError } from './errors';
 import { computeStats } from './geometry';
 import { parseModel } from './model';
@@ -34,7 +36,13 @@ export interface AnalyzeRequest {
 
 export type AnalyzeResponse =
   | { readonly id: number; readonly ok: true; readonly result: AnalyzedStl }
-  | { readonly id: number; readonly ok: false; readonly message: string; readonly parseError: boolean };
+  | {
+      readonly id: number;
+      readonly ok: false;
+      readonly message: string;
+      /** Si es un error de lectura previsto: su código y datos, para traducirlo en la interfaz. */
+      readonly parseError: { readonly code: ErrorKey; readonly params: Params } | null;
+    };
 
 /**
  * Atiende un mensaje del worker. Devuelve la respuesta y los buffers que se pueden
@@ -47,8 +55,8 @@ export async function handleAnalyzeRequest(
     const result = await analyzeModel(request.buffer, request.fileName);
     return { response: { id: request.id, ok: true, result }, transfer: [result.mesh.positions.buffer as ArrayBuffer] };
   } catch (error) {
-    const parseError = error instanceof ModelParseError;
-    const message = parseError ? error.message : error instanceof Error ? error.message : String(error);
+    const parseError = error instanceof ModelParseError ? { code: error.code, params: error.params } : null;
+    const message = error instanceof Error ? error.message : String(error);
     return { response: { id: request.id, ok: false, message, parseError }, transfer: [] };
   }
 }

@@ -1,10 +1,12 @@
+import type { ErrorKey } from '../i18n/es';
+import type { Params } from '../i18n/interpolate';
 import { ModelParseError } from './errors';
 import type { Mesh } from './types';
 
-/** Error de lectura de STL con un mensaje pensado para mostrarse tal cual a la persona usuaria. */
+/** Error de lectura de un STL (mensajes en `i18n/es.ts`, claves `err.stl.*`). */
 export class StlParseError extends ModelParseError {
-  constructor(message: string) {
-    super(message);
+  constructor(code: ErrorKey, params?: Params) {
+    super(code, params);
     this.name = 'StlParseError';
   }
 }
@@ -36,7 +38,7 @@ export function parseStl(data: ArrayBuffer | Uint8Array): Mesh {
   const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
 
   if (bytes.byteLength === 0) {
-    throw new StlParseError('El archivo está vacío.');
+    throw new StlParseError('err.empty');
   }
 
   const looksAscii = startsWithSolid(bytes) && isMostlyText(bytes);
@@ -59,20 +61,18 @@ export function parseStl(data: ArrayBuffer | Uint8Array): Mesh {
     if (count === 0 && Number.isInteger(inferred)) {
       return parseBinary(view, inferred);
     }
-    throw new StlParseError(
-      'No parece un STL válido: el tamaño del archivo no coincide con el número de triángulos que declara y tampoco es un STL de texto.',
-    );
+    throw new StlParseError('err.stl.size');
   }
 
   if (looksAscii) {
     return parseAscii(bytes);
   }
-  throw new StlParseError('No parece un STL válido: el archivo es demasiado pequeño.');
+  throw new StlParseError('err.stl.small');
 }
 
 function parseBinary(view: DataView, count: number): Mesh {
   if (count === 0) {
-    throw new StlParseError('El STL no contiene ningún triángulo.');
+    throw new StlParseError('err.stl.noTriangles');
   }
   const positions = new Float32Array(count * 9);
   for (let t = 0; t < count; t++) {
@@ -81,7 +81,7 @@ function parseBinary(view: DataView, count: number): Mesh {
     for (let k = 0; k < 9; k++) {
       const value = view.getFloat32(base + k * 4, true);
       if (!Number.isFinite(value)) {
-        throw new StlParseError(`El triángulo ${t + 1} tiene coordenadas no válidas.`);
+        throw new StlParseError('err.stl.badTriangle', { n: t + 1 });
       }
       positions[t * 9 + k] = value;
     }
@@ -164,10 +164,10 @@ function parseAscii(bytes: Uint8Array): Mesh {
   while (tokens.next()) {
     if (tokens.is('vertex')) {
       if (!insideFacet) {
-        throw new StlParseError('Hay un vértice fuera de una cara («facet»).');
+        throw new StlParseError('err.stl.vertexOutside');
       }
       if (verticesInFacet === 3) {
-        throw new StlParseError(`La cara ${facet} no tiene exactamente 3 vértices.`);
+        throw new StlParseError('err.stl.facetVertices', { n: facet });
       }
       if (length + 3 > values.length) {
         const grown = new Float32Array(values.length * 2);
@@ -178,21 +178,21 @@ function parseAscii(bytes: Uint8Array): Mesh {
         const value = tokens.next() ? tokens.number() : Number.NaN;
         // Math.fround: 1e39 es finito en JS, pero no cabe en el float de 32 bits en que se guarda.
         if (!Number.isFinite(Math.fround(value))) {
-          throw new StlParseError(`La cara ${facet} tiene un vértice con coordenadas no válidas.`);
+          throw new StlParseError('err.stl.badVertex', { n: facet });
         }
         values[length++] = value;
       }
       verticesInFacet++;
     } else if (tokens.is('facet')) {
       if (insideFacet) {
-        throw new StlParseError(`La cara ${facet} no se cierra con «endfacet».`);
+        throw new StlParseError('err.stl.facetOpen', { n: facet });
       }
       insideFacet = true;
       facet++;
       verticesInFacet = 0;
     } else if (tokens.is('endfacet')) {
       if (!insideFacet || verticesInFacet !== 3) {
-        throw new StlParseError(`La cara ${facet} no tiene exactamente 3 vértices.`);
+        throw new StlParseError('err.stl.facetVertices', { n: facet });
       }
       insideFacet = false;
     } else if (tokens.is('solid') || tokens.is('endsolid')) {
@@ -204,10 +204,10 @@ function parseAscii(bytes: Uint8Array): Mesh {
   }
 
   if (insideFacet) {
-    throw new StlParseError('El archivo termina en mitad de una cara: parece estar cortado.');
+    throw new StlParseError('err.stl.truncated');
   }
   if (facet === 0) {
-    throw new StlParseError('El STL no contiene ningún triángulo.');
+    throw new StlParseError('err.stl.noTriangles');
   }
 
   return { positions: values.slice(0, length), triangleCount: facet, format: 'ascii' };

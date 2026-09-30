@@ -41,7 +41,7 @@ export async function parseModel(data: ArrayBuffer | Uint8Array, fileName?: stri
   switch (detectKind(bytes, fileName)) {
     case '3mf':
       if (!isZip(bytes)) {
-        throw new ModelParseError('El archivo no es un 3MF válido: un 3MF es un ZIP y este no lo es.');
+        throw new ModelParseError('err.3mf.notZip');
       }
       return parse3mf(bytes);
     case 'obj':
