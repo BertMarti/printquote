@@ -2,7 +2,7 @@
 // (hace falta Chrome o Edge y la web en marcha: `npm run dev` o `npm run preview`).
 //
 // Uso: node scripts/captura.mjs [url]   (por defecto http://localhost:5173/printquote/)
-//      CHROME=/ruta/a/chrome node scripts/captura.mjs
+//      CHROME=/ruta/a/chrome node scripts/captura.mjs   (CHROME_PORT=9444 si el puerto 9333 está ocupado)
 //  →  docs/captura.png (1440 × 1200: ficha completa, con el perfil de impresora Bambu Lab A1)
 //     public/og.png    (1440 × 900: primera pantalla, la que se ve al abrir la pieza de ejemplo)
 //

@@ -49,6 +49,15 @@ Recorrido guiado de ~13 s (`DEMO_END_MS`) que dirige `src/ui/demo.ts`. El guion 
 - **Contrato con la aplicación** (`DemoHost` en `demo.ts`; la implementa `app.ts`): `begin()`, `apply(patch | 'restore')`, `spin(on)` (`Viewer.setAutoRotate`), `end()` y `announce()`. `startApp(demoScale)` acepta una escala de tiempo solo para los tests de integración.
 - Texto en `demo.*` (es/en). Funciona sin conexión: la pieza de ejemplo está en el precaché de la PWA.
 
+## Lote («06 Lote»)
+Presupuesto de pedidos con varias piezas. Contrato:
+- **Sin fórmula propia**: cada línea es `computeQuote(stats, settings)`; `src/quote/batch.ts` solo suma líneas ya redondeadas a céntimos (`computeBatch`, como una factura) y el IVA se aplica **una vez** sobre la suma (`computeTax`).
+- **Instantánea**: la línea (`BatchPart`) conserva los ajustes con que se añadió; no se edita (quitar y volver a añadir). Máximo `BATCH_MAX` = 50. Solo en memoria.
+- **Botones explícitos**: «Copiar presupuesto», «Imprimir», «Descargar PDF» y «Guardar este presupuesto» son de la pieza cargada; el lote tiene «Copiar lote», «PDF del lote» (sin vista 3D, con paginación) y «Guardar lote» (historial). Imprimir no incluye el lote. No hay un «modo» oculto.
+- **Historial**: `HistoryEntry.parts?` (retrocompatible); un lote guardado no se puede abrir (no guarda la geometría) y el CSV lleva una fila por pieza.
+- El enlace para compartir **nunca** lleva el lote.
+- `src/ui/batch.ts` recibe un `BatchHost` (`current`, `announce`, `changed`) y no importa `app.ts`; la lista reutiliza las clases `.history-*` y `.rows`. Tras quitar, el foco pasa al siguiente «Quitar» o a «Añadir esta pieza».
+
 ## Equipo de agentes y ramas
 Los tres proyectos se desarrollan en paralelo con un equipo de agentes. El trabajo está **guiado por issues de un hito** (p. ej. v0.2.0) y **todo entra en `main` mediante pull request**, que fusiona Alberto.
 
