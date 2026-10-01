@@ -282,6 +282,9 @@ El bloque **06 Lote** (plegable) sirve para pedidos con varias piezas distintas:
 - Cada línea **conserva los ajustes con que se añadió**: cambiar el formulario después no la altera. Para cambiar algo de una línea, **Quitar** y vuelve a añadirla.
 - El **total del lote** es la suma de los importes de las líneas, ya redondeados a céntimos (como en una factura): lo que ves suma. Cada línea usa el mismo cálculo que una pieza suelta.
 - **Quitar** recalcula el total; **Vaciar lote** pide confirmar con un segundo clic. Admite hasta **50 piezas**.
+- **Copiar lote** copia un texto con todas las piezas (una sección por pieza con su importe) y el desglose y el total del lote.
+- **PDF del lote** descarga un único presupuesto con la tabla de todas las piezas (pieza, material, copias, peso, tiempo e importe), el desglose del lote y el **IVA calculado una sola vez sobre la suma**. No lleva la vista 3D (mostraría una sola pieza). Con muchas piezas pasa a **varias páginas** (la cabecera de la tabla se repite y cada página lleva «Página n de N»). Usa los datos del negocio y el número de presupuesto igual que el PDF de una pieza, y el número también sube al descargarlo.
+- Los botones «Copiar presupuesto», «Imprimir» y «Descargar PDF» de abajo siguen siendo **de la pieza cargada**; los del lote son los de su bloque.
 - El lote vive solo en la página abierta: si la recargas, se pierde (el historial lo conserva; ver más abajo).
 
 ## 10. Copiar, imprimir y descargar el presupuesto en PDF

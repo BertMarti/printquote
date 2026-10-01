@@ -1,4 +1,5 @@
 import { getLang } from '../i18n';
+import { computeBatch, type BatchPart } from '../quote/batch';
 import type { BusinessProfile } from '../quote/business';
 import { validUntil } from '../quote/business';
 import { formatDuration, formatEuro, formatNumber } from '../quote/format';
@@ -43,10 +44,23 @@ export interface PdfLabels {
   readonly noteEstimate: string;
   readonly noteValidity: string;
   readonly footer: string;
+  readonly parts: string;
+  readonly copiesShort: string;
+  readonly weightShort: string;
+  readonly timeShort: string;
+  readonly amount: string;
+  /** «Página {n} de {total}»: lo rellena el dibujo cuando hay más de una página. */
+  readonly pageOf: string;
   readonly pdfTitle: string;
   readonly language: string;
   /** Configuración regional para las fechas largas («30 de septiembre de 2026»). */
   readonly dateLocale: string;
+}
+
+/** Tabla de piezas de un lote: cabecera y una fila por pieza (nombre, material, copias, peso, tiempo, importe). */
+export interface BatchTable {
+  readonly head: readonly string[];
+  readonly rows: readonly (readonly string[])[];
 }
 
 /** Contenido del PDF ya calculado y formateado; el dibujo se hace en `render.ts`. */
@@ -67,8 +81,12 @@ export interface QuoteDocument {
   /** Base imponible, IVA y total con IVA (la última fila es el total). */
   readonly totalRows: readonly PdfRow[];
   readonly tax: TaxedTotal;
+  /** Solo en un lote: la tabla de piezas (a todo el ancho y, si no cabe, en varias páginas). */
+  readonly batch?: BatchTable;
   readonly notes: readonly string[];
   readonly footer: string;
+  /** «Página {n} de {total}», con los marcadores sin rellenar. */
+  readonly pageOf: string;
   readonly metadata: { readonly title: string; readonly author: string; readonly language: string };
   readonly date: Date;
 }
@@ -85,6 +103,25 @@ export interface QuoteDocumentInput {
   readonly labels?: PdfLabels;
 }
 
+/** Líneas del emisor (NIF, dirección, teléfono, correo, web). */
+function issuerLinesOf(business: BusinessProfile, labels: PdfLabels): string[] {
+  const lines: string[] = [];
+  if (business.taxId) lines.push(`${labels.taxId}: ${business.taxId}`);
+  if (business.address) lines.push(...business.address.split('\n').filter((line) => line.trim() !== ''));
+  for (const line of [business.phone, business.email, business.web]) if (line) lines.push(line);
+  return lines;
+}
+
+/** Base imponible, IVA y total con IVA (la última fila es el total). */
+function taxRows(tax: TaxedTotal, labels: PdfLabels): PdfRow[] {
+  const vatDecimals = tax.vatPercent % 1 === 0 ? 0 : Math.round(tax.vatPercent * 10) === tax.vatPercent * 10 ? 1 : 2;
+  return [
+    [labels.taxBase, formatEuro(tax.base)],
+    [`${labels.vat} (${formatNumber(tax.vatPercent, vatDecimals)} %)`, formatEuro(tax.vat)],
+    [labels.totalWithVat, formatEuro(tax.total)],
+  ];
+}
+
 /** Calcula y formatea todo lo que lleva el PDF. Función pura: mismos datos, mismo contenido. */
 export function buildQuoteDocument(input: QuoteDocumentInput): QuoteDocument {
   const { business, fileName, stats, settings, quote, image } = input;
@@ -94,11 +131,6 @@ export function buildQuoteDocument(input: QuoteDocumentInput): QuoteDocument {
   const { size } = stats.bounds;
   const tax = computeTax(quote.total, business.vatPercent);
   const dateFormat = new Intl.DateTimeFormat(labels.dateLocale, { dateStyle: 'long' });
-
-  const issuerLines: string[] = [];
-  if (business.taxId) issuerLines.push(`${labels.taxId}: ${business.taxId}`);
-  if (business.address) issuerLines.push(...business.address.split('\n').filter((line) => line.trim() !== ''));
-  for (const line of [business.phone, business.email, business.web]) if (line) issuerLines.push(line);
 
   const breakdownRows: PdfRow[] = [
     [labels.copies, formatNumber(quote.copies, 0)],
@@ -111,7 +143,6 @@ export function buildQuoteDocument(input: QuoteDocumentInput): QuoteDocument {
   ];
   if (quote.copies > 1) breakdownRows.push([labels.perCopy, formatEuro(quote.totalPerCopy)]);
 
-  const vatDecimals = tax.vatPercent % 1 === 0 ? 0 : Math.round(tax.vatPercent * 10) === tax.vatPercent * 10 ? 1 : 2;
   return {
     title: labels.title,
     businessName: business.name || labels.noBusinessName,
@@ -122,7 +153,7 @@ export function buildQuoteDocument(input: QuoteDocumentInput): QuoteDocument {
       [labels.validUntil, dateFormat.format(validUntil(date, business.validityDays))],
     ],
     issuerTitle: labels.issuer,
-    issuerLines,
+    issuerLines: issuerLinesOf(business, labels),
     pieceTitle: labels.piece,
     pieceRows: [
       [labels.file, fileName],
@@ -134,14 +165,77 @@ export function buildQuoteDocument(input: QuoteDocumentInput): QuoteDocument {
     image,
     breakdownTitle: labels.breakdown,
     breakdownRows,
-    totalRows: [
-      [labels.taxBase, formatEuro(tax.base)],
-      [`${labels.vat} (${formatNumber(tax.vatPercent, vatDecimals)} %)`, formatEuro(tax.vat)],
-      [labels.totalWithVat, formatEuro(tax.total)],
-    ],
+    totalRows: taxRows(tax, labels),
     tax,
     notes: [labels.noteEstimate, labels.noteValidity],
     footer: labels.footer,
+    pageOf: labels.pageOf,
+    metadata: { title: `${labels.pdfTitle} ${business.quoteNumber}`, author: business.name, language: labels.language },
+    date,
+  };
+}
+
+export interface BatchDocumentInput {
+  readonly business: BusinessProfile;
+  readonly parts: readonly BatchPart[];
+  readonly date?: Date;
+  readonly labels?: PdfLabels;
+}
+
+/**
+ * PDF de un lote: la tabla de piezas y los totales del lote, con el IVA calculado una sola vez sobre la suma. Sin vista 3D
+ * (mostraría una sola pieza de varias). Los importes salen de `computeBatch`, no se recalculan aquí.
+ */
+export function buildBatchDocument(input: BatchDocumentInput): QuoteDocument {
+  const { business, parts } = input;
+  const date = input.date ?? new Date();
+  const labels = input.labels ?? pdfLabels(getLang());
+  const totals = computeBatch(parts);
+  const tax = computeTax(totals.total, business.vatPercent);
+  const dateFormat = new Intl.DateTimeFormat(labels.dateLocale, { dateStyle: 'long' });
+
+  return {
+    title: labels.title,
+    businessName: business.name || labels.noBusinessName,
+    logo: business.logo,
+    meta: [
+      [labels.number, business.quoteNumber],
+      [labels.date, dateFormat.format(date)],
+      [labels.validUntil, dateFormat.format(validUntil(date, business.validityDays))],
+    ],
+    issuerTitle: labels.issuer,
+    issuerLines: issuerLinesOf(business, labels),
+    pieceTitle: labels.parts,
+    pieceRows: [
+      [labels.parts, formatNumber(totals.parts, 0)],
+      [labels.copies, formatNumber(totals.copies, 0)],
+    ],
+    image: null,
+    batch: {
+      head: [labels.piece, labels.material, labels.copiesShort, labels.weightShort, labels.timeShort, labels.amount],
+      rows: parts.map(({ fileName, settings, quote }) => [
+        fileName,
+        MATERIALS[settings.material].name,
+        formatNumber(quote.copies, 0),
+        `${formatNumber(quote.totalWeightGrams, 1)} g`,
+        formatDuration(quote.totalHours),
+        formatEuro(quote.total),
+      ]),
+    },
+    breakdownTitle: labels.breakdown,
+    breakdownRows: [
+      [labels.weight, `${formatNumber(totals.weightGrams, 1)} g`],
+      [`${labels.time} (${labels.timeEstimate})`, formatDuration(totals.hours)],
+      [labels.materialCost, formatEuro(totals.materialCost)],
+      [`${labels.energyCost} (${formatNumber(totals.energyKwh, 2)} kWh)`, formatEuro(totals.energyCost)],
+      [labels.subtotal, formatEuro(totals.subtotal)],
+      [labels.margin, formatEuro(totals.marginAmount)],
+    ],
+    totalRows: taxRows(tax, labels),
+    tax,
+    notes: [labels.noteEstimate, labels.noteValidity],
+    footer: labels.footer,
+    pageOf: labels.pageOf,
     metadata: { title: `${labels.pdfTitle} ${business.quoteNumber}`, author: business.name, language: labels.language },
     date,
   };

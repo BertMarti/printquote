@@ -1,6 +1,6 @@
 import { browserLanguages, detectLang, getLang, LANGS, onLangChange, setLang, t, type Key, type Lang } from '../i18n';
 import { applyStaticTranslations } from '../i18n/dom';
-import { buildQuoteDocument } from '../pdf/document';
+import { buildBatchDocument, buildQuoteDocument, type QuoteDocument } from '../pdf/document';
 import { formatDuration, formatEuro, formatNumber } from '../quote/format';
 import { BUSINESS_LIMITS, nextQuoteNumber, normalizeBusiness, type BusinessProfile } from '../quote/business';
 import { isMaterialId, MATERIALS } from '../quote/materials';
@@ -8,7 +8,8 @@ import { computeQuote, type Quote } from '../quote/model';
 import { applyPrinter, CUSTOM_PRINTER, getPrinter, PRINTERS, printerNote } from '../quote/printers';
 import { DEFAULT_SETTINGS, LIMITS, normalizeSettings, type QuoteSettings } from '../quote/settings';
 import { parseHash, settingsToHash } from '../quote/share';
-import { buildQuoteText } from '../quote/text';
+import { buildBatchText, buildQuoteText } from '../quote/text';
+import { computeBatch } from '../quote/batch';
 import { StlAnalyzer } from '../stl/analyzer';
 import { meshWarnings, type MeshWarning } from '../stl/geometry';
 import { ModelParseError } from '../stl/errors';
@@ -128,6 +129,8 @@ export function startApp(demoScale = 1): void {
   const copyButton = byId<HTMLButtonElement>('copy-button');
   const printButton = byId<HTMLButtonElement>('print-button');
   const pdfButton = byId<HTMLButtonElement>('pdf-button');
+  const batchCopyButton = byId<HTMLButtonElement>('batch-copy');
+  const batchPdfButton = byId<HTMLButtonElement>('batch-pdf');
   const infillRange = byId<HTMLInputElement>('in-infill-range');
   const materialRadios = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="material"]'));
   const out = (id: string): HTMLElement => byId(`out-${id}`);
@@ -542,18 +545,27 @@ export function startApp(demoScale = 1): void {
   // ── Acciones ──
   resetCameraButton.addEventListener('click', () => viewer?.resetCamera());
 
-  let copyLabelTimer = 0;
-  copyButton.addEventListener('click', () => {
-    if (!part || !quote) return;
-    const text = buildQuoteText({ fileName: part.fileName, stats: part.stats, settings, quote });
+  const copyTimers = new Map<HTMLButtonElement, number>();
+  /** Copia el texto y lo dice en el botón y en el anuncio. */
+  const copyFrom = (button: HTMLButtonElement, idleKey: Key, text: string, okKey: Key, failedKey: Key): void => {
     void copyText(text).then((ok) => {
       // La etiqueta se restablece desde el diccionario (no desde el texto actual): con dos clics
       // seguidos se quedaba en «Copiado».
-      copyButton.textContent = t(ok ? 'copy.done' : 'copy.failed');
-      announce(t(ok ? 'copy.announce.ok' : 'copy.announce.failed'));
-      window.clearTimeout(copyLabelTimer);
-      copyLabelTimer = window.setTimeout(() => (copyButton.textContent = t('action.copy')), 1800);
+      button.textContent = t(ok ? 'copy.done' : 'copy.failed');
+      announce(t(ok ? okKey : failedKey));
+      window.clearTimeout(copyTimers.get(button));
+      copyTimers.set(button, window.setTimeout(() => (button.textContent = t(idleKey)), 1800));
     });
+  };
+  copyButton.addEventListener('click', () => {
+    if (!part || !quote) return;
+    const text = buildQuoteText({ fileName: part.fileName, stats: part.stats, settings, quote });
+    copyFrom(copyButton, 'action.copy', text, 'copy.announce.ok', 'copy.announce.failed');
+  });
+  batchCopyButton.addEventListener('click', () => {
+    const parts = batch?.parts() ?? [];
+    if (parts.length === 0) return;
+    copyFrom(batchCopyButton, 'batch.copy', buildBatchText({ parts, totals: computeBatch(parts) }), 'batch.copy.announce.ok', 'batch.copy.announce.failed');
   });
 
   const fillPrintSheet = (): void => {
@@ -667,31 +679,21 @@ export function startApp(demoScale = 1): void {
 
   const pdfFileName = (): string => `${t('pdf.title').toLowerCase()}-${business.quoteNumber.replace(/[^A-Za-z0-9._-]+/g, '-')}.pdf`;
 
-  pdfButton.addEventListener('click', () => {
-    if (!part || !quote || pdfBusy) return;
+  /** Genera y descarga un PDF (el de la pieza o el del lote): comparten el estado de «ocupado», el aviso de fallo y el nº. */
+  const runPdf = (trigger: HTMLButtonElement, idleKey: Key, issuer: BusinessProfile, build: () => QuoteDocument): void => {
     pdfBusy = true;
-    pdfButton.disabled = true;
-    pdfButton.textContent = t('pdf.generating');
+    pdfButton.disabled = batchPdfButton.disabled = true;
+    trigger.textContent = t('pdf.generating');
     announce(t('pdf.generating.announce'));
-    const current = { part, quote, settings, business };
     void (async () => {
       try {
         // pdf-lib y fontkit (~1,1 MB; ~500 kB gzip) y las fuentes solo se descargan la primera vez que se pide un PDF.
         const { renderQuotePdf } = await import('../pdf/render');
-        const bytes = await renderQuotePdf(
-          buildQuoteDocument({
-            business: current.business,
-            fileName: current.part.fileName,
-            stats: current.part.stats,
-            settings: current.settings,
-            quote: current.quote,
-            image: viewer ? viewer.snapshot() : null,
-          }),
-        );
+        const bytes = await renderQuotePdf(build());
         const name = pdfFileName();
         download(new Blob([bytes as BlobPart], { type: 'application/pdf' }), name);
         // El número sube solo tras descargar: el siguiente presupuesto ya sale con el nuevo.
-        updateBusiness({ quoteNumber: nextQuoteNumber(current.business.quoteNumber) });
+        updateBusiness({ quoteNumber: nextQuoteNumber(issuer.quoteNumber) });
         syncBusiness();
         announce(t('pdf.done', { name, next: business.quoteNumber }));
       } catch (error) {
@@ -701,10 +703,32 @@ export function startApp(demoScale = 1): void {
         showNotice(() => [t('pdf.failed.title'), t(fonts ? 'pdf.failed.fonts' : 'pdf.failed.text')]);
       } finally {
         pdfBusy = false;
-        pdfButton.textContent = t('action.pdf');
+        trigger.textContent = t(idleKey);
         pdfButton.disabled = !part;
+        batchPdfButton.disabled = (batch?.parts().length ?? 0) === 0;
       }
     })();
+  };
+
+  pdfButton.addEventListener('click', () => {
+    if (!part || !quote || pdfBusy) return;
+    const current = { part, quote, settings, business };
+    runPdf(pdfButton, 'action.pdf', current.business, () =>
+      buildQuoteDocument({
+        business: current.business,
+        fileName: current.part.fileName,
+        stats: current.part.stats,
+        settings: current.settings,
+        quote: current.quote,
+        image: viewer ? viewer.snapshot() : null,
+      }),
+    );
+  });
+  batchPdfButton.addEventListener('click', () => {
+    const parts = batch?.parts() ?? [];
+    if (parts.length === 0 || pdfBusy) return;
+    const issuer = business;
+    runPdf(batchPdfButton, 'batch.pdf', issuer, () => buildBatchDocument({ business: issuer, parts }));
   });
 
   // ── Historial de presupuestos ──
@@ -720,7 +744,12 @@ export function startApp(demoScale = 1): void {
   batch = setupBatch({
     current: () => (part && quote ? { fileName: part.fileName, stats: part.stats, quote, settings } : null),
     announce,
-    changed: () => history?.sync(),
+    changed: () => {
+      history?.sync();
+      const empty = (batch?.parts().length ?? 0) === 0;
+      batchCopyButton.disabled = empty;
+      batchPdfButton.disabled = empty || pdfBusy;
+    },
   });
 
   // ── Demo («Ver demo») ──

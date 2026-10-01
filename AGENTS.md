@@ -20,6 +20,7 @@ Web que calcula el presupuesto de una pieza de impresión 3D: arrastras un STL, 
 ## Estructura
 - `src/stl/` parser STL (binario y ASCII) y geometría (volumen, área, caja).
 - `src/quote/` modelo de coste (material, relleno, tiempo, energía, margen) y lote de piezas (`batch.ts`: suma líneas de `computeQuote`; no tiene fórmula propia).
+- `src/pdf/` presupuesto en PDF: contenido puro en `document.ts` (`buildQuoteDocument`, `buildBatchDocument`) y dibujo con pdf-lib en `render.ts`; un lote lleva `batch` (tabla de piezas a todo el ancho) y el dibujo pasa de página y numera («Página n de N»).
 - `src/viewer/` visor three.js.
 - `src/ui/` panel y controles.
 - `src/ui/batch.ts` bloque «06 Lote» (instantáneas por pieza, en memoria; recibe un `BatchHost`, no importa `app.ts`). El bloque 07 es «Datos del negocio» y el 08, «Presupuestos».

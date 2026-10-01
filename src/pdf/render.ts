@@ -2,7 +2,7 @@
 // solo cuando se pide un PDF, y `loadFonts` descarga entonces las fuentes (224 kB). Un PDF típico pesa ~30 kB.
 import fontkit from '@pdf-lib/fontkit';
 import { PDFDocument, rgb, type PDFFont, type PDFImage, type PDFPage } from 'pdf-lib';
-import type { PdfRow, QuoteDocument } from './document';
+import type { BatchTable, PdfRow, QuoteDocument } from './document';
 import { loadFonts, type FontBytes } from './fonts';
 
 /** A4 en puntos. */
@@ -13,6 +13,10 @@ const CONTENT_W = PAGE_W - 2 * MARGIN;
 const COLUMN_W = 240;
 const RIGHT_W = 232;
 const COLUMN_GAP = CONTENT_W - COLUMN_W - RIGHT_W;
+/** Hasta aquí (desde arriba) llega el contenido de una página: debajo van el filete y el pie. */
+const BOTTOM = PAGE_H - MARGIN - 20;
+/** Alto del desglose, el IVA y el total del lote: si no caben tras la tabla, pasan a otra página. */
+const BATCH_TOTALS_H = 240;
 /** Líneas del emisor (NIF, dirección, contacto) que caben sobre la vista 3D. */
 const MAX_ISSUER_LINES = 10;
 
@@ -60,7 +64,7 @@ class Sanitizer {
   }
 }
 
-/** Bytes de un PDF de presupuesto de una página. */
+/** Bytes de un PDF de presupuesto: una página y, si el lote tiene muchas piezas, las que hagan falta. */
 export async function renderQuotePdf(doc: QuoteDocument, fontBytes?: FontBytes): Promise<Uint8Array> {
   const bytes = fontBytes ?? (await loadFonts());
   const pdf = await PDFDocument.create();
@@ -97,6 +101,53 @@ export async function renderQuotePdf(doc: QuoteDocument, fontBytes?: FontBytes):
   const snapshot = await embedImage(doc.image);
 
   const draw = new Drawer(page, fonts, sanitizer);
+  const newPage = (): number => {
+    draw.page = pdf.addPage([PAGE_W, PAGE_H]);
+    return MARGIN;
+  };
+
+  /** Tabla de piezas de un lote: cabecera repetida en cada página; devuelve dónde termina (desde arriba). */
+  const batchTable = (table: BatchTable, start: number): number => {
+    const endX = MARGIN + CONTENT_W;
+    const timeR = endX - 80;
+    const weightR = timeR - 72;
+    const copiesR = weightR - 60;
+    const materialX = copiesR - 36 - 54;
+    const nameW = materialX - MARGIN - 10;
+    const align = ['left', 'left', 'right', 'right', 'right', 'right'] as const;
+    const xs = [MARGIN, materialX, copiesR, weightR, timeR, endX];
+    const header = (y: number): number => {
+      table.head.forEach((label, i) =>
+        draw.text(label.toLocaleUpperCase(doc.metadata.language), xs[i] ?? MARGIN, y + 8, {
+          font: fonts.bold,
+          size: 7.5,
+          color: MUTED,
+          align: align[i] ?? 'left',
+        }),
+      );
+      draw.rule(y + 14, MARGIN, endX, 0.75, INK);
+      return y + 14;
+    };
+    let y = start + 4;
+    if (y + 14 + 18 > BOTTOM) y = newPage();
+    y = header(y);
+    for (const cells of table.rows) {
+      if (y + 18 > BOTTOM) y = header(newPage());
+      cells.forEach((cell, i) => {
+        const first = i === 0;
+        draw.text(cell, xs[i] ?? MARGIN, y + 13, {
+          font: first || i === 1 ? fonts.sans : fonts.mono,
+          size: first ? 9.5 : 9,
+          color: i === 1 ? MUTED : INK,
+          align: align[i] ?? 'left',
+          maxWidth: first ? nameW : i === 1 ? 54 : 76,
+        });
+      });
+      y += 18;
+      draw.rule(y, MARGIN, endX, 0.5, LINE);
+    }
+    return y;
+  };
 
   // ── Cabecera: logotipo o marca + nombre, y a la derecha el número ──
   let top = MARGIN;
@@ -185,22 +236,30 @@ export async function renderQuotePdf(doc: QuoteDocument, fontBytes?: FontBytes):
   let right = top;
   right = draw.title(doc.pieceTitle, rightX, right, rightW);
   right = draw.table(doc.pieceRows, rightX, right, rightW);
-  right += 20;
-  right = draw.title(doc.breakdownTitle, rightX, right, rightW);
-  right = draw.table(doc.breakdownRows, rightX, right, rightW);
+  if (!doc.batch) {
+    right += 20;
+    right = draw.title(doc.breakdownTitle, rightX, right, rightW);
+    right = draw.table(doc.breakdownRows, rightX, right, rightW);
+  }
 
   // ── Totales y notas ──
   top = Math.max(left, right) + 22;
   const totalsW = rightW; // alineado con la columna derecha
   const totalsX = rightX;
   let totals = top;
+  if (doc.batch) {
+    // Lote: la tabla de piezas a todo el ancho (pasa de página si no cabe) y, después, el desglose del lote.
+    top = batchTable(doc.batch, top) + 22;
+    if (top + BATCH_TOTALS_H > BOTTOM) top = newPage();
+    totals = draw.table(doc.breakdownRows, totalsX, draw.title(doc.breakdownTitle, totalsX, top, totalsW), totalsW) + 18;
+  }
   const taxRows = doc.totalRows.slice(0, -1);
   totals = draw.table(taxRows, totalsX, totals, totalsW);
   draw.rule(totals + 6, totalsX, totalsX + totalsW, 1.5, INK);
   totals += 16;
   const grand = doc.totalRows[doc.totalRows.length - 1];
   if (grand) {
-    page.drawRectangle({ x: totalsX, y: PAGE_H - totals - 8, width: 9, height: 9, color: ACCENT });
+    draw.page.drawRectangle({ x: totalsX, y: PAGE_H - totals - 8, width: 9, height: 9, color: ACCENT });
     draw.text(grand[0].toLocaleUpperCase(doc.metadata.language), totalsX + 16, totals + 8, { font: fonts.bold, size: 8.5 });
     draw.text(grand[1], totalsX + totalsW, totals + 32, { font: fonts.monoBold, size: 22, align: 'right', maxWidth: totalsW });
   }
@@ -214,10 +273,18 @@ export async function renderQuotePdf(doc: QuoteDocument, fontBytes?: FontBytes):
     notes += 5;
   }
 
-  // ── Pie ──
+  // ── Pie (en cada página; con varias, también «Página n de N») ──
   const footerTop = PAGE_H - MARGIN + 6;
-  draw.rule(footerTop - 10, MARGIN, MARGIN + CONTENT_W, 0.5, LINE);
-  draw.text(doc.footer, MARGIN, footerTop + 2, { font: fonts.sans, size: 7.5, color: MUTED });
+  const pages = pdf.getPages();
+  pages.forEach((current, i) => {
+    draw.page = current;
+    draw.rule(footerTop - 10, MARGIN, MARGIN + CONTENT_W, 0.5, LINE);
+    draw.text(doc.footer, MARGIN, footerTop + 2, { font: fonts.sans, size: 7.5, color: MUTED });
+    if (pages.length > 1) {
+      const label = doc.pageOf.replace('{n}', String(i + 1)).replace('{total}', String(pages.length));
+      draw.text(label, MARGIN + CONTENT_W, footerTop + 2, { font: fonts.sans, size: 7.5, color: MUTED, align: 'right' });
+    }
+  });
 
   return pdf.save();
 }
@@ -240,7 +307,7 @@ interface TextOptions {
 /** Dibuja con coordenadas «desde arriba» (el origen de PDF es la esquina inferior izquierda). */
 class Drawer {
   constructor(
-    private readonly page: PDFPage,
+    public page: PDFPage,
     private readonly fonts: Fonts,
     private readonly sanitizer: Sanitizer,
   ) {}

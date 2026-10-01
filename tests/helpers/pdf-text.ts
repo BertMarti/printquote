@@ -12,10 +12,10 @@ function toUnicode(map: string): Map<number, string> {
 const decode = (stream: unknown, encoding: string): string =>
   stream instanceof PDFRawStream ? new TextDecoder(encoding).decode(decodePDFRawStream(stream).decode()) : '';
 
-/** Textos dibujados en la primera página: cada `Tj` decodificado con la tabla ToUnicode de su fuente. */
-export async function pageTexts(bytes: Uint8Array): Promise<string[]> {
+/** Textos dibujados en una página (la primera por defecto): cada `Tj` decodificado con la tabla ToUnicode de su fuente. */
+export async function pageTexts(bytes: Uint8Array, pageIndex = 0): Promise<string[]> {
   const pdf = await PDFDocument.load(bytes);
-  const page = pdf.getPage(0);
+  const page = pdf.getPage(pageIndex);
   const fonts = page.node.Resources()?.lookup(PDFName.of('Font'), PDFDict);
   const maps = new Map<string, Map<number, string>>();
   for (const name of fonts?.keys() ?? []) {
