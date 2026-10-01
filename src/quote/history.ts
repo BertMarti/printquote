@@ -170,6 +170,13 @@ export function removeEntry(list: readonly HistoryEntry[], id: string): HistoryE
 const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
 const isObject = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
+/** Topes de lo que se acepta al leer (mm³, mm y triángulos): muy por encima de una pieza real, pero sin cifras que den «NaN» al calcular. */
+const VOLUME_MAX = 1e11;
+const AREA_MAX = 1e12;
+const SIZE_MAX = 1e6;
+const TRIANGLES_MAX = 1e9;
+const inRange = (value: unknown, max: number): value is number => isFiniteNumber(value) && value >= 0 && value <= max;
+
 const RESULT_FIELDS = ['weightGrams', 'hours', 'materialCost', 'energyCost', 'marginAmount', 'subtotal', 'total'] as const;
 
 /** Una pieza válida o `null`. Lo que viene de `localStorage` se valida campo a campo. */
@@ -177,14 +184,14 @@ function normalizePart(raw: unknown): HistoryPart | null {
   if (!isObject(raw) || !isObject(raw['result']) || !isObject(raw['size'])) return null;
   const { fileName, volumeMm3, triangles } = raw;
   if (typeof fileName !== 'string') return null;
-  if (!isFiniteNumber(volumeMm3) || !isFiniteNumber(triangles)) return null;
+  if (!inRange(volumeMm3, VOLUME_MAX) || !inRange(triangles, TRIANGLES_MAX)) return null;
 
   const { x, y, z } = raw['size'];
   const result = raw['result'];
-  if (!isFiniteNumber(x) || !isFiniteNumber(y) || !isFiniteNumber(z)) return null;
+  if (!inRange(x, SIZE_MAX) || !inRange(y, SIZE_MAX) || !inRange(z, SIZE_MAX)) return null;
   if (!RESULT_FIELDS.every((key) => isFiniteNumber(result[key]))) return null;
   const surface = raw['surfaceMm2'];
-  if (surface !== undefined && (!isFiniteNumber(surface) || surface < 0)) return null;
+  if (surface !== undefined && !inRange(surface, AREA_MAX)) return null;
 
   return {
     fileName: fileName.slice(0, FILE_NAME_MAX),

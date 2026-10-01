@@ -66,6 +66,26 @@ describe('normalizeBatchParts', () => {
   });
 });
 
+describe('normalizePart: topes', () => {
+  const entry = (patch: Record<string, unknown>): unknown[] => {
+    const [first] = roundTrip(parts().map(partToHistory)) as Record<string, unknown>[];
+    return [{ ...first, id: 'x', savedAt: new Date().toISOString(), client: '', ...patch }];
+  };
+
+  it('acepta cifras de una pieza real y rechaza negativas o absurdas (1e308 daba «NaN»)', () => {
+    expect(normalizeHistory(entry({}))).toHaveLength(1);
+    expect(normalizeHistory(entry({ volumeMm3: 1.25e11 / 2 }))).toHaveLength(1);
+    for (const bad of [{ volumeMm3: 1e308 }, { volumeMm3: -1 }, { triangles: -5 }, { triangles: 1e12 }, { size: { x: 1e308, y: 1, z: 1 } }, { size: { x: 1, y: -2, z: 1 } }, { surfaceMm2: 1e308 }]) {
+      expect(normalizeHistory(entry(bad)), JSON.stringify(bad)).toHaveLength(0);
+    }
+  });
+
+  it('un lote persistido con una cifra absurda se descarta entero', () => {
+    const [first, second] = roundTrip(parts().map(partToHistory)) as Record<string, unknown>[];
+    expect(normalizeBatchParts([first, { ...second, volumeMm3: 1e308 }])).toBeNull();
+  });
+});
+
 describe('loadBatch / saveBatch', () => {
   const key = 'printquote:lote:v1';
   beforeEach(() => window.localStorage.clear());
@@ -90,6 +110,20 @@ describe('loadBatch / saveBatch', () => {
     window.localStorage.setItem(key, JSON.stringify({ v: 1, parts: [{ fileName: 'x' }] }));
     expect(loadBatch()).toEqual([]);
     window.localStorage.setItem(key, 'null');
+    expect(loadBatch()).toEqual([]);
+  });
+
+  it('con la cuota llena borra la copia vieja: al recargar no reaparece un lote desfasado', () => {
+    saveBatch(parts());
+    const set = vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
+      throw new DOMException('lleno', 'QuotaExceededError');
+    });
+    try {
+      saveBatch([...parts(), part('d.stl', 15)]);
+    } finally {
+      set.mockRestore();
+    }
+    expect(window.localStorage.getItem(key)).toBeNull();
     expect(loadBatch()).toEqual([]);
   });
 

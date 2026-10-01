@@ -178,6 +178,7 @@ describe('lote en la interfaz', () => {
     expect(button('batch-pdf').disabled).toBe(false);
     expect(button('history-save-batch').disabled).toBe(false);
     expect($('batch-empty').hidden).toBe(true);
+    expect($<HTMLDetailsElement>('batch-details').open).toBe(true); // el lote recuperado se ve desplegado
 
     button('batch-clear').click();
     button('batch-clear').click();
