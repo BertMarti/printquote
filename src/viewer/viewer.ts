@@ -172,6 +172,13 @@ export class Viewer {
     this.requestRender();
   }
 
+  /** Gira la cámara despacio alrededor de la pieza (la demo). Con `false` se queda donde está. */
+  setAutoRotate(on: boolean): void {
+    this.controls.autoRotate = on;
+    this.controls.autoRotateSpeed = 2; // ~12°/s: una vuelta cada 30 s
+    this.requestRender();
+  }
+
   /** Imagen PNG de la vista actual (para la hoja impresa). */
   snapshot(): string {
     this.renderer.render(this.scene, this.camera);

@@ -29,7 +29,7 @@ export const es = {
   'stage.hint.touch': 'Un dedo para girar · pellizca para acercar · dos dedos para desplazar',
   'empty.title': 'Arrastra un modelo 3D aquí',
   'empty.text':
-    'STL, OBJ o 3MF. También puedes usar «Abrir modelo 3D». ¿No tienes ninguno a mano? Prueba con la pieza de ejemplo.',
+    'STL, OBJ o 3MF. También puedes usar «Abrir modelo 3D». ¿No tienes ninguno a mano? Prueba con la pieza de ejemplo o mira la demo.',
   'drop.text': 'Suelta el archivo para calcular',
   'viewer.roledescription': 'visor 3D',
   'viewer.label': 'Vista 3D de la pieza.',
@@ -37,6 +37,17 @@ export const es = {
     'Flechas: desplazar. Mayúsculas más flechas: girar. Más y menos: acercar y alejar. «Restablecer vista» la vuelve a encuadrar.',
   'viewer.none.title': 'Sin vista 3D',
   'viewer.none.text': 'Tu navegador no ha podido iniciar WebGL. El presupuesto funciona igualmente.',
+
+  // ── Demo ──
+  'demo.button': 'Ver demo',
+  'demo.step.part': 'Una pieza de ejemplo, medida en tu navegador.',
+  'demo.step.material': 'Cambia a PETG y el total se recalcula.',
+  'demo.step.infill': 'Más relleno: más material y más tiempo.',
+  'demo.step.yours': 'Ahora es tuyo: tus ajustes vuelven y todo se puede editar.',
+  'demo.next': 'Siguiente',
+  'demo.finish': 'Terminar',
+  'demo.hint': 'Esc para salir',
+  'demo.done': 'Demo terminada. Los ajustes vuelven a ser los tuyos.',
 
   // ── Panel ──
   'panel.label': 'Ficha técnica y presupuesto',
