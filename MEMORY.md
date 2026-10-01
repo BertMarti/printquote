@@ -1,5 +1,5 @@
 # MEMORY.md · printquote
-Última actualización: 2026-09-30 por builder (v0.3.0, #21)
+Última actualización: 2026-09-30 por builder (v0.3.0, #22)
 
 ## Estado actual
 
@@ -9,7 +9,7 @@
 - #19 Aviso OBJ de más de 200 vértices (rama `agent/builder/19-aviso-obj`): hecho, ver abajo.
 - #20 Tope de triángulos en 3MF (rama `agent/builder/20-tope-3mf`): hecho, ver abajo.
 - #21 Zoom con teclado (rama `agent/builder/21-zoom-teclado`): hecho, ver abajo.
-- #22: pendiente.
+- #22 Captura del README (rama `agent/builder/22-captura-readme`): hecho, ver abajo.
 
 **#17 PDF con fuente incrustada.** `src/pdf/fonts.ts` (`loadFonts`: `fetch` de cuatro `.ttf` con `new URL(…, import.meta.url)`, que Vite emite como recursos aparte), `src/pdf/fonts/` (las cuatro fuentes y las licencias OFL) y `render.ts` (`pdf.registerFontkit(fontkit)`, `embedFont(bytes, { subset: true })`; `renderQuotePdf(doc, fontBytes?)` acepta las fuentes ya cargadas, que es como lo prueban los tests). La transcripción sin marcas (ǎ → a) y el «?» final siguen para lo que las fuentes no cubren. Los tests leen el texto del PDF con la tabla ToUnicode (`tests/helpers/pdf-text.ts`): el PDF ya no lleva cadenas WinAnsi sino identificadores de glifo.
 
@@ -20,6 +20,8 @@
 **#20 Tope de triángulos en 3MF.** `MAX_3MF_TRIANGLES` = 6 000 000 en `threemf.ts` (exportado): se acumulan los triángulos de cada instancia al recorrer la plantilla (`visit`) y, al pasar el tope, `ModelParseError('err.3mf.tooManyTriangles', { millions: 6 })` (es/en) **antes** de reservar el `Float32Array` (216 MB a 36 B por triángulo). Por qué 6 M: es lo que cabe en un STL de 300 MB (50 B por triángulo), el límite de archivo de la interfaz, así que los tres formatos tienen el mismo orden de magnitud. El test construye un 3MF sintético con 500 001 `item` de un cubo (6 000 012 triángulos) sin construir esa malla. Límite conocido: un árbol de componentes vacíos (sin triángulos) no suma y no se corta por este tope, solo por la profundidad máxima (32).
 
 **#21 Zoom con teclado.** `src/viewer/zoom.ts` (puro, sin three.js, testeado en `tests/zoom.test.ts`): `keyZoomFactor(evento)` da 1/1,15 para `+` y `=`, 1,15 para `-` y `_`, y `null` con Ctrl/Cmd/Alt (zoom de la página, atajos del sistema) o cualquier otra tecla. `Viewer` escucha `keydown` en el contenedor (que ya es enfocable) y mueve la cámara sobre la línea al objetivo; `controls.update()` la limita a `minDistance`/`maxDistance` y dispara el repintado. Sin animación: el cambio es inmediato, así que `prefers-reduced-motion` se respeta por construcción (la rueda tampoco se anima). La pista visible pasa a «rueda o +/− para acercar» y la etiqueta accesible del visor (`viewer.label`) menciona Más y Menos. Comprobado en el navegador enviando `keydown` sintéticos: 4 × `-` aleja, 30 × `+` llega al mínimo, Ctrl + `-` no se toca. (Las teclas enviadas por la herramienta del navegador llegan sin `key`, por eso no se usaron.)
+
+**#22 Capturas.** `docs/captura.png` (1440 × 1200: ficha completa con el perfil Bambu Lab A1 elegido, cama 256 × 256 × 256 y 1,57 €) y `public/og.png` (1440 × 900: primera pantalla tras «Probar con pieza de ejemplo», 1,59 €), ambas con la interfaz de v0.2 en español y tema claro. Las genera `scripts/captura.mjs` (Chrome/Edge headless manejado por el protocolo DevTools con el `WebSocket` de Node 24, sin dependencias nuevas): abre `http://localhost:5173/printquote/#ejemplo`, espera a que haya pieza y visor, fija el idioma y el perfil, y captura. Por qué dos imágenes y no una copia como antes: la ficha completa (con el selector de impresora) no cabe en 900 px de alto y la vista previa social conviene que sea apaisada y limpia. El bloque «Datos del negocio» queda fuera de la captura (está al final de la ficha, que se desplaza). Las capturas salen con WebGL por software (`swiftshader`), por eso los bordes del visor pueden diferir ligeramente de los de una GPU real. README y `docs/USO.md` ya las enlazan con el mismo nombre; no hizo falta tocar `index.html` (las URL y el texto alternativo de `og:image` siguen siendo válidos).
 
 ### v0.2.0 (fusionado en `main`, PR #11 a #16)
 Una rama y un PR por issue, cada rama parte de la anterior y todos van contra `main`:
@@ -49,7 +51,7 @@ Una rama y un PR por issue, cada rama parte de la anterior y todos van contra `m
 - `CHANGELOG.md` nuevo (Keep a Changelog, en español): [0.2.0] y [0.1.0], ambos con fecha 2026-09-30, y enlaces de comparación (las etiquetas `v0.1.0` y `v0.2.0` aún no existen: los crea Alberto al publicar).
 - `docs/USO.md`: sección 3 «Abrir un modelo 3D (STL, OBJ y 3MF)» (detección por contenido, unidades del 3MF, tabla de qué da error), «Impresora (perfiles)» dentro de la sección 7, sección 10 ampliada con datos del negocio y PDF (IVA, numeración, logotipo, límites), sección 14 «Cambiar el idioma» y preguntas frecuentes nuevas (la antigua 14 pasa a ser la 15). Cifras comprobadas contra el código (perfiles contra `printers.ts`; IVA: 1,59 € al 21 % → 0,33 € y 1,92 €).
 - `README.md`: enlace al CHANGELOG, guía de uso ampliada, límites del PDF, OBJ con caras cóncavas trianguladas y «Cómo se ha hecho» exacto. `CONTRIBUTING.md`: cómo añadir un perfil de impresora, una clave de traducción (y el test que la vigila, `tests/i18n.test.ts`) y un formato de archivo; el CHANGELOG entra en el flujo de PR.
-- No se ha regenerado `docs/captura.png` (muestra la interfaz de la v0.1.0, sin selector de impresora ni bloque de datos del negocio): pendiente si se quiere.
+- `docs/captura.png` se regeneró en v0.3.0 (#22).
 
 ### MVP y revisiones anteriores (v0.1.0)
 MVP completo en la rama `agent/builder` (PR abierto a `main`, pendiente de revisión del lead):
@@ -140,7 +142,7 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - Modelo de coste simplificado: no incluye soportes, balsa ni purga; la cáscara (área × grosor) sobreestima en piezas muy detalladas.
 - Los OBJ y 3MF no se han probado con archivos reales de laminadores (solo con los construidos en los tests y una prueba manual en Chrome).
 - PDF: una página; sin campo de cliente. Revisar el PDF impreso/abierto en distintos visores (solo se ha comprobado renderizado con PyMuPDF y la descarga en Chrome).
-- Las notas de impresora y demás textos están traducidos, pero `docs/USO.md` y el README siguen solo en español (documentación); los meta Open Graph del HTML servido también (en el navegador sí cambian). `docs/captura.png` muestra la interfaz de la v0.1.0.
+- Las notas de impresora y demás textos están traducidos, pero `docs/USO.md` y el README siguen solo en español (documentación); los meta Open Graph del HTML servido también (en el navegador sí cambian). `docs/captura.png` y `public/og.png` se regeneraron con la interfaz de v0.2 (#22).
 - El bloque del emisor del PDF se recorta a 10 líneas por el final: una dirección muy larga puede tapar teléfono, correo y web (está documentado en `docs/USO.md`).
 - Mallas muy grandes (> 400 000 triángulos) no dibujan las aristas marcadas, por rendimiento. Con mallas grandes (< 400 000) el `EdgesGeometry` y las normales del visor se calculan aún en el hilo principal (unos cientos de ms de bloqueo tras la lectura).
 - Si falla la lectura de un archivo, se mantiene la pieza anterior en pantalla junto al aviso de error (intencionado, pero puede confundir).
@@ -163,3 +165,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder/19-aviso-obj): #19 aviso de OBJ con polígonos de más de 200 vértices (contador en el parser, `big-polygons`, textos es/en, tests, docs).
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder/20-tope-3mf): #20 tope de 6 millones de triángulos en 3MF con error traducido y test sintético.
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder/21-zoom-teclado): #21 zoom con teclado en el visor (`zoom.ts`, listener en `Viewer`, pista y etiqueta accesible, tests, docs).
+- 2026-09-30 builder · Claude Code Sonnet (agent/builder/22-captura-readme): #22 capturas nuevas de README y Open Graph con `scripts/captura.mjs` (Chrome headless), CONTRIBUTING al día con #17 a #22.

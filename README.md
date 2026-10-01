@@ -8,7 +8,7 @@
 
 **Demo:** <https://bertmarti.github.io/printquote/> · [abrir con la pieza de ejemplo](https://bertmarti.github.io/printquote/#ejemplo)
 
-![printquote: visor 3D a la izquierda con un soporte de móvil naranja sobre la rejilla de la cama y, a la derecha, la ficha técnica con el presupuesto](docs/captura.png)
+![printquote: visor 3D a la izquierda con un soporte de móvil naranja sobre la rejilla de la cama y, a la derecha, la ficha técnica con el perfil de impresora y el presupuesto](docs/captura.png)
 
 ## Qué hace
 
