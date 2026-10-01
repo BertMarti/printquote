@@ -1,7 +1,9 @@
 import { getLang, getLocale, t } from '../i18n';
+import type { BatchPart } from '../quote/batch';
 import { formatEuro } from '../quote/format';
 import {
   addEntry,
+  createBatchEntry,
   createEntry,
   HISTORY_MAX,
   historyToCsv,
@@ -18,6 +20,8 @@ export interface HistoryHost {
   /** La pieza cargada y su presupuesto, o `null` si no hay. */
   current(): { fileName: string; stats: MeshStats; quote: Quote; settings: QuoteSettings } | null;
   /** Aplica unos ajustes a la interfaz (y los guarda como los de trabajo). */
+  /** Las piezas del lote (vacío si no hay lote). */
+  batch(): readonly BatchPart[];
   applySettings(settings: QuoteSettings): void;
   announce(message: string): void;
   showNotice(title: string, message: string): void;
@@ -34,6 +38,7 @@ const byId = <T extends HTMLElement>(id: string): T => {
 export function setupHistory(host: HistoryHost): { render(): void; sync(): void } {
   const client = byId<HTMLInputElement>('in-client');
   const saveButton = byId<HTMLButtonElement>('history-save');
+  const saveBatchButton = byId<HTMLButtonElement>('history-save-batch');
   const list = byId('history-list');
   const empty = byId('history-empty');
   const count = byId('history-count');
@@ -72,7 +77,8 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
 
     const meta = document.createElement('p');
     meta.className = 'history-meta';
-    meta.textContent = [formatDate(entry.savedAt), entry.client, entry.settings.material].filter((part) => part !== '').join(' · ');
+    const kind = entry.parts ? t('hist.batch.meta', { n: entry.parts.length }) : entry.settings.material;
+    meta.textContent = [formatDate(entry.savedAt), entry.client, kind].filter((part) => part !== '').join(' · ');
 
     const label = { name: entry.fileName, date: formatDate(entry.savedAt) };
     const action = (kind: 'open' | 'delete'): HTMLButtonElement => {
@@ -87,7 +93,8 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
     };
     const buttons = document.createElement('div');
     buttons.className = 'history-buttons';
-    buttons.append(action('open'), action('delete'));
+    // Un lote no se reabre (no guarda la geometría de las piezas): se lista, se exporta y se borra.
+    buttons.append(...(entry.parts ? [] : [action('open')]), action('delete'));
     item.append(head, meta, buttons);
     return item;
   }
@@ -95,6 +102,7 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
   /** Lo que depende de la pieza cargada: sin pieza no se puede guardar. */
   function sync(): void {
     saveButton.disabled = host.current() === null;
+    saveBatchButton.disabled = host.batch().length === 0;
   }
 
   function render(): void {
@@ -113,10 +121,8 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
     render();
   };
 
-  function save(): void {
-    const current = host.current();
-    if (!current) return;
-    const entry = createEntry({ fileName: current.fileName, client: client.value, stats: current.stats, settings: current.settings, quote: current.quote });
+  /** Guarda una entrada nueva (de una pieza o de un lote) y lo anuncia con `name`. */
+  function store(entry: HistoryEntry, name: string): void {
     const { entries: next, dropped } = addEntry(entries, entry);
     if (!saveHistory(next)) {
       host.showNotice(t('hist.save.failed.title'), t('hist.save.failed'));
@@ -125,8 +131,21 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
     entries = next;
     confirmingClear = false;
     render();
-    const params = { name: entry.fileName, total: formatEuro(entry.result.total), max: HISTORY_MAX };
+    const params = { name, total: formatEuro(entry.result.total), max: HISTORY_MAX };
     host.announce(t(dropped > 0 ? 'hist.saved.dropped' : 'hist.saved', params));
+  }
+
+  function save(): void {
+    const current = host.current();
+    if (!current) return;
+    const entry = createEntry({ fileName: current.fileName, client: client.value, stats: current.stats, settings: current.settings, quote: current.quote });
+    store(entry, entry.fileName);
+  }
+
+  function saveBatch(): void {
+    const parts = host.batch();
+    if (parts.length === 0) return;
+    store(createBatchEntry({ client: client.value, parts }), t('hist.batch.name', { n: parts.length }));
   }
 
   function open(entry: HistoryEntry): void {
@@ -156,6 +175,7 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
   }
 
   saveButton.addEventListener('click', save);
+  saveBatchButton.addEventListener('click', saveBatch);
   client.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
       event.preventDefault();
