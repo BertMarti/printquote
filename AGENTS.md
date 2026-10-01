@@ -33,6 +33,9 @@ Minimalista, claro y preciso, como una ficha técnica.
 - Visor grande a la izquierda, panel de especificaciones estrecho a la derecha; en móvil, uno debajo del otro.
 - Modo oscuro con `prefers-color-scheme`.
 - Los tiempos se rotulan siempre como **estimación**.
+- Jerarquía de botones: en la cabecera **un único primario** (naranja, `button--primary`); el secundario lleva contorno (`button`) y el terciario va sin caja y subrayado (`button--ghost`).
+- Dianas de **44 px** con puntero táctil o ≤ 900 px (`@media (pointer: coarse), (max-width: 900px)`); en escritorio con ratón se mantiene la densidad de la ficha. Sin desbordes de 320 a 1440 px.
+- Los rótulos sobre el visor (medidas, leyenda, ayuda) llevan una pastilla del color del visor para leerse sobre la rejilla. La banda superior del visor (`.stage-top`) es un contenedor en flujo: ficha de la pieza y, debajo, el aviso.
 
 ## Equipo de agentes y ramas
 Los tres proyectos se desarrollan en paralelo con un equipo de agentes. El trabajo está **guiado por issues de un hito** (p. ej. v0.2.0) y **todo entra en `main` mediante pull request**, que fusiona Alberto.

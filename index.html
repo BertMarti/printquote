@@ -48,7 +48,7 @@
       </p>
       <div class="tb-cell tb-actions">
         <button type="button" class="button button--primary" id="open-button" data-i18n="action.open">Abrir modelo 3D</button>
-        <button type="button" class="button" id="sample-button" data-i18n="action.sample">Probar con pieza de ejemplo</button>
+        <button type="button" class="button button--ghost" id="sample-button" data-i18n="action.sample">Probar con pieza de ejemplo</button>
         <div class="lang-switch" role="group" aria-label="Idioma" data-i18n-attr="aria-label:lang.label">
           <button type="button" class="lang-button" data-lang="es" lang="es" aria-pressed="true" aria-label="Español" title="Español">ES</button>
           <button type="button" class="lang-button" data-lang="en" lang="en" aria-pressed="false" aria-label="English" title="English">EN</button>
@@ -67,10 +67,13 @@
         <span class="crop crop--bl" aria-hidden="true"></span>
         <span class="crop crop--br" aria-hidden="true"></span>
 
-        <div class="stage-meta">
-          <span class="stage-label" data-i18n="stage.piece">Pieza</span>
-          <span class="stage-file" id="file-name">Sin pieza cargada</span>
-          <span class="stage-detail" id="file-detail"></span>
+        <div class="stage-top">
+          <div class="stage-meta">
+            <span class="stage-label" data-i18n="stage.piece">Pieza</span>
+            <span class="stage-file" id="file-name">Sin pieza cargada</span>
+            <span class="stage-detail" id="file-detail"></span>
+          </div>
+          <div class="notice" id="notice" hidden></div>
         </div>
 
         <button type="button" class="button button--small stage-reset" id="reset-camera" data-i18n="stage.reset" disabled>Restablecer vista</button>
@@ -86,7 +89,7 @@
 
         <p class="stage-loading" id="stage-loading" aria-hidden="true" hidden></p>
 
-        <div class="notice" id="notice" hidden></div>
+        <p id="viewer-help" data-i18n="viewer.help" hidden>Flechas: desplazar. Mayúsculas más flechas: girar. Más y menos: acercar y alejar. «Restablecer vista» la vuelve a encuadrar.</p>
       </section>
 
       <aside class="panel" id="panel" tabindex="-1" aria-label="Ficha técnica y presupuesto" data-i18n-attr="aria-label:panel.label">

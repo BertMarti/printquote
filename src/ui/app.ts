@@ -183,6 +183,8 @@ export function startApp(): void {
     if (!container.hasAttribute('role')) return;
     container.setAttribute('aria-roledescription', t('viewer.roledescription'));
     container.setAttribute('aria-label', t('viewer.label'));
+    // Las teclas son la descripción (no el nombre): el nombre se lee corto y la ayuda, tras él.
+    container.setAttribute('aria-describedby', 'viewer-help');
   }
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => viewer?.setTheme(readTheme()));
 
@@ -419,11 +421,13 @@ export function startApp(): void {
     notice.replaceChildren(heading, body);
     notice.setAttribute('role', 'alert');
     notice.hidden = false;
+    stage.classList.add('has-notice');
   }
 
   function hideNotice(): void {
     noticeBuilder = null;
     notice.hidden = true;
+    stage.classList.remove('has-notice');
     notice.removeAttribute('role');
     notice.replaceChildren();
   }

@@ -29,8 +29,9 @@ export const en: Record<Key, string> = {
   'empty.text': 'STL, OBJ or 3MF. You can also use “Open 3D model”. Nothing at hand? Try the sample part.',
   'drop.text': 'Drop the file to calculate',
   'viewer.roledescription': '3D viewer',
-  'viewer.label':
-    '3D view of the part. Arrow keys: pan. Shift plus arrow keys: rotate. Plus and minus: zoom in and out. “Reset view” frames it again.',
+  'viewer.label': '3D view of the part.',
+  'viewer.help':
+    'Arrow keys: pan. Shift plus arrow keys: rotate. Plus and minus: zoom in and out. “Reset view” frames it again.',
   'viewer.none.title': 'No 3D view',
   'viewer.none.text': 'Your browser could not start WebGL. The quote still works.',
 

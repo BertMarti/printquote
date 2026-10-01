@@ -4,6 +4,10 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 
 ## [Sin publicar]
 
+### Cambiado
+
+- **Pulido visual y de accesibilidad** (#36), a partir de la auditoría de UX (ver `docs/specs/v0.5.md`, §2): la cabecera tiene un único botón primario («Abrir modelo 3D») y la pieza de ejemplo pasa a acción terciaria; el aviso del visor ya no tapa el nombre de la pieza ni el texto del estado vacío (banda superior en flujo); los rótulos del visor se leen sobre la rejilla; filete de acento sobre el total, que se compacta en pantallas bajas; dianas táctiles de 44 px o más con puntero táctil o en pantallas de hasta 900 px; la cama X/Y/Z pasa a tres columnas en pantallas de hasta 480 px (a 320 px la página desbordaba); el visor tiene un nombre accesible corto y las teclas como descripción.
+
 ## [0.4.0] - 2026-10-01
 
 Hito v0.4.0 «Pro»: herramienta para talleres (app instalable y sin conexión, historial de presupuestos y enlace para compartir). Especificación en `docs/specs/v0.4.md`.
