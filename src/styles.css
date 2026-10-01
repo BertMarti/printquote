@@ -876,6 +876,82 @@ input {
   margin-bottom: 10px;
 }
 
+/* Historial de presupuestos (bloque 07): lista de filas con filete, sin tarjetas */
+
+.history-count {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.history-save {
+  margin-top: 4px;
+}
+
+.history-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--ink);
+}
+
+.history-item {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.history-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.history-name {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.history-total {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.history-meta {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.history-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.history-empty {
+  margin-top: 14px;
+}
+
+.history-empty[hidden] {
+  display: none;
+}
+
+.history-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 18px;
+}
+
+.link-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
 .caption--plain {
   text-transform: none;
   letter-spacing: 0;

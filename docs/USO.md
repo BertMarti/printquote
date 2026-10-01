@@ -269,6 +269,18 @@ Los botones están en la parte inferior del panel, junto al **Total** (en el mó
 
 El texto copiado y la hoja impresa muestran el total **sin IVA** (es la base imponible). Los tres indican siempre que el tiempo es una estimación.
 
+### Guardar y reabrir presupuestos (historial)
+
+El bloque **07 Presupuestos** (plegado por defecto; el número entre paréntesis es cuántos tienes guardados) recuerda tus presupuestos en este navegador, para repetirlos o llevarlos a una hoja de cálculo:
+
+1. Con una pieza cargada, escribe el **cliente** si quieres (opcional; solo se ve en el historial y en el CSV, no sale en el PDF) y pulsa **Guardar este presupuesto** (o Intro en el campo del cliente).
+2. Cada presupuesto aparece en la lista con la pieza, la fecha, el cliente, el material y el total (sin IVA, tal como salió).
+3. **Abrir** restaura todos los parámetros (material, precios, impresora, relleno, copias…) y el cliente. El archivo 3D **no se guarda**: si no hay pieza cargada, arrastra la pieza para recalcular; si ya hay una, se recalcula con ella (el total puede diferir del guardado si la pieza es otra).
+4. **Borrar** quita un presupuesto; **Borrar todos** pide confirmar con un segundo clic.
+5. **Exportar CSV** descarga `presupuestos-AAAA-MM-DD.csv` con una fila por presupuesto (fecha, cliente, pieza, volumen, medidas, material, impresora, relleno, perímetros, copias, peso, tiempo, costes, margen y total sin IVA). En español usa `;` y coma decimal (lo que abre bien Excel en español); en inglés, `,` y punto. Los textos que una hoja de cálculo podría tomar por fórmula (los que empiezan por `=`, `+`, `-` o `@`) llevan un apóstrofo delante para que no se ejecuten.
+
+**Límites:** se guardan como máximo **100** presupuestos (al guardar el 101.º se descarta el más antiguo y se avisa); el cliente admite 80 caracteres. Si el navegador no deja guardar (sin espacio o modo privado) se avisa y lo que ya tenías sigue ahí. Los presupuestos están **solo en este navegador**: no se sincronizan entre dispositivos ni se envían a ningún sitio.
+
 ### Datos del negocio
 
 Para que el PDF lleve tu nombre y tus datos, rellena el bloque plegable **«06 · Datos del negocio»**, al final del panel (está plegado por defecto; púlsalo para abrirlo). Se rellena una sola vez: todo se guarda en tu navegador y no se envía a ningún sitio.
@@ -377,7 +389,7 @@ Y una vez imprimida la pieza, compara el peso real en una báscula con el de pri
 
 - El archivo (STL, OBJ o 3MF) se lee con las funciones de tu navegador y se procesa **en tu equipo**. No hay servidor que lo reciba: la web es estática.
 - No hay analítica, ni cookies, ni cuentas.
-- Se guardan **solo tus preferencias** en el almacenamiento local de tu navegador (`localStorage`), para que estén ahí la próxima vez: los ajustes (material, precios, impresora, relleno, etc.), el idioma y los **datos del negocio** (incluido el logotipo, ya reducido y el número del próximo presupuesto). El archivo 3D y el presupuesto no se guardan. Puedes borrar los ajustes con «Restablecer valores por defecto», los datos del negocio con «Borrar los datos del negocio», o todo limpiando los datos del sitio en tu navegador.
+- Se guardan **solo tus preferencias** en el almacenamiento local de tu navegador (`localStorage`), para que estén ahí la próxima vez: los ajustes (material, precios, impresora, relleno, etc.), el idioma y los **datos del negocio** (incluido el logotipo, ya reducido y el número del próximo presupuesto). El archivo 3D y el presupuesto no se guardan. Los **presupuestos guardados** del historial (pieza, cliente, parámetros y resultado; nunca el archivo 3D) también se quedan solo aquí, y se borran uno a uno o todos desde el bloque 07. Puedes borrar los ajustes con «Restablecer valores por defecto», los datos del negocio con «Borrar los datos del negocio», o todo limpiando los datos del sitio en tu navegador.
 - Al pulsar «Copiar presupuesto», «Imprimir» o «Descargar PDF», el texto, la hoja o el PDF se quedan en tu equipo; printquote no envía nada (el PDF se genera en tu navegador).
 
 ## 14. Cambiar el idioma
@@ -459,7 +471,7 @@ Se guardan en el navegador y en el equipo donde los escribiste: no se sincroniza
 
 ### ¿Puedo usarlo sin conexión?
 
-Necesitas conexión para abrir la página (y para la pieza de ejemplo). Una vez cargada, con tu propio STL el cálculo se hace en tu equipo y no envía nada por internet. Sin embargo, printquote no está pensada para funcionar sin conexión: si recargas sin red, es posible que no abra.
+Sí, tras abrirla **una vez con conexión**: el navegador guarda la app y después se abre y calcula sin red (la pieza de ejemplo incluida). El PDF también, una vez que lo has generado alguna vez con conexión. Mira [Instalar la app y usarla sin conexión](#15-instalar-la-app-y-usarla-sin-conexión). Con tu propio archivo el cálculo siempre se hace en tu equipo y no envía nada por internet.
 
 ### No veo el visor 3D
 

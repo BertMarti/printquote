@@ -1,5 +1,6 @@
 import { isLang, type Lang } from '../i18n';
 import { normalizeBusiness, type BusinessProfile } from '../quote/business';
+import { normalizeHistory, type HistoryEntry } from '../quote/history';
 import { DEFAULT_SETTINGS, normalizeSettings, type QuoteSettings } from '../quote/settings';
 
 const STORAGE_KEY = 'printquote:ajustes:v1';
@@ -77,5 +78,27 @@ export function saveLang(lang: Lang): void {
     window.localStorage.setItem(LANG_KEY, lang);
   } catch {
     // Modo privado o almacenamiento lleno: se usará el idioma del navegador.
+  }
+}
+
+const HISTORY_KEY = 'printquote:historial:v1';
+
+/** Presupuestos guardados (los que se puedan leer; lo roto se descarta entrada a entrada). */
+export function loadHistory(): HistoryEntry[] {
+  try {
+    const raw = window.localStorage.getItem(HISTORY_KEY);
+    return normalizeHistory(raw ? (JSON.parse(raw) as unknown) : []);
+  } catch {
+    return [];
+  }
+}
+
+/** Guarda el historial. Devuelve false si el navegador no ha dejado (sin espacio, modo privado…). */
+export function saveHistory(entries: readonly HistoryEntry[]): boolean {
+  try {
+    window.localStorage.setItem(HISTORY_KEY, JSON.stringify(entries));
+    return true;
+  } catch {
+    return false;
   }
 }
