@@ -29,13 +29,14 @@ class Growable<T extends Float32Array | Int32Array> {
 }
 
 /** Polígonos de más vértices que esto se trianguan en abanico aunque sean cóncavos (el recorte de orejas es O(n³)). */
-const MAX_EAR_CLIPPING = 200;
+export const MAX_EAR_CLIPPING = 200;
 
 /**
  * Triangula un polígono (índices absolutos en `vertices`). Convexo: abanico desde el primer
  * vértice. Cóncavo: recorte de orejas sobre el plano de mayor área proyectada (normal de Newell).
  * Si el polígono es degenerado, referencia vértices que aún no se han leído o es enorme, cae al abanico.
- * ponytail: los polígonos cóncavos de más de 200 vértices se siguen trianguando en abanico.
+ * ponytail: los polígonos cóncavos de más de 200 vértices se siguen trianguando en abanico; `parseObj`
+ * los cuenta en `largePolygons` y la interfaz avisa.
  */
 export function triangulate(
   face: readonly number[],
@@ -119,6 +120,7 @@ export function parseObj(data: ArrayBuffer | Uint8Array): Mesh {
   const faceIndices = new Growable((n) => new Int32Array(n)); // 3 por triángulo, ya absolutos
   let vertexCount = 0;
   let triangleCount = 0;
+  let largePolygons = 0;
   let lineNumber = 0;
 
   const fail = (code: ErrorKey, params: Params = {}): never => {
@@ -183,6 +185,7 @@ export function parseObj(data: ArrayBuffer | Uint8Array): Mesh {
         if (absolute > 0x7fffffff) fail('err.obj.outOfRange', { index, count: vertexCount });
         face.push(absolute);
       }
+      if (face.length > MAX_EAR_CLIPPING) largePolygons++;
       triangulate(face, vertices.data, vertexCount, (a, b, c) => {
         faceIndices.push(a);
         faceIndices.push(b);
@@ -208,5 +211,5 @@ export function parseObj(data: ArrayBuffer | Uint8Array): Mesh {
     positions[i * 3 + 1] = vertices.data[v * 3 + 1] ?? 0;
     positions[i * 3 + 2] = vertices.data[v * 3 + 2] ?? 0;
   }
-  return { positions, triangleCount, format: 'obj' };
+  return { positions, triangleCount, format: 'obj', largePolygons };
 }

@@ -63,7 +63,7 @@ Detalles a tener en cuenta:
 - Mientras se lee el archivo aparece «Leyendo…» sobre el visor. La página sigue respondiendo aunque el archivo sea grande.
 - Puedes cargar otro archivo en cualquier momento: sustituye al anterior.
 - Bajo el nombre de la pieza verás el formato y el número de triángulos, por ejemplo «STL binario · 56 triángulos», «OBJ · 12 triángulos» o «3MF · 12 triángulos».
-- Los tres formatos pasan por **el mismo análisis y los mismos avisos** (volumen, superficie, dimensiones, malla abierta, normales invertidas, cama y pieza diminuta).
+- Los tres formatos pasan por **el mismo análisis y los mismos avisos** (volumen, superficie, dimensiones, malla abierta, normales invertidas, cama y pieza diminuta; en OBJ, además, los polígonos muy grandes).
 - Si el archivo tiene varias piezas separadas (u objetos), se cuentan todas juntas como una sola.
 - Si tu programa solo exporta otro formato (STEP, FBX…), conviértelo antes a STL, OBJ o 3MF.
 
@@ -73,7 +73,7 @@ Se aceptan STL **binarios y de texto (ASCII)**; printquote los distingue solo. E
 
 ### OBJ
 
-- Se leen los vértices (`v`) y las caras (`f`). Las caras de más de tres vértices se dividen en triángulos (también las cóncavas) y se admiten los índices negativos (relativos al final), como en `f -3 -2 -1`. Las coordenadas de textura y las normales (`f 1/2/3`) se ignoran.
+- Se leen los vértices (`v`) y las caras (`f`). Las caras de más de tres vértices se dividen en triángulos (también las cóncavas, hasta 200 vértices por cara; por encima se divide en abanico y aparece un aviso) y se admiten los índices negativos (relativos al final), como en `f -3 -2 -1`. Las coordenadas de textura y las normales (`f 1/2/3`) se ignoran.
 - Todos los objetos y grupos del archivo se juntan en una sola pieza.
 - Como el STL, el OBJ **no guarda unidades**: se asumen milímetros.
 - Un OBJ sin caras (solo puntos o líneas) da error («El OBJ no contiene caras…»), igual que uno cuyas caras usan vértices que no existen.
@@ -141,6 +141,7 @@ Debajo pueden aparecer **avisos**. Ninguno bloquea el cálculo; son advertencias
 | **Normales invertidas** («Las normales parecen invertidas…») | Las caras de la pieza «miran hacia dentro». printquote usa el valor absoluto del volumen, así que el cálculo suele salir bien. | Conviene revisar la malla, pero normalmente no cambia el presupuesto. |
 | **No cabe en la cama** («…no cabe en la cama de … ni siquiera girándola») | La pieza es mayor que la cama configurada. Se permite girarla 90° en horizontal. | Comprueba las medidas de la cama (bloque 03), reduce la pieza o divídela en partes. |
 | **Pieza diminuta** («La pieza mide solo … mm en su lado mayor…») | Ningún lado supera 1 mm. Casi seguro el STL o el OBJ se exportó en **metros** u otra unidad. | Vuelve a exportarlo en milímetros. Más detalles en [las preguntas frecuentes](#15-preguntas-frecuentes-y-solución-de-problemas). |
+| **Polígonos de más de 200 vértices** («El OBJ tiene polígonos de más de 200 vértices (n)…») | Solo en OBJ. Las caras de más de 200 vértices se dividen en abanico, que solo es correcto si son convexas; si alguna es cóncava, la superficie, el peso y la vista 3D pueden salir mal. Las de hasta 200 se dividen bien aunque sean cóncavas. | Vuelve a exportar el modelo con las caras triangulares (en Blender, el modificador «Triangulate»; en otros programas, «Triangular caras»). |
 
 Si la pieza está abierta *y además* tiene las normales invertidas, solo se muestra el aviso de malla abierta.
 

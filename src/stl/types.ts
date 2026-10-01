@@ -9,6 +9,8 @@ export interface Mesh {
   readonly positions: Float32Array;
   readonly triangleCount: number;
   readonly format: MeshFormat;
+  /** Solo OBJ: polígonos de más de 200 vértices, triangulados en abanico aunque fueran cóncavos. */
+  readonly largePolygons?: number;
 }
 
 export interface Vec3 {

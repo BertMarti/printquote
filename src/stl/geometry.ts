@@ -182,7 +182,7 @@ export function countOpenEdges(positions: Float32Array, tolerance = WELD_TOLERAN
   return open;
 }
 
-export type MeshWarning = 'open-mesh' | 'inverted' | 'too-big' | 'tiny';
+export type MeshWarning = 'open-mesh' | 'inverted' | 'too-big' | 'tiny' | 'big-polygons';
 
 /** Por debajo de este tamaño (mm, dimensión mayor) la pieza seguramente se exportó en metros o pulgadas. */
 const TINY_PART_MM = 1;
@@ -193,8 +193,10 @@ const TINY_PART_MM = 1;
  * - `inverted`: volumen con signo negativo (normales hacia dentro).
  * - `too-big`: no cabe en la cama ni girándola 90° sobre Z.
  * - `tiny`: la dimensión mayor mide menos de 1 mm (¿exportada en metros o pulgadas?).
+ * - `big-polygons`: el OBJ trae polígonos de más de 200 vértices (`Mesh.largePolygons`), triangulados
+ *   en abanico: si son cóncavos, la superficie y el visor salen mal.
  */
-export function meshWarnings(stats: MeshStats, bed: Vec3 = DEFAULT_BED): MeshWarning[] {
+export function meshWarnings(stats: MeshStats, bed: Vec3 = DEFAULT_BED, largePolygons = 0): MeshWarning[] {
   const warnings: MeshWarning[] = [];
   const { size } = stats.bounds;
   const boxVolume = size.x * size.y * size.z;
@@ -210,6 +212,9 @@ export function meshWarnings(stats: MeshStats, bed: Vec3 = DEFAULT_BED): MeshWar
   }
   if (Math.max(size.x, size.y, size.z) < TINY_PART_MM) {
     warnings.push('tiny');
+  }
+  if (largePolygons > 0) {
+    warnings.push('big-polygons');
   }
   return warnings;
 }

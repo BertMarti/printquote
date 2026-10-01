@@ -55,12 +55,14 @@ function readTheme(): ViewerTheme {
   };
 }
 
-function warningText(warning: MeshWarning, size: Vec3, bed: Vec3): string {
+function warningText(warning: MeshWarning, size: Vec3, bed: Vec3, largePolygons: number): string {
   switch (warning) {
     case 'open-mesh':
       return t('warn.open');
     case 'inverted':
       return t('warn.inverted');
+    case 'big-polygons':
+      return t('warn.bigPolygons', { count: formatNumber(largePolygons, 0) });
     case 'tiny':
       return t('warn.tiny', { size: formatNumber(Math.max(size.x, size.y, size.z), 3) });
     case 'too-big':
@@ -341,7 +343,8 @@ export function startApp(): void {
 
     // La lista es una región viva: solo se reescribe si los avisos cambian, para que el
     // lector de pantalla no los repita cada vez que se toca un ajuste.
-    const warningTexts = meshWarnings(stats, b).map((warning) => warningText(warning, size, b));
+    const largePolygons = part.mesh.largePolygons ?? 0;
+    const warningTexts = meshWarnings(stats, b, largePolygons).map((warning) => warningText(warning, size, b, largePolygons));
     const currentTexts = Array.from(warningsList.children, (li) => li.textContent ?? '');
     if (warningTexts.join('|') !== currentTexts.join('|')) {
       warningsList.replaceChildren(
