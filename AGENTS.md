@@ -22,6 +22,7 @@ Web que calcula el presupuesto de una pieza de impresión 3D: arrastras un STL, 
 - `src/quote/` modelo de coste (material, relleno, tiempo, energía, margen).
 - `src/viewer/` visor three.js.
 - `src/ui/` panel y controles.
+- `src/ui/demo.ts` modo demo: guion `DEMO_STEPS` en datos y su control; no importa `app.ts`, recibe un `DemoHost` (ver «Modo demo»).
 - `public/samples/` pieza de ejemplo original.
 - `tests/` pruebas unitarias.
 
@@ -36,6 +37,15 @@ Minimalista, claro y preciso, como una ficha técnica.
 - Jerarquía de botones: en la cabecera **un único primario** (naranja, `button--primary`); el secundario lleva contorno (`button`) y el terciario va sin caja y subrayado (`button--ghost`).
 - Dianas de **44 px** con puntero táctil o ≤ 900 px (`@media (pointer: coarse), (max-width: 900px)`); en escritorio con ratón se mantiene la densidad de la ficha. Sin desbordes de 320 a 1440 px.
 - Los rótulos sobre el visor (medidas, leyenda, ayuda) llevan una pastilla del color del visor para leerse sobre la rejilla. La banda superior del visor (`.stage-top`) es un contenedor en flujo: ficha de la pieza y, debajo, el aviso.
+
+## Modo demo («Ver demo»)
+Recorrido guiado de ~13 s (`DEMO_END_MS`) que dirige `src/ui/demo.ts`. El guion son cuatro pasos en datos (`DEMO_STEPS`: carga el ejemplo con los ajustes por defecto → PETG → relleno 40 % → `'restore'` devuelve los ajustes de la persona); cada paso resalta el bloque que cambia (`.is-demo-focus`) y pone un subtítulo en `#demo-bar`.
+- **Botón** `#demo-button` con `aria-pressed` (la etiqueta no cambia). Se para con un segundo clic, **Esc** o cualquier `pointerdown`/`keydown`/`wheel` fuera de los elementos con `data-demo-ui` (el botón y la barra), y si la pestaña pasa a segundo plano.
+- **`prefers-reduced-motion`**: no corre sola ni gira la cámara; pasos manuales con «Siguiente» (el último, «Terminar») y el subtítulo es texto legible (sin `aria-hidden`).
+- **Nunca persiste**: aplica ajustes con `applySettings(…, false)`; no toca `localStorage` ni el historial ni el hash. Al terminar o pararse **devuelve los ajustes de la persona** (y su pieza, si había una): `update()` guarda *todos* los ajustes en la siguiente edición y no deben colarse los de la demo.
+- **Accesibilidad**: durante la demo el total y los avisos pasan a `aria-live="off"` y `announce()` se silencia; **un único anuncio al final**. Si se detiene mientras carga, el estado se devuelve cuando acaba la carga.
+- **Contrato con la aplicación** (`DemoHost` en `demo.ts`; la implementa `app.ts`): `begin()`, `apply(patch | 'restore')`, `spin(on)` (`Viewer.setAutoRotate`), `end()` y `announce()`. `startApp(demoScale)` acepta una escala de tiempo solo para los tests de integración.
+- Texto en `demo.*` (es/en). Funciona sin conexión: la pieza de ejemplo está en el precaché de la PWA.
 
 ## Equipo de agentes y ramas
 Los tres proyectos se desarrollan en paralelo con un equipo de agentes. El trabajo está **guiado por issues de un hito** (p. ej. v0.2.0) y **todo entra en `main` mediante pull request**, que fusiona Alberto.
