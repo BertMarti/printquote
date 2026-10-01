@@ -279,7 +279,7 @@ Si imprimes varias copias juntas en una misma cama, el tiempo real puede ser alg
 
 El bloque **06 Lote** (plegable) sirve para pedidos con varias piezas distintas: ajusta una pieza (material, relleno, copias…), pulsa **Añadir esta pieza** (el botón muestra su importe) y sigue con la siguiente. Cada línea de la lista muestra el nombre, el material, el volumen, el peso, el tiempo y las copias, y su **importe** (sin IVA).
 
-- Cada línea **conserva los ajustes con que se añadió**: cambiar el formulario después no la altera. Para cambiar algo de una línea, **Quitar** y vuelve a añadirla.
+- Cada línea **conserva los ajustes con que se añadió**: cambiar el formulario después no la altera. Las **copias** de una línea se corrigen en su propio campo numérico («Copias»; de 1 a 10 000; se aplica al salir del campo o con Intro): se recalcula esa línea con los ajustes con que se añadió (no con los del formulario) y el total del lote. Para cambiar cualquier otro ajuste de una línea, **Quitar** y vuelve a añadirla.
 - El **total del lote** es la suma de los importes de las líneas, ya redondeados a céntimos (como en una factura): lo que ves suma. Cada línea usa el mismo cálculo que una pieza suelta.
 - **Quitar** recalcula el total; **Vaciar lote** pide confirmar con un segundo clic. Admite hasta **50 piezas**.
 - **Copiar lote** copia un texto con todas las piezas (una sección por pieza con su importe) y el desglose y el total del lote.

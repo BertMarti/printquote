@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BATCH_MAX, computeBatch, makePart, type BatchPart } from '../src/quote/batch';
+import { BATCH_MAX, computeBatch, makePart, withCopies, type BatchPart } from '../src/quote/batch';
 import { computeQuote } from '../src/quote/model';
 import { DEFAULT_SETTINGS } from '../src/quote/settings';
 import { computeStats } from '../src/stl/geometry';
@@ -56,5 +56,18 @@ describe('lote: modelo de coste', () => {
   it('cada pieza tiene un id propio y el tope es de 50', () => {
     expect(part('a.stl', 20).id).not.toBe(part('a.stl', 20).id);
     expect(BATCH_MAX).toBe(50);
+  });
+});
+
+describe('withCopies', () => {
+  it('recalcula con computeQuote y los ajustes originales de la línea; conserva el id y lo demás', () => {
+    const p = part('a.stl', 20, { material: 'PETG', infillPercent: 40 });
+    const q = withCopies(p, 5);
+    expect(q.id).toBe(p.id);
+    expect(q.fileName).toBe('a.stl');
+    expect(q.stats).toBe(p.stats);
+    expect(q.settings).toEqual({ ...p.settings, copies: 5 });
+    expect(q.quote).toEqual(computeQuote(cube(20), { ...DEFAULT_SETTINGS, material: 'PETG', infillPercent: 40, copies: 5 }));
+    expect(p.settings.copies).toBe(1); // no muta la línea original
   });
 });

@@ -1041,8 +1041,36 @@ input {
 
 .history-buttons {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
   margin-top: 8px;
+}
+
+.batch-copies {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: auto;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.batch-copies-input {
+  width: 5.5em;
+  height: 30px;
+  padding: 0 6px;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 14px;
+  text-align: right;
+}
+
+.batch-copies-input:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 0;
 }
 
 .history-empty {
@@ -1519,6 +1547,7 @@ input {
     min-width: 44px;
   }
 
+  .batch-copies-input,
   .field input[type='text'],
   .field--select select {
     height: 44px;
