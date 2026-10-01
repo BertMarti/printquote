@@ -10,7 +10,8 @@ import { join } from 'node:path';
 
 export const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 
-const PORT = 9333;
+// CHROME_PORT permite elegir otro puerto de depuración si el 9333 está ocupado.
+const PORT = Number(process.env.CHROME_PORT ?? 9333);
 
 function findChrome() {
   const found = [
