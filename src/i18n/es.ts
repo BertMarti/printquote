@@ -277,6 +277,15 @@ export const es = {
   'hist.clear.cancel': 'Cancelar',
   'hist.cleared': 'Todos los presupuestos se han borrado.',
 
+  // ── Enlace para compartir ──
+  'share.copy': 'Copiar enlace',
+  'share.copied': 'Enlace copiado',
+  'share.copyFailed': 'No se ha podido copiar el enlace',
+  'share.note': 'El enlace lleva solo los parámetros (material, precios, impresora…), nunca el archivo 3D ni el cliente.',
+  'share.applied': 'Parámetros del enlace aplicados. Arrastra tu pieza para calcular el presupuesto.',
+  'share.applied.part': 'Parámetros del enlace aplicados a la pieza cargada.',
+  'summary.shared': 'Parámetros del enlace aplicados. Arrastra tu pieza para calcular el presupuesto.',
+
   // ── Cabecera del CSV del historial ──
   'csv.date': 'Fecha',
   'csv.client': 'Cliente',

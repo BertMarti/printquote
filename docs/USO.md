@@ -281,6 +281,19 @@ El bloque **07 Presupuestos** (plegado por defecto; el número entre paréntesis
 
 **Límites:** se guardan como máximo **100** presupuestos (al guardar el 101.º se descarta el más antiguo y se avisa); el cliente admite 80 caracteres. Si el navegador no deja guardar (sin espacio o modo privado) se avisa y lo que ya tenías sigue ahí. Los presupuestos están **solo en este navegador**: no se sincronizan entre dispositivos ni se envían a ningún sitio.
 
+### Compartir los parámetros con un enlace
+
+En el bloque **07 Presupuestos**, **Copiar enlace** copia una dirección con los **parámetros** de tu presupuesto (material y su precio, impresora, relleno, perímetros, ancho de línea, caudal, potencia, energía, margen, copias y cama). Quien la abra ve exactamente esa configuración y **solo tiene que arrastrar su pieza**. Ejemplo:
+
+```text
+https://bertmarti.github.io/printquote/#v=1&mat=PETG&price=24&printer=bambu-a1&infill=15&per=3&lw=0.45&flow=12&oh=5&pw=100&ep=0.15&mg=30&cp=2&bx=256&by=256&bz=256
+```
+
+- **Qué lleva el enlace y qué no.** Solo esos parámetros. **No** lleva el archivo 3D, el nombre de la pieza, el cliente, los datos del negocio (nombre, NIF, logotipo…) ni el precio de los otros materiales. Los parámetros van en el *hash* de la dirección (lo que hay tras `#`), que el navegador **no envía a ningún servidor**.
+- **Al abrir un enlace** se aplican los parámetros **sin guardarlos** en el navegador de quien lo abre: sus ajustes guardados no se pisan (hasta que edite un campo). Los precios de los materiales que el enlace no trae siguen siendo los suyos. Sin pieza cargada, el estado dice «Parámetros del enlace aplicados. Arrastra tu pieza para calcular el presupuesto.».
+- **Enlaces rotos o manipulados.** Lo que no se entiende se ignora y los valores fuera de rango se acotan a los límites de siempre; un enlace de otra versión del formato (`v` distinto de 1) o de más de 1000 caracteres se ignora entero.
+- **Con la pieza de ejemplo.** `#ejemplo` abre la pieza de ejemplo, y también se puede combinar: `#ejemplo&v=1&mat=ABS&cp=2`.
+
 ### Datos del negocio
 
 Para que el PDF lleve tu nombre y tus datos, rellena el bloque plegable **«06 · Datos del negocio»**, al final del panel (está plegado por defecto; púlsalo para abrirlo). Se rellena una sola vez: todo se guarda en tu navegador y no se envía a ningún sitio.
@@ -389,7 +402,7 @@ Y una vez imprimida la pieza, compara el peso real en una báscula con el de pri
 
 - El archivo (STL, OBJ o 3MF) se lee con las funciones de tu navegador y se procesa **en tu equipo**. No hay servidor que lo reciba: la web es estática.
 - No hay analítica, ni cookies, ni cuentas.
-- Se guardan **solo tus preferencias** en el almacenamiento local de tu navegador (`localStorage`), para que estén ahí la próxima vez: los ajustes (material, precios, impresora, relleno, etc.), el idioma y los **datos del negocio** (incluido el logotipo, ya reducido y el número del próximo presupuesto). El archivo 3D y el presupuesto no se guardan. Los **presupuestos guardados** del historial (pieza, cliente, parámetros y resultado; nunca el archivo 3D) también se quedan solo aquí, y se borran uno a uno o todos desde el bloque 07. Puedes borrar los ajustes con «Restablecer valores por defecto», los datos del negocio con «Borrar los datos del negocio», o todo limpiando los datos del sitio en tu navegador.
+- Se guardan **solo tus preferencias** en el almacenamiento local de tu navegador (`localStorage`), para que estén ahí la próxima vez: los ajustes (material, precios, impresora, relleno, etc.), el idioma y los **datos del negocio** (incluido el logotipo, ya reducido y el número del próximo presupuesto). El archivo 3D y el presupuesto no se guardan. Los **enlaces** para compartir solo llevan parámetros de cálculo (ver [Compartir los parámetros con un enlace](#compartir-los-parámetros-con-un-enlace)). Los **presupuestos guardados** del historial (pieza, cliente, parámetros y resultado; nunca el archivo 3D) también se quedan solo aquí, y se borran uno a uno o todos desde el bloque 07. Puedes borrar los ajustes con «Restablecer valores por defecto», los datos del negocio con «Borrar los datos del negocio», o todo limpiando los datos del sitio en tu navegador.
 - Al pulsar «Copiar presupuesto», «Imprimir» o «Descargar PDF», el texto, la hoja o el PDF se quedan en tu equipo; printquote no envía nada (el PDF se genera en tu navegador).
 
 ## 14. Cambiar el idioma

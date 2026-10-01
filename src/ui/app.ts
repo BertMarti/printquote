@@ -7,6 +7,7 @@ import { isMaterialId, MATERIALS } from '../quote/materials';
 import { computeQuote, type Quote } from '../quote/model';
 import { applyPrinter, CUSTOM_PRINTER, getPrinter, PRINTERS, printerNote } from '../quote/printers';
 import { DEFAULT_SETTINGS, LIMITS, normalizeSettings, type QuoteSettings } from '../quote/settings';
+import { parseHash, settingsToHash } from '../quote/share';
 import { buildQuoteText } from '../quote/text';
 import { StlAnalyzer } from '../stl/analyzer';
 import { meshWarnings, type MeshWarning } from '../stl/geometry';
@@ -76,6 +77,8 @@ function warningText(warning: MeshWarning, size: Vec3, bed: Vec3, largePolygons:
 
 /** Quita el listener de idioma de la instancia anterior (los tests arrancan la app varias veces). */
 let detachLanguage: (() => void) | null = null;
+/** Ídem para el listener de `hashchange`. */
+let detachHash: (() => void) | null = null;
 
 /** Descarga un archivo generado en el navegador. */
 function download(blob: Blob, fileName: string): void {
@@ -102,9 +105,13 @@ async function copyText(text: string): Promise<boolean> {
     area.style.opacity = '0';
     document.body.append(area);
     area.select();
-    const ok = document.execCommand('copy');
-    area.remove();
-    return ok;
+    try {
+      return document.execCommand('copy');
+    } catch {
+      return false; // sin `execCommand` (o bloqueado): se avisa de que no se ha copiado
+    } finally {
+      area.remove();
+    }
   }
 }
 
@@ -132,6 +139,8 @@ export function startApp(): void {
   let business = loadBusiness();
   let pdfBusy = false;
   let part: LoadedPart | null = null;
+  /** Se aplicaron los parámetros de un enlace y aún no hay pieza: el estado vacío lo dice. */
+  let sharedApplied = false;
   let quote: Quote | null = null;
   let viewer: Viewer | null = null;
   /** Se crea más abajo, cuando existen `announce`, `showNotice` y `applySettings`. */
@@ -243,10 +252,13 @@ export function startApp(): void {
     printerSelect.value = settings.printerId;
   };
   fillPrinterOptions();
-  /** Aplica unos ajustes a todos los campos y recalcula. Los guarda como los de trabajo. */
-  const applySettings = (next: QuoteSettings): void => {
+  /**
+   * Aplica unos ajustes a todos los campos y recalcula. Por defecto los guarda como los de trabajo; los de un
+   * enlace no (`persist = false`): abrir un enlace no pisa lo que la persona tenía guardado.
+   */
+  const applySettings = (next: QuoteSettings, persist = true): void => {
     settings = normalizeSettings(next);
-    saveSettings(settings);
+    if (persist) saveSettings(settings);
     syncForm();
     render();
   };
@@ -318,7 +330,7 @@ export function startApp(): void {
       }
       setOut('kwh', '');
       setOut('margin-pct', '');
-      setOut('summary', t('summary.empty'));
+      setOut('summary', t(sharedApplied ? 'summary.shared' : 'summary.empty'));
       byId('file-name').textContent = t('stage.none');
       byId('file-detail').textContent = '';
       document.title = t('meta.title');
@@ -690,6 +702,35 @@ export function startApp(): void {
     download,
   });
 
+  // ── Enlace con los parámetros (en el hash de la URL) ──
+  const shareButton = byId<HTMLButtonElement>('share-copy');
+  let shareLabelTimer = 0;
+  shareButton.addEventListener('click', () => {
+    // Origen y ruta de esta página + el hash con los ajustes actuales (sin pieza, sin cliente, sin negocio).
+    const link = `${window.location.origin}${window.location.pathname}${settingsToHash(settings)}`;
+    void copyText(link).then((ok) => {
+      shareButton.textContent = t(ok ? 'share.copied' : 'share.copyFailed');
+      announce(t(ok ? 'share.copied' : 'share.copyFailed'));
+      window.clearTimeout(shareLabelTimer);
+      shareLabelTimer = window.setTimeout(() => (shareButton.textContent = t('share.copy')), 1800);
+    });
+  });
+
+  /** `#v=1&…` aplica los parámetros; `#ejemplo` (solo o con ellos) carga la pieza de ejemplo. */
+  const applyHash = (): void => {
+    const { settings: shared, example } = parseHash(window.location.hash, settings);
+    if (shared) {
+      applySettings(shared, false);
+      sharedApplied = part === null;
+      render();
+      announce(t(part ? 'share.applied.part' : 'share.applied'));
+    }
+    if (example) loadSample();
+  };
+  detachHash?.();
+  window.addEventListener('hashchange', applyHash);
+  detachHash = () => window.removeEventListener('hashchange', applyHash);
+
   // ── Idioma ──
   const langButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('button[data-lang]'));
 
@@ -713,6 +754,7 @@ export function startApp(): void {
     syncForm();
     syncBusiness();
     history?.render();
+    shareButton.textContent = t('share.copy');
     if (noticeBuilder) showNotice(noticeBuilder);
     if (!pdfBusy) pdfButton.textContent = t('action.pdf');
     render();
@@ -733,6 +775,6 @@ export function startApp(): void {
   detachLanguage = onLangChange(applyLanguage);
   applyLanguage();
 
-  // Enlace directo a la demo con la pieza cargada: …/printquote/#ejemplo
-  if (window.location.hash === '#ejemplo') loadSample();
+  // Enlaces: …/printquote/#ejemplo (la pieza de ejemplo) y …/printquote/#v=1&… (parámetros compartidos).
+  applyHash();
 }
