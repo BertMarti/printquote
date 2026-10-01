@@ -190,7 +190,7 @@ export class Viewer {
 
   /** Zoom con el teclado: mueve la cámara sobre la línea al objetivo; `update()` la limita a min/maxDistance. */
   private readonly onKeyDown = (event: KeyboardEvent): void => {
-    const factor = keyZoomFactor(event);
+    const factor = keyZoomFactor(event, this.partSize !== null);
     if (factor === null) return;
     event.preventDefault();
     const offset = this.camera.position.clone().sub(this.controls.target);

@@ -641,7 +641,7 @@ export function startApp(): void {
     const current = { part, quote, settings, business };
     void (async () => {
       try {
-        // pdf-lib (~500 kB) solo se descarga la primera vez que se pide un PDF.
+        // pdf-lib y fontkit (~1,1 MB; ~500 kB gzip) y las fuentes solo se descargan la primera vez que se pide un PDF.
         const { renderQuotePdf } = await import('../pdf/render');
         const bytes = await renderQuotePdf(
           buildQuoteDocument({
@@ -659,8 +659,11 @@ export function startApp(): void {
         updateBusiness({ quoteNumber: nextQuoteNumber(current.business.quoteNumber) });
         syncBusiness();
         announce(t('pdf.done', { name, next: business.quoteNumber }));
-      } catch {
-        showNotice(() => [t('pdf.failed.title'), t('pdf.failed.text')]);
+      } catch (error) {
+        console.error(error);
+        // Sin conexión (o sin las fuentes) es un fallo distinto de un error al dibujar el documento.
+        const fonts = error instanceof Error && error.name === 'FontLoadError';
+        showNotice(() => [t('pdf.failed.title'), t(fonts ? 'pdf.failed.fonts' : 'pdf.failed.text')]);
       } finally {
         pdfBusy = false;
         pdfButton.textContent = t('action.pdf');

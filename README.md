@@ -160,3 +160,5 @@ El reparto y las reglas del equipo están en [`AGENTS.md`](AGENTS.md) y la bitá
 ## Licencia
 
 [MIT](LICENSE). La pieza de ejemplo es un diseño original de este proyecto, con la misma licencia.
+
+**Fuentes del PDF:** [Noto Sans](https://github.com/notofonts/latin-greek-cyrillic) (© The Noto Project Authors) y [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) (© The JetBrains Mono Project Authors), con licencia [SIL Open Font License 1.1](https://openfontlicense.org). Van recortadas en `src/pdf/fonts/` y las licencias completas se publican junto a la web, en [`/fonts/OFL-NotoSans.txt`](public/fonts/OFL-NotoSans.txt) y [`/fonts/OFL-JetBrainsMono.txt`](public/fonts/OFL-JetBrainsMono.txt).

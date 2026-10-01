@@ -145,6 +145,8 @@ export const en: Record<Key, string> = {
   'pdf.failed.text':
     'An error occurred while creating the document. Try again; if it keeps failing, use “Print” and save as PDF.',
 
+  'pdf.failed.fonts': 'The PDF font could not be downloaded. Check your connection and try again.',
+
   // ── Loading files ──
   'load.reading': 'Reading “{name}”…',
   'load.reading.announce': 'Reading {name}…',

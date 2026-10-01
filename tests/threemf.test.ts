@@ -209,11 +209,17 @@ describe('parse3mf: errores en español', () => {
     expect(tIn('en', 'err.3mf.tooManyTriangles', (error as ModelParseError).params)).toMatch(/more than 6 million triangles/);
   });
 
-  it('justo en el tope (con instancias que caben) no se rechaza', async () => {
+  it('un 3MF con muchas instancias que caben en el tope se abre entero', async () => {
     const items = '<item objectid="1"/>'.repeat(1000); // 12 000 triángulos
     const { mesh } = await analyzeModel(await zipWithModel(modelXml(objectXml(1, cubeTriangles(10)), items)));
     expect(mesh.triangleCount).toBe(12000);
     expect(MAX_3MF_TRIANGLES).toBe(6_000_000);
+  });
+
+  it('la frontera es exacta: 6 000 000 triángulos pasan (el caso de 6 000 012 falla arriba)', async () => {
+    const items = '<item objectid="1"/>'.repeat(MAX_3MF_TRIANGLES / 12);
+    const mesh = await parse3mf(await zipWithModel(modelXml(objectXml(1, cubeTriangles(10)), items)));
+    expect(mesh.triangleCount).toBe(MAX_3MF_TRIANGLES);
   });
 
   it('transformación mal formada', async () => {

@@ -1,15 +1,22 @@
 # MEMORY.md · printquote
-Última actualización: 2026-09-30 por builder (v0.3.0, #22)
+Última actualización: 2026-10-01 por builder (pulido de v0.3.0)
 
 ## Estado actual
 
-### v0.3.0 (hito en curso; builder: #17 a #22, una rama y un PR por issue, cada rama parte de la anterior)
+### v0.3.0 (#17 a #22 fusionados en `main`; PR de pulido `agent/builder/v0.3-pulido` pendiente de fusionar antes de la release)
 - #17 PDF con fuente incrustada (rama `agent/builder/17-pdf-fuente`): hecho, ver abajo.
 - #18 Metadatos en inglés (rama `agent/builder/18-metadatos-en`): hecho, ver abajo.
 - #19 Aviso OBJ de más de 200 vértices (rama `agent/builder/19-aviso-obj`): hecho, ver abajo.
 - #20 Tope de triángulos en 3MF (rama `agent/builder/20-tope-3mf`): hecho, ver abajo.
 - #21 Zoom con teclado (rama `agent/builder/21-zoom-teclado`): hecho, ver abajo.
 - #22 Captura del README (rama `agent/builder/22-captura-readme`): hecho, ver abajo.
+
+**Pulido de v0.3.0 (rama `agent/builder/v0.3-pulido`, tras la revisión del lead).**
+- Las dos licencias OFL se publican con la web en `public/fonts/` (`/fonts/OFL-NotoSans.txt`, `/fonts/OFL-JetBrainsMono.txt`) y el README da los créditos de las fuentes.
+- `loadFonts` guarda su promesa en el módulo (una sola descarga por sesión) y la olvida si falla, para poder reintentar. Los fallos de red o HTTP se convierten en `FontLoadError`; `app.ts` registra el error con `console.error` y, si es de fuentes, muestra `pdf.failed.fonts` («No se ha podido descargar la fuente del PDF. Comprueba tu conexión…», es/en) en lugar del aviso genérico. Se detecta por `error.name` para no importar `fonts.ts` en el JS inicial. Tests en archivos separados (`tests/pdf-fonts.test.ts`, `tests/pdf-fonts-error.test.ts`) porque la promesa guardada vive en el módulo y cada archivo de Vitest tiene el suyo.
+- El zoom con teclado no hace nada con el visor vacío: `keyZoomFactor(evento, hasPart)` (el visor pasa `partSize !== null`).
+- Test de frontera del 3MF (exactamente 6 000 000 triángulos pasa, ~0,9 s); el test que se llamaba «justo en el tope» pasa a llamarse por lo que hace.
+- Comentarios de tamaño unificados (~1,1 MB sin comprimir / ~500 kB gzip el chunk del PDF, 224 kB de fuentes, ~30 kB por PDF). CHANGELOG con `[0.3.0] - 2026-10-01` y `version` 0.3.0 en `package.json`. Pendiente conocido: el kerning de las fuentes recortadas (se regenerarán más adelante).
 
 **#17 PDF con fuente incrustada.** `src/pdf/fonts.ts` (`loadFonts`: `fetch` de cuatro `.ttf` con `new URL(…, import.meta.url)`, que Vite emite como recursos aparte), `src/pdf/fonts/` (las cuatro fuentes y las licencias OFL) y `render.ts` (`pdf.registerFontkit(fontkit)`, `embedFont(bytes, { subset: true })`; `renderQuotePdf(doc, fontBytes?)` acepta las fuentes ya cargadas, que es como lo prueban los tests). La transcripción sin marcas (ǎ → a) y el «?» final siguen para lo que las fuentes no cubren. Los tests leen el texto del PDF con la tabla ToUnicode (`tests/helpers/pdf-text.ts`): el PDF ya no lleva cadenas WinAnsi sino identificadores de glifo.
 
@@ -166,3 +173,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder/20-tope-3mf): #20 tope de 6 millones de triángulos en 3MF con error traducido y test sintético.
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder/21-zoom-teclado): #21 zoom con teclado en el visor (`zoom.ts`, listener en `Viewer`, pista y etiqueta accesible, tests, docs).
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder/22-captura-readme): #22 capturas nuevas de README y Open Graph con `scripts/captura.mjs` (Chrome headless), CONTRIBUTING al día con #17 a #22.
+- 2026-10-01 builder · Claude Code Sonnet (agent/builder/v0.3-pulido): pulido de v0.3.0 tras la revisión (licencias OFL en la web, `loadFonts` memoizado, aviso de fuentes sin conexión, guarda del zoom, test de frontera 3MF, comentarios, CHANGELOG 0.3.0 y versión).

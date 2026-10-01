@@ -1,4 +1,5 @@
-// Este módulo importa pdf-lib y fontkit (~500 kB): la interfaz lo carga con import() solo cuando se pide un PDF.
+// Este módulo importa pdf-lib y fontkit (~1,1 MB sin comprimir, ~500 kB gzip): la interfaz lo carga con import()
+// solo cuando se pide un PDF, y `loadFonts` descarga entonces las fuentes (224 kB). Un PDF típico pesa ~30 kB.
 import fontkit from '@pdf-lib/fontkit';
 import { PDFDocument, rgb, type PDFFont, type PDFImage, type PDFPage } from 'pdf-lib';
 import type { PdfRow, QuoteDocument } from './document';
