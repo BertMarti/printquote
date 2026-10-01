@@ -225,8 +225,7 @@ export const en: Record<Key, string> = {
   'doc.view3d': '3D view of {name}',
   'doc.fileInfo': '{name} · {format} · {n} triangles',
   'doc.batchPartUpper': 'PART {i} OF {n}',
-  'doc.batchInfo': 'Batch of {n} parts · {copies} copies',
-  'doc.batchAmount':'Amount (excl. VAT)',
+  'doc.batchAmount': 'Amount (excl. VAT)',
   'doc.batchTotalUpper': 'BATCH TOTAL',
 
   // ── PDF ──

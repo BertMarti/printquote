@@ -578,6 +578,8 @@ export function startApp(demoScale = 1): void {
   }
 
   const fillPrintSheet = (): void => {
+    // Sin nada que imprimir la hoja queda vacía: Ctrl+P no debe sacar la de la vez anterior.
+    byId('print-sheet').replaceChildren();
     const lines = batch?.parts() ?? [];
     if (lines.length > 0) return renderBatchSheet(byId('print-sheet'), { parts: lines, totals: computeBatch(lines) });
     if (!part || !quote) return;

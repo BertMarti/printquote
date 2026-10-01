@@ -231,8 +231,7 @@ export const es = {
   'doc.view3d': 'Vista 3D de {name}',
   'doc.fileInfo': '{name} · {format} · {n} triángulos',
   'doc.batchPartUpper': 'PIEZA {i} DE {n}',
-  'doc.batchInfo': 'Lote de {n} piezas · {copies} copias',
-  'doc.batchAmount':'Importe (sin IVA)',
+  'doc.batchAmount': 'Importe (sin IVA)',
   'doc.batchTotalUpper': 'TOTAL DEL LOTE',
 
   // ── PDF ──

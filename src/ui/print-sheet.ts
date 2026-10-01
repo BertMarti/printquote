@@ -58,7 +58,9 @@ function sheetHeader(): HTMLElement[] {
  */
 export function renderBatchSheet(container: HTMLElement, data: { parts: readonly BatchPart[]; totals: BatchTotals }): void {
   const { parts, totals } = data;
-  const info = el('p', 'ps-file', t('doc.batchInfo', { n: formatNumber(totals.parts, 0), copies: formatNumber(totals.copies, 0) }));
+  const pieces = totals.parts === 1 ? t('hist.batch.meta.one') : t('hist.batch.meta', { n: formatNumber(totals.parts, 0) });
+  const copies = totals.copies === 1 ? t('summary.copies.one') : t('batch.copies', { n: formatNumber(totals.copies, 0) });
+  const info = el('p', 'ps-file', `${pieces} · ${copies}`);
 
   const list = el('table', 'ps-table ps-parts');
   list.append(el('caption', undefined, t('batch.list.label')));

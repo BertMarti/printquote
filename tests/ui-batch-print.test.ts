@@ -115,6 +115,42 @@ describe('imprimir el lote', () => {
     expect(button('print-button').disabled).toBe(true);
   });
 
+  it('imprimir lote → vaciar el lote → Ctrl+P (beforeprint) sin pieza: la hoja queda vacía, no sale el lote anterior', async () => {
+    await start();
+    addTwo();
+    await start(false); // «recargar»: el lote vuelve, la pieza no
+    button('print-button').click();
+    expect($('print-sheet').textContent).toContain('Total del lote');
+    button('batch-clear').click();
+    button('batch-clear').click();
+    expect(button('print-button').disabled).toBe(true);
+    window.dispatchEvent(new Event('beforeprint'));
+    expect($('print-sheet').children).toHaveLength(0);
+  });
+
+  it('el mismo caso sin recargar: imprimir lote, quitar la pieza y vaciar el lote, y beforeprint', async () => {
+    await start();
+    addTwo();
+    window.dispatchEvent(new Event('beforeprint'));
+    expect($('print-sheet').querySelector('.ps-parts')).not.toBeNull();
+    button('batch-clear').click();
+    button('batch-clear').click();
+    // Con pieza cargada vuelve a ser la hoja de la pieza (no la del lote).
+    window.dispatchEvent(new Event('beforeprint'));
+    expect($('print-sheet').querySelector('.ps-parts')).toBeNull();
+    expect($('print-sheet').textContent).toContain('Desglose');
+  });
+
+  it('una sola pieza y una copia: «Lote de 1 pieza · 1 copia» (singular)', async () => {
+    await start();
+    button('batch-add').click();
+    button('print-button').click();
+    expect($('print-sheet').querySelector('.ps-file')?.textContent).toBe('Lote de 1 pieza · 1 copia');
+    addTwo();
+    button('print-button').click();
+    expect($('print-sheet').querySelector('.ps-file')?.textContent).toBe('Lote de 3 piezas · 5 copias');
+  });
+
   it('Ctrl+P (beforeprint) también imprime el lote', async () => {
     await start();
     addTwo();

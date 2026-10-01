@@ -289,7 +289,7 @@ El bloque **06 Lote** (plegable) sirve para pedidos con varias piezas distintas:
 
 ## 10. Copiar, imprimir y descargar el presupuesto en PDF
 
-Los botones están en la parte inferior del panel, junto al **Total** (en el móvil, esa barra queda fija al fondo de la pantalla). Se activan cuando hay una pieza cargada.
+Los botones están en la parte inferior del panel, junto al **Total** (en el móvil, esa barra queda fija al fondo de la pantalla). Se activan cuando hay una pieza cargada; con un lote en curso, «Imprimir lote» también se activa sin pieza (el lote se imprime aunque no haya ninguna cargada).
 
 - **Copiar presupuesto**: copia al portapapeles un texto plano con la pieza, los ajustes y el desglose, listo para pegar en un correo o mensaje. El botón muestra «Copiado» durante un momento. Si tu navegador bloquea el portapapeles, verás «No se pudo copiar».
 - **Imprimir**: abre el diálogo de impresión con una hoja limpia que incluye una imagen de la pieza en 3D, los datos de la pieza, los ajustes y el desglose con el total. Si tienes un lote en el bloque 06, el botón dice **Imprimir lote** y la hoja es la del lote: la tabla de todas las piezas (con su material, copias, peso, tiempo e importe), el desglose y el total del lote sin IVA, sin la vista 3D.
