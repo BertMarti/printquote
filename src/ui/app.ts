@@ -17,6 +17,7 @@ import { supportsWebGL } from '../viewer/webgl';
 import { formatLabel } from './format-label';
 import { NumberField } from './number-field';
 import { renderPrintSheet } from './print-sheet';
+import { setupHistory } from './history';
 import { LogoError, prepareLogo } from './logo';
 import {
   clearBusiness,
@@ -133,6 +134,8 @@ export function startApp(): void {
   let part: LoadedPart | null = null;
   let quote: Quote | null = null;
   let viewer: Viewer | null = null;
+  /** Se crea más abajo, cuando existen `announce`, `showNotice` y `applySettings`. */
+  let history: ReturnType<typeof setupHistory> | null = null;
   /** El aviso se guarda como función para poder volver a pintarlo si cambia el idioma. */
   let noticeBuilder: (() => readonly [title: string, message: string]) | null = null;
 
@@ -240,11 +243,15 @@ export function startApp(): void {
     printerSelect.value = settings.printerId;
   };
   fillPrinterOptions();
-  printerSelect.addEventListener('change', () => {
-    settings = normalizeSettings(applyPrinter(settings, printerSelect.value));
+  /** Aplica unos ajustes a todos los campos y recalcula. Los guarda como los de trabajo. */
+  const applySettings = (next: QuoteSettings): void => {
+    settings = normalizeSettings(next);
     saveSettings(settings);
     syncForm();
     render();
+  };
+  printerSelect.addEventListener('change', () => {
+    applySettings(applyPrinter(settings, printerSelect.value));
     const printer = getPrinter(settings.printerId);
     announce(printer ? t('printer.applied', { name: printer.name }) : t('printer.custom.applied'));
   });
@@ -317,6 +324,7 @@ export function startApp(): void {
       document.title = t('meta.title');
       byId('stage-dims').textContent = '';
       warningsList.replaceChildren();
+      history?.sync();
       return;
     }
 
@@ -384,6 +392,7 @@ export function startApp(): void {
       n: formatNumber(part.mesh.triangleCount, 0),
     });
     document.title = `${part.fileName} · printquote`;
+    history?.sync();
   }
 
   // ── Carga de archivos ──
@@ -672,6 +681,15 @@ export function startApp(): void {
     })();
   });
 
+  // ── Historial de presupuestos ──
+  history = setupHistory({
+    current: () => (part && quote ? { fileName: part.fileName, stats: part.stats, quote, settings } : null),
+    applySettings,
+    announce,
+    showNotice: (title, message) => showNotice(() => [title, message]),
+    download,
+  });
+
   // ── Idioma ──
   const langButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('button[data-lang]'));
 
@@ -694,6 +712,7 @@ export function startApp(): void {
     applyViewerLabels();
     syncForm();
     syncBusiness();
+    history?.render();
     if (noticeBuilder) showNotice(noticeBuilder);
     if (!pdfBusy) pdfButton.textContent = t('action.pdf');
     render();

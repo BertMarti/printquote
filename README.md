@@ -20,6 +20,7 @@
 - **Presupuesto en vivo**: material, relleno, perímetros, caudal, energía, margen y copias. Cualquier cambio recalcula al instante.
 - **Copiar presupuesto** en texto plano, **Imprimir** una hoja limpia con la vista 3D y el desglose, o **Descargar PDF**: un presupuesto de una página con el nombre y el logotipo de tu negocio, tus datos de contacto, número, fecha, validez, desglose e **IVA** (21 % por defecto, configurable). Los datos del negocio se rellenan una vez en el bloque plegable «Datos del negocio» y se guardan en tu navegador. Límites: una página A4, sin campo de cliente, y el PDF incrusta Noto Sans y JetBrains Mono (latino, griego y cirílico); chino, japonés y emojis salen como «?».
 - **Español e inglés**: el idioma inicial sale de tu navegador (`navigator.language`), se cambia con el selector ES / EN de la cabecera y se recuerda. Textos, avisos, errores, números, moneda, fechas y PDF cambian de idioma (la moneda sigue siendo el euro).
+- **Historial de presupuestos**: guarda cada presupuesto (pieza, cliente opcional, parámetros y resultado) en tu navegador, reábrelo con sus parámetros, bórralo o **expórtalo a CSV** (`;` y coma decimal en español, `,` y punto en inglés; protegido contra inyección de fórmulas). Hasta 100; nunca guarda el archivo 3D.
 - **App instalable y sin conexión (PWA)**: se instala desde el navegador y, tras la primera visita, se abre y calcula sin red; el PDF también, una vez descargado el generador (la primera vez que lo pides). Un service worker propio, sin dependencias, versiona la caché para no dejar la app vieja.
 - Recuerda tus ajustes en este navegador (`localStorage`). Modo claro y oscuro automático.
 
@@ -76,7 +77,7 @@ Relleno 20 % · 2 perímetros de 0,45 mm · caudal 8 mm³/s · sobrecarga 5 min 
 
 ## Privacidad
 
-El STL, OBJ o 3MF se lee con la API de archivos del navegador y se procesa en tu equipo. No hay servidor, ni analítica, ni cookies: la web es estática (GitHub Pages) y **tu archivo no sale de tu navegador**. Los ajustes y los datos del negocio (incluido el logotipo, ya reducido) se guardan solo en el `localStorage` de tu navegador, y el PDF se genera también en tu navegador: nada se envía a ningún servidor.
+El STL, OBJ o 3MF se lee con la API de archivos del navegador y se procesa en tu equipo. No hay servidor, ni analítica, ni cookies: la web es estática (GitHub Pages) y **tu archivo no sale de tu navegador**. Los ajustes y los datos del negocio (incluido el logotipo, ya reducido) se guardan solo en el `localStorage` de tu navegador (igual que el historial de presupuestos, que no incluye el archivo 3D), y el PDF se genera también en tu navegador: nada se envía a ningún servidor.
 
 ## Uso en local
 
@@ -116,7 +117,7 @@ npm run dev        # http://localhost:5173/printquote/
 ```text
 src/
   stl/        parsers STL, OBJ y 3MF (ZIP + XML), geometría (volumen, área, caja, aristas abiertas) y Web Worker
-  quote/      modelo de coste, materiales, perfiles de impresora, ajustes, IVA, datos del negocio, formato es-ES y presupuesto en texto
+  quote/      modelo de coste, materiales, perfiles de impresora, ajustes, IVA, datos del negocio, historial y CSV, formato es-ES y presupuesto en texto
   pdf/        contenido del presupuesto en PDF (puro) y su dibujo con pdf-lib
   viewer/     visor three.js (cama, cámara, luces)
   sw.js       service worker (plantilla que el plugin de Vite copia a `dist/sw.js` con la versión y el precaché)

@@ -1,11 +1,21 @@
 # MEMORY.md · printquote
-Última actualización: 2026-10-01 por builder (v0.4.0, #30)
+Última actualización: 2026-10-01 por builder (v0.4.0, #31)
 
 ## Estado actual
 
 ### v0.4.0 «Pro» (hito en curso; especificación en `docs/specs/v0.4.md`; issues #30 PWA, #31 historial, #32 enlace; una rama y un PR por issue, encadenados)
 - #30 App instalable y sin conexión (rama `agent/builder/30-pwa`): hecho, ver abajo.
-- #31 Historial y #32 Enlace para compartir: pendientes.
+- #31 Historial (rama `agent/builder/31-historial`): hecho, ver abajo.
+- #32 Enlace para compartir: pendiente.
+
+**#31 Historial.** `src/quote/history.ts` (puro): `HistoryEntry` (id, fecha ISO, pieza, cliente ≤ 80, volumen, medidas, triángulos, `QuoteSettings` completos y `result` = peso, tiempo, costes, margen, subtotal y total sin IVA **tal como salió**; nunca la malla ni los datos del negocio, ~0,6 kB por entrada), `createEntry`, `addEntry` (más reciente primero, máximo `HISTORY_MAX` = 100, devuelve cuántos descarta), `removeEntry`, `normalizeHistory` (valida campo a campo lo que viene de `localStorage`, descarta lo roto y lo repetido, acota los ajustes con `normalizeSettings`) e `historyToCsv`. `src/ui/history.ts` es el bloque «07 Presupuestos» (`<details>` plegado con el contador; campo Cliente, Guardar, lista, Exportar CSV, Borrar todos); recibe de `app.ts` un `HistoryHost` (`current`, `applySettings`, `announce`, `showNotice`, `download`) y no importa `app.ts`. `storage.ts`: `loadHistory`/`saveHistory` (clave `printquote:historial:v1`).
+- `app.ts` gana `applySettings(next)` (normaliza, guarda, `syncForm`, `render`): lo usan el selector de impresora y «Abrir»; **#32 la reutiliza**. `render()` solo llama a `history.sync()` (habilita «Guardar» si hay pieza); la lista completa se repinta solo al guardar/borrar y al cambiar de idioma (no en cada tecla).
+- Abrir restaura parámetros y cliente; con pieza cargada recalcula con ella (el total puede diferir del guardado), sin pieza avisa de arrastrarla. El archivo 3D no se guarda (decisión de la especificación).
+- CSV: BOM, CRLF, columna a columna con cabecera traducida (`csv.*`); español `;` y coma decimal, inglés `,` y punto; fecha local `AAAA-MM-DD HH:MM`; comillas dobles duplicadas y campos con separador/comillas/saltos entre comillas; **neutralización de fórmulas** (`=`, `+`, `-`, `@`, tabulador, retorno → apóstrofo delante) en los textos de usuario (cliente, pieza).
+- «Borrar todos» pide un segundo clic (botón «Cancelar» aparte), sin `confirm()` (bloquea, no se traduce ni se prueba). Fallos de escritura en `localStorage`: aviso (`showNotice`) y no se toca lo que había. Pieza y cliente salen con `textContent` (test con `<img onerror>`).
+- Interfaz: filas con filete (sin tarjetas), botones «Abrir»/«Borrar» con `aria-label` que incluye la pieza y la fecha; estilos nuevos mínimos (`.history-*`) con los tokens existentes. Revisado en Chrome headless a 1440 px y a 360 px en claro y oscuro: sin desbordes horizontales.
+- Tests: `tests/history.test.ts` (lógica y CSV) y `tests/ui-history.test.ts` (guardar con/sin cliente, persistencia, abrir, borrar y confirmar, exportar en es/en, XSS, `localStorage` que falla, límite de 100, nombres accesibles en inglés). Nota de Vitest/happy-dom: espiar `window.localStorage.setItem` (no `Storage.prototype`) y restaurarlo a mano dentro del test.
+- También corregí en USO.md la pregunta frecuente «¿Puedo usarlo sin conexión?», que seguía diciendo lo de antes de la PWA (#30).
 
 **#30 PWA.** `public/manifest.webmanifest` (scope y `start_url` `/printquote/`, `standalone`, iconos 192/512/maskable) e iconos en `public/icons/` generados por `scripts/iconos.mjs` (Chrome/Edge headless; la parte de DevTools se extrajo a `scripts/chrome.mjs` y la comparte `captura.mjs`). Service worker a mano en `src/sw.js` (plantilla; no entra en el paquete de Vite) y plugin `scripts/pwa-plugin.ts` (`closeBundle`: lee `dist/`, calcula la lista de precaché y la versión y escribe `dist/sw.js`). `src/pwa.ts` lo registra tras `load`, solo en producción, con `updateViaCache: 'none'`.
 - Precaché (12 archivos, ~0,76 MB): HTML, JS de entrada, CSS, worker, visor, pieza de ejemplo, iconos, favicon, manifiesto. **No** el chunk del PDF (`assets/render-*.js`), las fuentes (`assets/*.ttf`), `og.png` ni las licencias: el service worker los guarda la primera vez que se piden (lo comprobé: tras un PDF quedan en caché y se genera otro sin red). Nombres en la lista `LAZY` del plugin (si se renombra el módulo `pdf/render.ts`, hay que tocarla; el test lo vigila con nombres reales).
@@ -188,3 +198,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder/22-captura-readme): #22 capturas nuevas de README y Open Graph con `scripts/captura.mjs` (Chrome headless), CONTRIBUTING al día con #17 a #22.
 - 2026-10-01 builder · Claude Code Sonnet (agent/builder/v0.3-pulido): pulido de v0.3.0 tras la revisión (licencias OFL en la web, `loadFonts` memoizado, aviso de fuentes sin conexión, guarda del zoom, test de frontera 3MF, comentarios, CHANGELOG 0.3.0 y versión).
 - 2026-10-01 builder · Claude Code Sonnet (agent/builder/30-pwa): #30 PWA (manifiesto, iconos, service worker propio con plugin de Vite, tests, comprobación sin conexión en Chrome headless) y especificación de v0.4.0 (`docs/specs/v0.4.md`).
+- 2026-10-01 builder · Claude Code Sonnet (agent/builder/31-historial): #31 historial de presupuestos (lógica pura y CSV, bloque 07, `applySettings`, tests, docs).

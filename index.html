@@ -255,6 +255,25 @@
               <button type="button" class="link-button" id="reset-business" data-i18n="biz.reset">Borrar los datos del negocio</button>
             </details>
           </section>
+
+          <section class="block" aria-labelledby="h-history">
+            <details class="details" id="history-details">
+              <summary><span class="block-title" id="h-history"><span class="block-num">07</span><span data-i18n="hist.title">Presupuestos</span> <span class="history-count num" id="history-count"></span></span></summary>
+              <p class="caption caption--plain" data-i18n="hist.intro">Guarda cada presupuesto en este navegador para repetirlo o exportarlo. No se guarda el archivo 3D ni los datos del negocio, y no se envía nada a ningún servidor.</p>
+              <div class="field field--text">
+                <label for="in-client"><span data-i18n="hist.client">Cliente</span> <span class="sub" data-i18n="biz.optional">(opcional)</span></label>
+                <input id="in-client" type="text" maxlength="80" autocomplete="off" spellcheck="false" />
+              </div>
+              <button type="button" class="button history-save" id="history-save" data-i18n="hist.save" disabled>Guardar este presupuesto</button>
+              <ul class="history-list" id="history-list" aria-label="Presupuestos guardados" data-i18n-attr="aria-label:hist.list.label"></ul>
+              <p class="field-note history-empty" id="history-empty" data-i18n="hist.empty">Aún no hay presupuestos guardados.</p>
+              <div class="history-footer">
+                <button type="button" class="link-button" id="history-export" data-i18n="hist.export" disabled>Exportar CSV</button>
+                <button type="button" class="link-button" id="history-clear" data-i18n="hist.clear" disabled>Borrar todos</button>
+                <button type="button" class="link-button" id="history-cancel" data-i18n="hist.clear.cancel" hidden>Cancelar</button>
+              </div>
+            </details>
+          </section>
         </form>
 
         <section class="summary" aria-labelledby="total-label">

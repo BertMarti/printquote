@@ -6,6 +6,7 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 
 ### Añadido
 
+- **Historial de presupuestos** (#31): bloque «07 Presupuestos» para guardar cada presupuesto en el navegador (pieza, cliente opcional, parámetros y resultado tal como salió; nunca el archivo 3D ni los datos del negocio), listarlos, **reabrirlos con sus parámetros**, borrarlos (uno a uno o todos, con confirmación) y **exportarlos a CSV** (UTF-8 con BOM; `;` y coma decimal en español, `,` y punto en inglés; neutraliza las fórmulas). Hasta 100, con aviso al descartar el más antiguo. Lógica pura en `src/quote/history.ts`.
 - **App instalable y sin conexión (PWA)** (#30): `manifest.webmanifest` con iconos (192, 512 y maskable, más el de iOS, generados desde el favicon con `scripts/iconos.mjs`) y un service worker propio, sin dependencias nuevas. Precachea la app, el visor y la pieza de ejemplo; el chunk del PDF y las fuentes se guardan la primera vez que se piden. Navegación con red primero (se ve la versión publicada) y respaldo en caché; la caché lleva la versión (hash del contenido de `dist/`) y se limpian las antiguas al activarse. El JS inicial crece 0,2 kB.
 
 ## [0.3.0] - 2026-10-01
