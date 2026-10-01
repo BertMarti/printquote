@@ -25,6 +25,7 @@ npm run dev        # http://localhost:5173/printquote/
 | `npm run build` | Comprueba tipos y genera la web estática en `dist/`. |
 | `npm run preview` | Sirve `dist/` en <http://localhost:4173/printquote/>. |
 | `npm run sample` | Regenera la pieza de ejemplo `public/samples/soporte-movil.stl`. |
+| `node scripts/iconos.mjs` | Regenera los iconos de la PWA (`public/icons/`) desde `public/favicon.svg` con Chrome o Edge headless. Solo si cambia el favicon. |
 | `node scripts/captura.mjs` | Regenera `docs/captura.png` y `public/og.png` con Chrome o Edge headless (con `npm run dev` en marcha). Ejecútalo cuando cambie la interfaz. |
 
 Antes de abrir un PR: `npm run lint && npm test && npm run build` en verde. El CI lo repite en Ubuntu y Windows.
@@ -62,6 +63,7 @@ La interfaz está en español e inglés y la documentación, en español; los no
 | Presupuesto en PDF (contenido puro y dibujo con pdf-lib; fuentes Noto Sans y JetBrains Mono incrustadas, con su licencia, en `src/pdf/fonts/`) | `src/pdf/` | `tests/pdf.test.ts` (el texto del PDF se lee con `tests/helpers/pdf-text.ts`) |
 | Texto para copiar | `src/quote/text.ts` | `tests/format.test.ts` |
 | Interfaz, campos, hoja de impresión | `index.html`, `src/ui/`, `src/styles.css` | `tests/ui.test.ts` (carga el `index.html` real con happy-dom), `tests/meta.test.ts` |
+| PWA: manifiesto, iconos, service worker y plugin de Vite que escribe `dist/sw.js` (se prueba con `npm run build && npm run preview`: el service worker solo se registra en producción) | `public/manifest.webmanifest`, `public/icons/`, `src/sw.js`, `src/pwa.ts`, `scripts/pwa-plugin.ts` | `tests/sw.test.ts`, `tests/pwa-plugin.test.ts`, `tests/manifest.test.ts` |
 | Visor three.js (la lógica del zoom con teclado está aparte, en `zoom.ts`) | `src/viewer/` | `tests/zoom.test.ts`; el resto, a mano en el navegador (`npm run dev`) |
 
 ### Textos e idiomas

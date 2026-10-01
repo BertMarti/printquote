@@ -20,7 +20,8 @@ Esta guía explica, paso a paso y sin jerga, cómo sacar un presupuesto de impre
 12. [Calibrar los valores con tu laminador](#12-calibrar-los-valores-con-tu-laminador)
 13. [Privacidad](#13-privacidad)
 14. [Cambiar el idioma](#14-cambiar-el-idioma)
-15. [Preguntas frecuentes y solución de problemas](#15-preguntas-frecuentes-y-solución-de-problemas)
+15. [Instalar la app y usarla sin conexión](#15-instalar-la-app-y-usarla-sin-conexión)
+16. [Preguntas frecuentes y solución de problemas](#16-preguntas-frecuentes-y-solución-de-problemas)
 
 ---
 
@@ -388,7 +389,18 @@ printquote está en **español** y en **inglés**. En la cabecera hay un selecto
 - **Qué cambia:** la interfaz, los avisos y los errores de lectura, las notas de los perfiles de impresora, el texto copiado, la hoja impresa y el **PDF**, así como el formato de números y fechas (`12,34 €` en español, `€12.34` en inglés).
 - **Qué no cambia:** la **moneda** sigue siendo el euro en los dos idiomas, y esta guía está solo en español.
 
-## 15. Preguntas frecuentes y solución de problemas
+## 15. Instalar la app y usarla sin conexión
+
+printquote es una **app web instalable** (PWA). No hace falta instalarla para usarla, pero así se abre desde el escritorio o la pantalla de inicio, en su propia ventana, y funciona **sin conexión**.
+
+- **Instalar.** En Chrome o Edge, pulsa el icono de instalar de la barra de direcciones (o «Instalar printquote» en el menú). En Android, «Añadir a la pantalla de inicio»; en iPhone y iPad, «Compartir» → «Añadir a pantalla de inicio».
+- **Sin conexión.** Tras abrir la web **una vez con conexión**, el navegador guarda la app, el visor y la pieza de ejemplo; después se abre y calcula sin red.
+- **El PDF sin conexión.** El generador de PDF y sus fuentes (≈ 1,3 MB) se descargan **la primera vez que pulsas «Descargar PDF»**, no antes. A partir de ahí, también el PDF funciona sin conexión. Si pulsas «Descargar PDF» sin red y es la primera vez, verás el aviso «No se ha podido descargar la fuente del PDF».
+- **Actualizaciones.** Con conexión, al abrir la web se ve siempre la versión publicada. La versión nueva se guarda en segundo plano y pasa a usarse sin conexión cuando cierras todas las ventanas de printquote y vuelves a abrirla; las versiones antiguas se borran solas.
+- **Privacidad.** Es la misma que siempre: lo guardado está en tu navegador y tu archivo 3D no sale de él.
+- **Desinstalar o limpiar.** Desde el menú de la app («Desinstalar») o borrando los datos del sitio en tu navegador.
+
+## 16. Preguntas frecuentes y solución de problemas
 
 ### «No parece un STL válido» o «No se ha podido leer…»
 

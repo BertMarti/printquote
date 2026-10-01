@@ -1,0 +1,16 @@
+{
+  "name": "printquote",
+  "short_name": "printquote",
+  "description": "Presupuesta una impresión 3D en el navegador: peso, tiempo estimado y precio. Funciona sin conexión.",
+  "lang": "es",
+  "start_url": "/printquote/",
+  "scope": "/printquote/",
+  "display": "standalone",
+  "background_color": "#f6f5f2",
+  "theme_color": "#f6f5f2",
+  "icons": [
+    { "src": "/printquote/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/printquote/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/printquote/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
