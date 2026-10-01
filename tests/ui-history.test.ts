@@ -61,12 +61,12 @@ describe('historial de presupuestos en la interfaz', () => {
     vi.unstubAllGlobals();
   });
 
-  it('el bloque 07 es plegable, empieza plegado y vacío, y «Guardar» no se puede usar sin pieza', async () => {
+  it('el bloque 08 es plegable, empieza plegado y vacío, y «Guardar» no se puede usar sin pieza', async () => {
     await start(false);
     const details = $<HTMLDetailsElement>('history-details');
     expect(details.tagName).toBe('DETAILS');
     expect(details.open).toBe(false);
-    expect(details.querySelector('summary')?.textContent).toMatch(/07\s*Presupuestos/);
+    expect(details.querySelector('summary')?.textContent).toMatch(/08\s*Presupuestos/);
     expect(button('history-save').disabled).toBe(true);
     expect(rows()).toHaveLength(0);
     expect($('history-empty').hidden).toBe(false);

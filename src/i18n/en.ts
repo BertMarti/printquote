@@ -283,6 +283,30 @@ export const en: Record<Key, string> = {
   'hist.clear.cancel': 'Cancel',
   'hist.cleared': 'All quotes have been deleted.',
 
+  // ── Batch (orders with several parts) ──
+  'batch.title': 'Batch',
+  'batch.intro':
+    'For orders with several parts: set up one part, add it to the batch and move on to the next. Each line keeps the settings it was added with. The batch is not kept when you reload the page.',
+  'batch.add': 'Add this part',
+  'batch.add.price': 'Add this part · {price}',
+  'batch.full': 'Batch full ({max} parts)',
+  'batch.list.label': 'Parts in the batch',
+  'batch.empty': 'The batch is empty. Load a part, set it up and press “Add this part”.',
+  'batch.copies': '{n} copies',
+  'batch.remove': 'Remove',
+  'batch.remove.label': 'Remove {name} from the batch',
+  'batch.added': 'Part added to the batch: {name}. {n} in the batch; total {total}.',
+  'batch.removed': 'Part removed from the batch: {name}. {n} left; total {total}.',
+  'batch.removed.empty': 'Part removed from the batch: {name}. The batch is empty.',
+  'batch.sum.parts': 'Parts',
+  'batch.sum.copies': 'Copies',
+  'batch.total': 'Batch total',
+  'batch.total.sub': 'excl. VAT',
+  'batch.clear': 'Empty batch',
+  'batch.clear.confirm': 'Confirm: remove all {n}',
+  'batch.clear.cancel': 'Cancel',
+  'batch.cleared': 'The batch is empty.',
+
   // ── Share link ──
   'share.copy': 'Copy link',
   'share.copied': 'Link copied',

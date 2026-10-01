@@ -1,7 +1,11 @@
 # MEMORY.md · printquote
-Última actualización: 2026-10-01 por builder (v0.5.0, #37)
+Última actualización: 2026-10-01 por builder (v0.6.0, #40)
 
 ## Estado actual
+
+### v0.6.0 «Lotes» (v0.5.0 ya publicada; especificación en `docs/specs/v0.6.md`; hito v0.6.0; issues #40 lote, #41 texto y PDF, #42 historial, #43 imágenes y versión; una rama y un PR por issue, encadenados: `agent/builder/40-lote` → `41-lote-salida` → `42-lote-historial` → `43-imagenes`)
+- #40 Lote (rama `agent/builder/40-lote`): hecho. `src/quote/batch.ts` (`BatchPart` = instantánea con `settings`, `stats` y `quote` de `computeQuote`; `computeBatch` suma las líneas ya redondeadas con `roundCents`: sin fórmula propia; `BATCH_MAX` = 50) y `src/ui/batch.ts` (`setupBatch(BatchHost)`: añadir, quitar, vaciar con confirmación, total; foco al «Quitar» siguiente y anuncio). Bloque nuevo **06 Lote** (`<details>`); «Datos del negocio» pasa a 07 y «Presupuestos» a 08. Reutiliza las clases `.history-*` y `.rows`.
+- Decisiones: el lote vive solo en memoria (YAGNI: para conservarlo, el historial); la línea no se edita (quitar y volver a añadir); los botones Copiar/Imprimir/PDF/Guardar de siempre siguen siendo de la pieza cargada y el lote tiene los suyos (sin «modo» oculto); Imprimir no incluye el lote.
 
 ### v0.5.0 «Demo y pulido» (los dos PR abiertos, pendientes de fusionar #38 y el de la demo en ese orden; `version` 0.5.0 y CHANGELOG `[0.5.0]` ya en el de la demo; especificación en `docs/specs/v0.5.md`; hito v0.5.0; #36 pulido, #37 demo; una rama y un PR por issue, encadenados)
 - #36 Pulido visual y de accesibilidad (rama `agent/builder/36-pulido`): hecho, ver abajo.
@@ -228,3 +232,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-10-01 builder · Claude Code Sonnet (agent/builder/32-compartir): #32 enlace para compartir los parámetros (`share.ts`, `applyHash`, botón «Copiar enlace», tests, docs).
 - 2026-10-01 builder · Claude Code Sonnet (agent/builder/36-pulido): #36 pulido visual y de accesibilidad (auditoría de UX verificada punto por punto).
 - 2026-10-01 builder · Claude Code Sonnet (agent/builder/37-demo): #37 modo demo en tiempo real y versión 0.5.0 (CHANGELOG, README, USO, AGENTS); tras la revisión, la demo se para al soltar un archivo o cambiar el enlace y no pisa lo cargado a mitad.
+- 2026-10-01 builder · Claude Code Sonnet (agent/builder/40-lote): #40 lote (modelo `batch.ts`, bloque 06, renumeración 07/08, tests, docs).

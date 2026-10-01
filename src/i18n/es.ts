@@ -289,6 +289,30 @@ export const es = {
   'hist.clear.cancel': 'Cancelar',
   'hist.cleared': 'Todos los presupuestos se han borrado.',
 
+  // ── Lote (pedidos de varias piezas) ──
+  'batch.title': 'Lote',
+  'batch.intro':
+    'Para pedidos de varias piezas: ajusta una pieza, añádela al lote y sigue con la siguiente. Cada línea conserva los ajustes con que se añadió. El lote no se conserva al recargar la página.',
+  'batch.add': 'Añadir esta pieza',
+  'batch.add.price': 'Añadir esta pieza · {price}',
+  'batch.full': 'Lote lleno ({max} piezas)',
+  'batch.list.label': 'Piezas del lote',
+  'batch.empty': 'El lote está vacío. Carga una pieza, ajústala y pulsa «Añadir esta pieza».',
+  'batch.copies': '{n} copias',
+  'batch.remove': 'Quitar',
+  'batch.remove.label': 'Quitar {name} del lote',
+  'batch.added': 'Pieza añadida al lote: {name}. Hay {n} en el lote; total {total}.',
+  'batch.removed': 'Pieza quitada del lote: {name}. Quedan {n}; total {total}.',
+  'batch.removed.empty': 'Pieza quitada del lote: {name}. El lote está vacío.',
+  'batch.sum.parts': 'Piezas',
+  'batch.sum.copies': 'Copias',
+  'batch.total': 'Total del lote',
+  'batch.total.sub': 'sin IVA',
+  'batch.clear': 'Vaciar lote',
+  'batch.clear.confirm': 'Confirmar: quitar las {n}',
+  'batch.clear.cancel': 'Cancelar',
+  'batch.cleared': 'El lote está vacío.',
+
   // ── Enlace para compartir ──
   'share.copy': 'Copiar enlace',
   'share.copied': 'Enlace copiado',

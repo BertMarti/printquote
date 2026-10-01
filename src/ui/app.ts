@@ -19,6 +19,7 @@ import { formatLabel } from './format-label';
 import { setupDemo } from './demo';
 import { NumberField } from './number-field';
 import { renderPrintSheet } from './print-sheet';
+import { setupBatch } from './batch';
 import { setupHistory } from './history';
 import { LogoError, prepareLogo } from './logo';
 import {
@@ -146,6 +147,7 @@ export function startApp(demoScale = 1): void {
   let viewer: Viewer | null = null;
   /** Se crea más abajo, cuando existen `announce`, `showNotice` y `applySettings`. */
   let history: ReturnType<typeof setupHistory> | null = null;
+  let batch: ReturnType<typeof setupBatch> | null = null;
   /** El aviso se guarda como función para poder volver a pintarlo si cambia el idioma. */
   let noticeBuilder: (() => readonly [title: string, message: string]) | null = null;
 
@@ -340,6 +342,7 @@ export function startApp(demoScale = 1): void {
       byId('stage-dims').textContent = '';
       warningsList.replaceChildren();
       history?.sync();
+      batch?.sync();
       return;
     }
 
@@ -408,6 +411,7 @@ export function startApp(demoScale = 1): void {
     });
     document.title = `${part.fileName} · printquote`;
     history?.sync();
+    batch?.sync();
   }
 
   // ── Carga de archivos ──
@@ -712,6 +716,13 @@ export function startApp(demoScale = 1): void {
     download,
   });
 
+  // ── Lote ──
+  batch = setupBatch({
+    current: () => (part && quote ? { fileName: part.fileName, stats: part.stats, quote, settings } : null),
+    announce,
+    changed: () => history?.sync(),
+  });
+
   // ── Demo («Ver demo») ──
   // Va antes que el bloque de enlaces: su `hashchange` se registra primero y para la demo antes de que la aplicación aplique el enlace.
   // Nunca guarda nada: aplica los ajustes con `persist = false` y, al acabar, devuelve los de la persona
@@ -814,6 +825,7 @@ export function startApp(demoScale = 1): void {
     syncForm();
     syncBusiness();
     history?.render();
+    batch?.render();
     shareButton.textContent = t('share.copy');
     if (noticeBuilder) showNotice(noticeBuilder);
     if (!pdfBusy) pdfButton.textContent = t('action.pdf');

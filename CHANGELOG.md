@@ -4,6 +4,14 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 
 ## [Sin publicar]
 
+### Añadido
+
+- **Lote: presupuesto de varias piezas** (#40): bloque «06 Lote» (plegable) con «Añadir esta pieza» (muestra su importe), una lista con nombre, material, volumen, peso, tiempo, copias e importe de cada línea, «Quitar» y «Vaciar lote» (dos clics), y el **total del lote**. Cada línea conserva los ajustes con que se añadió y usa `computeQuote` (`src/quote/batch.ts` solo suma líneas ya redondeadas a céntimos, como una factura). Hasta 50 piezas; vive en memoria. Foco y anuncios accesibles, sin desborde a 320 px.
+
+### Cambiado
+
+- «Datos del negocio» pasa a ser el bloque 07 y «Presupuestos», el 08.
+
 ## [0.5.0] - 2026-10-01
 
 Hito v0.5.0 «Demo y pulido»: modo demo en tiempo real y pulido visual y de accesibilidad. Especificación en `docs/specs/v0.5.md`.
