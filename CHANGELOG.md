@@ -4,9 +4,17 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 
 ## [Sin publicar]
 
+## [0.5.0] - 2026-10-01
+
+Hito v0.5.0 «Demo y pulido»: modo demo en tiempo real y pulido visual y de accesibilidad. Especificación en `docs/specs/v0.5.md`.
+
+### Añadido
+
+- **Modo demo en tiempo real** (#37): botón «Ver demo» (`aria-pressed`) en la cabecera. En ~13 s carga la pieza de ejemplo, gira la cámara despacio, cambia el material a PETG y el relleno al 40 % con el total recalculándose en vivo, resalta el bloque que cambia con un subtítulo breve y devuelve los ajustes (y la pieza) de la persona. Se detiene con un segundo clic, Esc, cualquier interacción, al soltar un archivo o cambiar el enlace, o al pasar la pestaña a segundo plano (y nunca pisa un archivo cargado a mitad de recorrido); con `prefers-reduced-motion` no corre sola (pasos manuales «Siguiente»). **No escribe en `localStorage`, en el historial ni en la URL**; un único anuncio `aria-live` al final; funciona sin conexión. Módulo `src/ui/demo.ts` con el guion en datos, sin dependencias nuevas; `Viewer.setAutoRotate`.
+
 ### Cambiado
 
-- **Pulido visual y de accesibilidad** (#36), a partir de la auditoría de UX (ver `docs/specs/v0.5.md`, §2): la cabecera tiene un único botón primario («Abrir modelo 3D») y la pieza de ejemplo pasa a acción terciaria; el aviso del visor ya no tapa el nombre de la pieza ni el texto del estado vacío (banda superior en flujo); los rótulos del visor se leen sobre la rejilla; filete de acento sobre el total, que se compacta en pantallas bajas; dianas táctiles de 44 px o más con puntero táctil o en pantallas de hasta 900 px; la cama X/Y/Z pasa a tres columnas en pantallas de hasta 480 px (a 320 px la página desbordaba); el visor tiene un nombre accesible corto y las teclas como descripción.
+- **Pulido visual y de accesibilidad** (#36), a partir de la auditoría de UX (ver `docs/specs/v0.5.md`, §2): la cabecera tiene un único botón primario («Abrir modelo 3D») y la pieza de ejemplo pasa a acción terciaria; el aviso del visor ya no tapa el nombre de la pieza ni el texto del estado vacío (banda superior en flujo); los rótulos del visor se leen sobre la rejilla; filete de acento sobre el total, que se compacta en pantallas bajas; dianas táctiles de 44 px o más con puntero táctil o en pantallas de hasta 900 px; la cama X/Y/Z pasa a tres columnas en pantallas de hasta 480 px (a 320 px la página desbordaba); el visor tiene un nombre accesible corto y las teclas como descripción; con el visor estrecho (901 a 1100 px) la ayuda se ajusta a su ancho y se oculta la leyenda de la cama, que chocaba con las medidas.
 
 ## [0.4.0] - 2026-10-01
 
@@ -77,7 +85,8 @@ Primera versión: el MVP.
 - **Revisión de QA** (PR #2): parser ASCII byte a byte, soldado de vértices con tolerancia, lectura en un Web Worker, three.js cargado bajo demanda, regiones vivas accesibles, Open Graph y tests de interfaz (57 → 132 tests).
 - **Documentación** (PR #4): guía de uso (`docs/USO.md`) y guía de contribución (`CONTRIBUTING.md`).
 
-[Sin publicar]: https://github.com/BertMarti/printquote/compare/v0.4.0...HEAD
+[Sin publicar]: https://github.com/BertMarti/printquote/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/BertMarti/printquote/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/BertMarti/printquote/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/BertMarti/printquote/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/BertMarti/printquote/compare/v0.1.0...v0.2.0

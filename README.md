@@ -13,6 +13,7 @@
 ## Qué hace
 
 - **Carga STL** (binario o ASCII), **OBJ** y **3MF** arrastrándolos a la ventana o con «Abrir modelo 3D». ¿Sin archivo? «Probar con pieza de ejemplo».
+- **Modo demo en tiempo real**: «Ver demo» (cabecera) carga la pieza de ejemplo, gira la cámara, cambia material y relleno con el total recalculándose en vivo y devuelve tus ajustes en ~13 s. Se para con un segundo clic, Esc o cualquier interacción; con «reducir movimiento» va paso a paso con «Siguiente»; no guarda nada y, para los lectores de pantalla, anuncia una sola vez al terminar.
 - **Mide la pieza**: volumen, superficie, caja envolvente (X × Y × Z en mm) y número de triángulos.
 - **Avisa** si la malla parece abierta o tiene las normales invertidas, si no cabe en tu cama (por defecto 220 × 220 × 250 mm) o si mide menos de 1 mm (¿exportada en metros o pulgadas?).
 - **Visor 3D** con la pieza apoyada en la cama, rejilla de 10 mm, órbita, zoom (rueda, pellizco o teclas + y −) y «Restablecer vista».

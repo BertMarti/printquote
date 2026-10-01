@@ -48,6 +48,7 @@
       </p>
       <div class="tb-cell tb-actions">
         <button type="button" class="button button--primary" id="open-button" data-i18n="action.open">Abrir modelo 3D</button>
+        <button type="button" class="button" id="demo-button" aria-pressed="false" data-demo-ui data-i18n="demo.button">Ver demo</button>
         <button type="button" class="button button--ghost" id="sample-button" data-i18n="action.sample">Probar con pieza de ejemplo</button>
         <div class="lang-switch" role="group" aria-label="Idioma" data-i18n-attr="aria-label:lang.label">
           <button type="button" class="lang-button" data-lang="es" lang="es" aria-pressed="true" aria-label="Español" title="Español">ES</button>
@@ -84,10 +85,16 @@
 
         <div class="empty" id="empty-state">
           <p class="empty-title" data-i18n="empty.title">Arrastra un modelo 3D aquí</p>
-          <p class="empty-text" data-i18n="empty.text">STL, OBJ o 3MF. También puedes usar «Abrir modelo 3D». ¿No tienes ninguno a mano? Prueba con la pieza de ejemplo.</p>
+          <p class="empty-text" data-i18n="empty.text">STL, OBJ o 3MF. También puedes usar «Abrir modelo 3D». ¿No tienes ninguno a mano? Prueba con la pieza de ejemplo o mira la demo.</p>
         </div>
 
         <p class="stage-loading" id="stage-loading" aria-hidden="true" hidden></p>
+
+        <div class="demo-bar" id="demo-bar" data-demo-ui hidden>
+          <p class="demo-caption" id="demo-caption" aria-hidden="true"></p>
+          <button type="button" class="button button--small button--inverse demo-next" id="demo-next" aria-describedby="demo-caption" hidden></button>
+          <p class="demo-hint" data-i18n="demo.hint">Esc para salir</p>
+        </div>
 
         <p id="viewer-help" data-i18n="viewer.help" hidden>Flechas: desplazar. Mayúsculas más flechas: girar. Más y menos: acercar y alejar. «Restablecer vista» la vuelve a encuadrar.</p>
       </section>

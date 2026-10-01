@@ -16,6 +16,7 @@ import type { Mesh, MeshStats, Vec3 } from '../stl/types';
 import type { Viewer, ViewerTheme } from '../viewer/viewer';
 import { supportsWebGL } from '../viewer/webgl';
 import { formatLabel } from './format-label';
+import { setupDemo } from './demo';
 import { NumberField } from './number-field';
 import { renderPrintSheet } from './print-sheet';
 import { setupHistory } from './history';
@@ -116,7 +117,7 @@ async function copyText(text: string): Promise<boolean> {
 }
 
 /** Arranca la aplicación: enlaza controles, visor, arrastrar y soltar y almacenamiento. */
-export function startApp(): void {
+export function startApp(demoScale = 1): void {
   const stage = byId('viewer').parentElement as HTMLElement;
   const notice = byId('notice');
   const live = byId('live-status');
@@ -433,13 +434,17 @@ export function startApp(): void {
   }
 
   let announceTimer = 0;
+  /** Durante la demo no se anuncia nada (carga, avisos…): solo habla ella, una vez, al terminar. */
+  let silent = false;
   function announce(message: string): void {
+    if (silent) return;
     live.textContent = '';
     window.clearTimeout(announceTimer);
     announceTimer = window.setTimeout(() => (live.textContent = message), 50);
   }
 
-  async function loadBuffer(fileName: string, getBuffer: () => Promise<ArrayBuffer>): Promise<void> {
+  /** Devuelve `true` si la pieza quedó cargada (no si falló o llegó otra petición después). */
+  async function loadBuffer(fileName: string, getBuffer: () => Promise<ArrayBuffer>): Promise<boolean> {
     const ticket = ++loadTicket;
     hideNotice();
     stage.classList.add('is-loading');
@@ -452,19 +457,21 @@ export function startApp(): void {
       const buffer = await getBuffer();
       // El parseo y la geometría van en un Web Worker: la interfaz sigue respondiendo.
       const { mesh, stats } = await analyzer.analyze(buffer, fileName);
-      if (ticket !== loadTicket) return; // ya se ha pedido otro archivo
+      if (ticket !== loadTicket) return false; // ya se ha pedido otro archivo
       part = { fileName, mesh, stats };
       viewer?.setPart(mesh.positions);
 
       render();
       // El total se anuncia solo: su contenedor es una región viva.
       announce(t('load.done', { name: fileName }));
+      return true;
     } catch (error) {
-      if (ticket !== loadTicket) return;
+      if (ticket !== loadTicket) return false;
       showNotice(() => [
         t('load.failed.title', { name: fileName }),
         error instanceof ModelParseError ? t(error.code, error.params) : t('err.unexpected'),
       ]);
+      return false;
     } finally {
       if (ticket === loadTicket) {
         stage.classList.remove('is-loading');
@@ -490,14 +497,13 @@ export function startApp(): void {
     fileInput.value = '';
   });
 
-  const loadSample = (): void => {
-    void loadBuffer(SAMPLE_FILE, async () => {
+  const loadSample = (): Promise<boolean> =>
+    loadBuffer(SAMPLE_FILE, async () => {
       const response = await fetch(`${import.meta.env.BASE_URL}samples/${SAMPLE_FILE}`);
       if (!response.ok) throw new ModelParseError('err.sample');
       return response.arrayBuffer();
     });
-  };
-  byId('sample-button').addEventListener('click', loadSample);
+  byId('sample-button').addEventListener('click', () => void loadSample());
 
   // ── Arrastrar y soltar en toda la ventana ──
   const overlay = byId('drop-overlay');
@@ -706,6 +712,56 @@ export function startApp(): void {
     download,
   });
 
+  // ── Demo («Ver demo») ──
+  // Va antes que el bloque de enlaces: su `hashchange` se registra primero y para la demo antes de que la aplicación aplique el enlace.
+  // Nunca guarda nada: aplica los ajustes con `persist = false` y, al acabar, devuelve los de la persona
+  // (y su pieza, si había una). Así una edición posterior no guarda por sorpresa los valores de la demo.
+  const liveRegions = [byId('out-total').closest<HTMLElement>('[aria-live]'), byId('warnings')];
+  let before: { settings: QuoteSettings; part: LoadedPart | null } | null = null;
+  /** La pieza que cargó la demo: si al acabar ya es otra, la persona soltó un archivo y no se pisa con la anterior. */
+  let demoPart: LoadedPart | null = null;
+  /** Lo último que puso la demo: si al acabar ya es otro objeto, algo (un enlace) cambió los ajustes y no se pisan. */
+  let demoSettings: QuoteSettings | null = null;
+  const demoApply = (next: QuoteSettings): void => {
+    applySettings(next, false);
+    demoSettings = settings;
+  };
+  setupDemo(
+    {
+      async begin() {
+        before = { settings, part };
+        silent = true;
+        for (const region of liveRegions) region?.setAttribute('aria-live', 'off');
+        demoApply(DEFAULT_SETTINGS);
+        const loaded = await loadSample();
+        demoPart = part;
+        return loaded;
+      },
+      apply: (patch) => demoApply(patch === 'restore' ? (before?.settings ?? settings) : { ...settings, ...patch }),
+      spin: (on) => viewer?.setAutoRotate(on),
+      end() {
+        if (before) {
+          if (settings === demoSettings) {
+            settings = normalizeSettings(before.settings);
+            syncForm();
+          }
+          // La pieza solo se devuelve si sigue siendo la de la demo: un archivo cargado a mitad manda.
+          if (before.part && part === demoPart) {
+            part = before.part;
+            viewer?.setPart(part.mesh.positions);
+          }
+        }
+        before = demoPart = demoSettings = null;
+        render();
+        viewer?.resetCamera();
+        silent = false;
+        for (const region of liveRegions) region?.setAttribute('aria-live', 'polite');
+      },
+      announce,
+    },
+    demoScale,
+  );
+
   // ── Enlace con los parámetros (en el hash de la URL) ──
   const shareButton = byId<HTMLButtonElement>('share-copy');
   let shareLabelTimer = 0;
@@ -729,7 +785,7 @@ export function startApp(): void {
       render();
       announce(t(part ? 'share.applied.part' : 'share.applied'));
     }
-    if (example) loadSample();
+    if (example) void loadSample();
   };
   detachHash?.();
   window.addEventListener('hashchange', applyHash);

@@ -50,6 +50,22 @@ Con los valores por defecto, la pieza de ejemplo (70 × 90 × 88 mm, 123,83 cm³
 
 > El enlace `#ejemplo` solo se lee al abrir la página. Si ya tienes la web abierta y añades `#ejemplo` a la dirección, pulsa antes F5 (recargar) para que funcione.
 
+### Ver la demo
+
+Si prefieres que te lo enseñen, pulsa **«Ver demo»** en la cabecera. En unos 13 segundos la web:
+
+1. carga la pieza de ejemplo y gira la cámara despacio;
+2. cambia el material a PETG y el total se recalcula;
+3. sube el relleno al 40 % y el total vuelve a cambiar;
+4. te devuelve **tus** ajustes, y todo queda listo para editar.
+
+Un subtítulo abajo en el visor dice qué ocurre y el bloque que cambia se resalta con un recuadro naranja. Para pararla en cualquier momento, pulsa **«Ver demo»** otra vez, pulsa **Esc** o toca o escribe en cualquier parte de la página.
+
+- **Es inofensiva**: no guarda nada (ni ajustes, ni historial, ni cambia la dirección de la página) y, al terminar o pararla, tus ajustes (y la pieza que tuvieras cargada) vuelven a como estaban. Si no tenías ninguna pieza, se queda cargada la de ejemplo.
+- **Con «reducir movimiento»** (el ajuste del sistema), la demo no corre sola ni gira la cámara: muestra un paso y espera a que pulses **«Siguiente»**; el último paso dice **«Terminar»**.
+- **Con lector de pantalla**, durante la demo no se lee nada para no atropellarte; al terminar se anuncia una sola vez «Demo terminada».
+- **Sin conexión** funciona igual (la pieza de ejemplo se guarda con la app; ver [Instalar la app y usarla sin conexión](#15-instalar-la-app-y-usarla-sin-conexión)).
+
 ## 3. Abrir un modelo 3D (STL, OBJ y 3MF)
 
 Hay dos formas de cargar un archivo:
