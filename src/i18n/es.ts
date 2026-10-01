@@ -25,7 +25,7 @@ export const es = {
   'stage.none': 'Sin pieza cargada',
   'stage.reset': 'Restablecer vista',
   'stage.legend': 'Rejilla 10 mm · Cama {x} × {y} × {z} mm',
-  'stage.hint.mouse': 'Arrastra para girar · rueda para acercar · botón derecho para desplazar',
+  'stage.hint.mouse': 'Arrastra para girar · rueda o +/− para acercar · botón derecho para desplazar',
   'stage.hint.touch': 'Un dedo para girar · pellizca para acercar · dos dedos para desplazar',
   'empty.title': 'Arrastra un modelo 3D aquí',
   'empty.text':
@@ -33,7 +33,7 @@ export const es = {
   'drop.text': 'Suelta el archivo para calcular',
   'viewer.roledescription': 'visor 3D',
   'viewer.label':
-    'Vista 3D de la pieza. Flechas: desplazar. Mayúsculas más flechas: girar. «Restablecer vista» la vuelve a encuadrar.',
+    'Vista 3D de la pieza. Flechas: desplazar. Mayúsculas más flechas: girar. Más y menos: acercar y alejar. «Restablecer vista» la vuelve a encuadrar.',
   'viewer.none.title': 'Sin vista 3D',
   'viewer.none.text': 'Tu navegador no ha podido iniciar WebGL. El presupuesto funciona igualmente.',
 

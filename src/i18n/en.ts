@@ -23,14 +23,14 @@ export const en: Record<Key, string> = {
   'stage.none': 'No part loaded',
   'stage.reset': 'Reset view',
   'stage.legend': 'Grid 10 mm · Bed {x} × {y} × {z} mm',
-  'stage.hint.mouse': 'Drag to rotate · wheel to zoom · right button to pan',
+  'stage.hint.mouse': 'Drag to rotate · wheel or +/− to zoom · right button to pan',
   'stage.hint.touch': 'One finger to rotate · pinch to zoom · two fingers to pan',
   'empty.title': 'Drop a 3D model here',
   'empty.text': 'STL, OBJ or 3MF. You can also use “Open 3D model”. Nothing at hand? Try the sample part.',
   'drop.text': 'Drop the file to calculate',
   'viewer.roledescription': '3D viewer',
   'viewer.label':
-    '3D view of the part. Arrow keys: pan. Shift plus arrow keys: rotate. “Reset view” frames it again.',
+    '3D view of the part. Arrow keys: pan. Shift plus arrow keys: rotate. Plus and minus: zoom in and out. “Reset view” frames it again.',
   'viewer.none.title': 'No 3D view',
   'viewer.none.text': 'Your browser could not start WebGL. The quote still works.',
 
