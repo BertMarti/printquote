@@ -1,7 +1,7 @@
 {
   "name": "printquote",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Presupuesta una impresión 3D en el navegador a partir de un STL.",
   "type": "module",
   "license": "MIT",

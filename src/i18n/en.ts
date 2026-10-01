@@ -271,6 +271,15 @@ export const en: Record<Key, string> = {
   'hist.clear.cancel': 'Cancel',
   'hist.cleared': 'All quotes have been deleted.',
 
+  // ── Share link ──
+  'share.copy': 'Copy link',
+  'share.copied': 'Link copied',
+  'share.copyFailed': 'Could not copy the link',
+  'share.note': 'The link carries only the settings (material, prices, printer…), never the 3D file or the client.',
+  'share.applied': 'Link settings applied. Drop your part to calculate the quote.',
+  'share.applied.part': 'Link settings applied to the loaded part.',
+  'summary.shared': 'Link settings applied. Drop your part to calculate the quote.',
+
   // ── History CSV header ──
   'csv.date': 'Date',
   'csv.client': 'Client',

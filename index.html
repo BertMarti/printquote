@@ -264,9 +264,13 @@
                 <label for="in-client"><span data-i18n="hist.client">Cliente</span> <span class="sub" data-i18n="biz.optional">(opcional)</span></label>
                 <input id="in-client" type="text" maxlength="80" autocomplete="off" spellcheck="false" />
               </div>
-              <button type="button" class="button history-save" id="history-save" data-i18n="hist.save" disabled>Guardar este presupuesto</button>
+              <div class="history-actions">
+                <button type="button" class="button" id="history-save" data-i18n="hist.save" disabled>Guardar este presupuesto</button>
+                <button type="button" class="button" id="share-copy" data-i18n="share.copy">Copiar enlace</button>
+              </div>
+              <p class="caption field-note history-note" data-i18n="share.note">El enlace lleva solo los parámetros (material, precios, impresora…), nunca el archivo 3D ni el cliente.</p>
               <ul class="history-list" id="history-list" aria-label="Presupuestos guardados" data-i18n-attr="aria-label:hist.list.label"></ul>
-              <p class="field-note history-empty" id="history-empty" data-i18n="hist.empty">Aún no hay presupuestos guardados.</p>
+              <p class="caption field-note history-empty" id="history-empty" data-i18n="hist.empty">Aún no hay presupuestos guardados.</p>
               <div class="history-footer">
                 <button type="button" class="link-button" id="history-export" data-i18n="hist.export" disabled>Exportar CSV</button>
                 <button type="button" class="link-button" id="history-clear" data-i18n="hist.clear" disabled>Borrar todos</button>

@@ -63,6 +63,7 @@ La interfaz está en español e inglés y la documentación, en español; los no
 | Presupuesto en PDF (contenido puro y dibujo con pdf-lib; fuentes Noto Sans y JetBrains Mono incrustadas, con su licencia, en `src/pdf/fonts/`) | `src/pdf/` | `tests/pdf.test.ts` (el texto del PDF se lee con `tests/helpers/pdf-text.ts`) |
 | Texto para copiar | `src/quote/text.ts` | `tests/format.test.ts` |
 | Interfaz, campos, hoja de impresión | `index.html`, `src/ui/`, `src/styles.css` | `tests/ui.test.ts` (carga el `index.html` real con happy-dom), `tests/meta.test.ts` |
+| Enlace para compartir los parámetros (hash de la URL) | `src/quote/share.ts`, `applyHash` en `src/ui/app.ts` | `tests/share.test.ts`, `tests/ui-share.test.ts` |
 | Historial de presupuestos (lógica pura, CSV) y su bloque de interfaz | `src/quote/history.ts`, `src/ui/history.ts`, `src/ui/storage.ts` | `tests/history.test.ts`, `tests/ui-history.test.ts` |
 | PWA: manifiesto, iconos, service worker y plugin de Vite que escribe `dist/sw.js` (se prueba con `npm run build && npm run preview`: el service worker solo se registra en producción) | `public/manifest.webmanifest`, `public/icons/`, `src/sw.js`, `src/pwa.ts`, `scripts/pwa-plugin.ts` | `tests/sw.test.ts`, `tests/pwa-plugin.test.ts`, `tests/manifest.test.ts` |
 | Visor three.js (la lógica del zoom con teclado está aparte, en `zoom.ts`) | `src/viewer/` | `tests/zoom.test.ts`; el resto, a mano en el navegador (`npm run dev`) |

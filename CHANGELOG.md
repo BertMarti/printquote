@@ -4,8 +4,13 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 
 ## [Sin publicar]
 
+## [0.4.0] - 2026-10-01
+
+Hito v0.4.0 «Pro»: herramienta para talleres (app instalable y sin conexión, historial de presupuestos y enlace para compartir). Especificación en `docs/specs/v0.4.md`.
+
 ### Añadido
 
+- **Enlace para compartir los parámetros** (#32): «Copiar enlace» (bloque 07) copia una URL con los parámetros del presupuesto en el hash (`#v=1&mat=PETG&price=24&printer=…`), sin el archivo 3D, la pieza, el cliente ni los datos del negocio. Al abrirla se aplican **sin guardarlos** (no pisan los ajustes de quien la recibe) y solo hay que arrastrar la pieza; compatible con `#ejemplo`. Entrada rota u hostil: se ignora lo que no se entiende, se acotan los rangos, y una versión desconocida o un hash de más de 1000 caracteres se ignora entero. Lógica pura en `src/quote/share.ts`.
 - **Historial de presupuestos** (#31): bloque «07 Presupuestos» para guardar cada presupuesto en el navegador (pieza, cliente opcional, parámetros y resultado tal como salió; nunca el archivo 3D ni los datos del negocio), listarlos, **reabrirlos con sus parámetros**, borrarlos (uno a uno o todos, con confirmación) y **exportarlos a CSV** (UTF-8 con BOM; `;` y coma decimal en español, `,` y punto en inglés; neutraliza las fórmulas). Hasta 100, con aviso al descartar el más antiguo. Lógica pura en `src/quote/history.ts`.
 - **App instalable y sin conexión (PWA)** (#30): `manifest.webmanifest` con iconos (192, 512 y maskable, más el de iOS, generados desde el favicon con `scripts/iconos.mjs`) y un service worker propio, sin dependencias nuevas. Precachea la app, el visor y la pieza de ejemplo; el chunk del PDF y las fuentes se guardan la primera vez que se piden. Navegación con red primero (se ve la versión publicada) y respaldo en caché; la caché lleva la versión (hash del contenido de `dist/`) y se limpian las antiguas al activarse. El JS inicial crece 0,2 kB.
 
@@ -68,7 +73,8 @@ Primera versión: el MVP.
 - **Revisión de QA** (PR #2): parser ASCII byte a byte, soldado de vértices con tolerancia, lectura en un Web Worker, three.js cargado bajo demanda, regiones vivas accesibles, Open Graph y tests de interfaz (57 → 132 tests).
 - **Documentación** (PR #4): guía de uso (`docs/USO.md`) y guía de contribución (`CONTRIBUTING.md`).
 
-[Sin publicar]: https://github.com/BertMarti/printquote/compare/v0.3.0...HEAD
+[Sin publicar]: https://github.com/BertMarti/printquote/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/BertMarti/printquote/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/BertMarti/printquote/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/BertMarti/printquote/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/BertMarti/printquote/releases/tag/v0.1.0
