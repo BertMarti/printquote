@@ -17,9 +17,11 @@ const CACHE = PREFIX + VERSION;
 const SCOPE = self.registration.scope; // p. ej. https://bertmarti.github.io/printquote/
 
 self.addEventListener('install', (event) => {
-  // cache: 'reload' salta la caché HTTP: lo precacheado es lo que hay publicado ahora.
+  // cache: 'reload' salta la caché HTTP: lo precacheado es lo que hay publicado ahora. Los assets/* llevan el hash
+  // del contenido en el nombre (inmutables) y la página acaba de pedirlos: con 'default' salen de la caché HTTP
+  // en vez de descargarse dos veces en la primera visita.
   const urls = [SCOPE, ...PRECACHE.map((path) => new URL(path, SCOPE).href)];
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(urls.map((url) => new Request(url, { cache: 'reload' })))));
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(urls.map((url) => new Request(url, { cache: /\/assets\//.test(url) ? 'default' : 'reload' })))));
 });
 
 self.addEventListener('activate', (event) => {

@@ -11,6 +11,7 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 
 ### Cambiado
 
+- **Service worker: menos descarga en la primera visita** (#46): al instalar, los `assets/*` (con hash en el nombre, inmutables) se precachean con `cache: 'default'` en vez de `reload`, así salen de la caché HTTP en lugar de pedirse dos veces (index, CSS y visor, ~177 KB gz de más). `index.html`, el manifiesto, el favicon, los iconos y la pieza de ejemplo siguen con `reload`. Una versión nueva se invalida igual que antes (caché con el nombre de la versión; las antiguas se borran al activar), con test.
 - «Datos del negocio» pasa a ser el bloque 07 y «Presupuestos», el 08.
 
 ## [0.5.0] - 2026-10-01

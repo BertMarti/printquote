@@ -22,7 +22,12 @@ function fakeEnv(initial: Record<string, Record<string, string>> = {}) {
     stores.set(name, new Map(Object.entries(entries).map(([url, body]) => [url, new Response(body)])));
   }
   let network: (url: string) => Promise<Response> = async () => new Response('no', { status: 404 });
-  const fetch = (request: Req): Promise<Response> => network(urlOf(request));
+  /** Modo de caché HTTP con que se pidió cada URL (`reload` salta la caché del navegador). */
+  const modes = new Map<string, string>();
+  const fetch = (request: Req): Promise<Response> => {
+    if (typeof request !== 'string' && 'cache' in request) modes.set(urlOf(request), String(request.cache));
+    return network(urlOf(request));
+  };
   const caches = {
     open: async (name: string) => {
       const store = stores.get(name) ?? new Map<string, Response>();
@@ -56,6 +61,7 @@ function fakeEnv(initial: Record<string, Record<string, string>> = {}) {
   };
   return {
     stores,
+    modes,
     online: (body: (url: string) => string = (url) => `red:${url}`) => void (network = async (url) => new Response(body(url))),
     offline: () =>
       void (network = async () => {
@@ -69,14 +75,14 @@ function fakeEnv(initial: Record<string, Record<string, string>> = {}) {
 type Listener = (event: Record<string, unknown>) => void;
 
 /** Carga `src/sw.js` (con la plantilla rellena como lo hace el plugin) en un contexto aislado. */
-function load(version: string, env = fakeEnv()) {
+function load(version: string, env = fakeEnv(), precache: readonly string[] = PRECACHE) {
   const listeners = new Map<string, Listener>();
   const self = {
     registration: { scope: SCOPE },
     clients: { claim: async () => undefined },
     addEventListener: (type: string, listener: Listener) => listeners.set(type, listener),
   };
-  runInNewContext(buildServiceWorker(template, PRECACHE, version), {
+  runInNewContext(buildServiceWorker(template, precache, version), {
     self, caches: env.caches, fetch: env.fetch, Request, Response, URL, Promise, Object, JSON,
   });
   const lifecycle = async (type: 'install' | 'activate'): Promise<void> => {
@@ -108,6 +114,31 @@ describe('service worker', () => {
     expect([...(env.stores.get('printquote-v1')?.keys() ?? [])].sort()).toEqual(
       [SCOPE, `${SCOPE}assets/index-1.js`, `${SCOPE}index.html`].sort(),
     );
+  });
+
+  it('al instalar no vuelve a descargar los assets con hash (la página ya los pidió) pero sí salta la caché HTTP en lo demás', async () => {
+    const env = fakeEnv();
+    env.online();
+    const precache = ['index.html', 'manifest.webmanifest', 'favicon.svg', 'icons/icon-192.png', 'samples/soporte-movil.stl', 'assets/index-1.js', 'assets/index-1.css', 'assets/viewer-1.js'];
+    await load('v1', env, precache).lifecycle('install');
+    expect(env.modes.get(SCOPE)).toBe('reload');
+    for (const path of precache) {
+      expect(env.modes.get(`${SCOPE}${path}`), path).toBe(path.startsWith('assets/') ? 'default' : 'reload');
+    }
+  });
+
+  it('una versión nueva instala su propia caché y, al activar, borra la anterior', async () => {
+    const env = fakeEnv();
+    env.online((url) => `v1:${url}`);
+    await load('v1', env).lifecycle('install');
+    env.online((url) => `v2:${url}`);
+    const next = load('v2', env);
+    await next.lifecycle('install');
+    expect([...env.stores.keys()].sort()).toEqual(['printquote-v1', 'printquote-v2']);
+    await next.lifecycle('activate');
+    expect([...env.stores.keys()]).toEqual(['printquote-v2']);
+    env.offline();
+    expect(await (await next.request(`${SCOPE}assets/index-1.js`))?.text()).toBe(`v2:${SCOPE}assets/index-1.js`);
   });
 
   it('al activar borra las cachés printquote-* de otras versiones y respeta las de otras apps', async () => {
