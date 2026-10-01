@@ -4,7 +4,14 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 
 ## [Sin publicar]
 
+## [0.3.0] - 2026-10-01
+
+Hito v0.3.0: PDF en cualquier alfabeto, metadatos traducidos, avisos y límites en OBJ y 3MF, zoom con teclado y capturas nuevas.
+
 ### Añadido
+
+- **Licencias de las fuentes del PDF** publicadas con la web (`/fonts/OFL-NotoSans.txt` y `/fonts/OFL-JetBrainsMono.txt`) y créditos en el README.
+- **Aviso específico si no se pueden descargar las fuentes del PDF** («Comprueba tu conexión»), traducido; el error se registra además en la consola.
 
 - **Capturas nuevas** (#22): `docs/captura.png` y `public/og.png` (vista previa al compartir el enlace) muestran la interfaz de v0.2 con la pieza de ejemplo: selector de idioma, «Abrir modelo 3D», perfil de impresora y botón «Descargar PDF». `scripts/captura.mjs` las regenera con Chrome o Edge headless.
 - **Zoom con teclado en el visor** (#21): con el visor enfocado, `+` (o `=`) acerca y `-` (o `_`) aleja un 15 % por pulsación, sin animación (respeta `prefers-reduced-motion`). Indicado en la pista de controles y en la etiqueta accesible del visor.
@@ -56,6 +63,7 @@ Primera versión: el MVP.
 - **Revisión de QA** (PR #2): parser ASCII byte a byte, soldado de vértices con tolerancia, lectura en un Web Worker, three.js cargado bajo demanda, regiones vivas accesibles, Open Graph y tests de interfaz (57 → 132 tests).
 - **Documentación** (PR #4): guía de uso (`docs/USO.md`) y guía de contribución (`CONTRIBUTING.md`).
 
-[Sin publicar]: https://github.com/BertMarti/printquote/compare/v0.2.0...HEAD
+[Sin publicar]: https://github.com/BertMarti/printquote/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/BertMarti/printquote/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/BertMarti/printquote/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/BertMarti/printquote/releases/tag/v0.1.0

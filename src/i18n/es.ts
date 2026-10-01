@@ -149,6 +149,9 @@ export const es = {
   'pdf.failed.text':
     'Ha ocurrido un error al generar el documento. Vuelve a intentarlo; si sigue fallando, usa «Imprimir» y guarda como PDF.',
 
+  'pdf.failed.fonts':
+    'No se ha podido descargar la fuente del PDF. Comprueba tu conexión y vuelve a intentarlo.',
+
   // ── Carga de archivos ──
   'load.reading': 'Leyendo «{name}»…',
   'load.reading.announce': 'Leyendo {name}…',
