@@ -8,6 +8,8 @@ export const es = {
   'meta.title': 'printquote · presupuesto de impresión 3D',
   'meta.description':
     'Arrastra un STL, OBJ o 3MF, míralo en 3D y obtén peso, tiempo estimado y precio de impresión. Todo ocurre en tu navegador.',
+  'meta.ogLocale': 'es_ES',
+  'meta.ogImageAlt': 'Interfaz de printquote: soporte de móvil naranja en el visor 3D y ficha técnica con el presupuesto',
   'skip.link': 'Saltar al presupuesto',
   'lang.label': 'Idioma',
 

@@ -6,6 +6,8 @@ export const en: Record<Key, string> = {
   'meta.title': 'printquote · 3D print quote',
   'meta.description':
     'Drop an STL, OBJ or 3MF file, see it in 3D and get the weight, estimated time and price of the print. Everything happens in your browser.',
+  'meta.ogLocale': 'en_GB',
+  'meta.ogImageAlt': 'printquote interface: an orange phone stand in the 3D viewer and the data sheet with the quote',
   'skip.link': 'Skip to the quote',
   'lang.label': 'Language',
 

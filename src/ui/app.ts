@@ -674,7 +674,6 @@ export function startApp(): void {
     const lang = getLang();
     document.documentElement.lang = lang;
     applyStaticTranslations();
-    document.querySelector('meta[name="description"]')?.setAttribute('content', t('meta.description'));
     for (const node of document.querySelectorAll<HTMLElement>('[data-density]')) {
       const id = node.dataset['density'];
       if (isMaterialId(id)) node.textContent = formatNumber(MATERIALS[id].density, 2);

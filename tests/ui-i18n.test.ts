@@ -17,6 +17,7 @@ import { binaryStl, cubeTriangles, toPositions } from './helpers/mesh';
 import { pageTexts as pdfTexts } from './helpers/pdf-text';
 
 const html = readFileSync(join(process.cwd(), 'index.html'), 'utf8');
+const head = html.match(/<head>([\s\S]*)<\/head>/)?.[1] ?? '';
 const body = (html.match(/<body>([\s\S]*)<\/body>/)?.[1] ?? '').replace(/<script[\s\S]*?<\/script>/g, '');
 const renderQuotePdf = (doc: Parameters<typeof render>[0]): Promise<Uint8Array> => render(doc, testFonts);
 const $ = <T extends HTMLElement = HTMLElement>(id: string): T => document.getElementById(id) as T;
@@ -41,7 +42,7 @@ describe('interfaz en inglés', () => {
     window.localStorage.clear();
     document.body.innerHTML = body;
     document.documentElement.lang = 'es';
-    document.head.innerHTML = '<meta name="description" content="" />';
+    document.head.innerHTML = head;
     const stl = binaryStl(cubeTriangles(300)); // no cabe en la cama: hay un aviso
     vi.stubGlobal('fetch', vi.fn(async () => new Response(stl.slice(0))));
   });
@@ -70,6 +71,9 @@ describe('interfaz en inglés', () => {
     expect($('file-name').textContent).toBe('No part loaded');
     expect(document.title).toBe('printquote · 3D print quote');
     expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toMatch(/^Drop an STL/);
+    expect(document.querySelector('meta[property="og:title"]')?.getAttribute('content')).toBe('printquote · 3D print quote');
+    expect(document.querySelector('meta[name="twitter:description"]')?.getAttribute('content')).toMatch(/^Drop an STL/);
+    expect(document.querySelector('meta[property="og:locale"]')?.getAttribute('content')).toBe('en_GB');
     expect($<HTMLSelectElement>('in-printer').options[0]?.text).toBe('Custom');
     expect(document.querySelector('button[data-lang="en"]')?.getAttribute('aria-pressed')).toBe('true');
     expect($('stage-legend').textContent).toBe('Grid 10 mm · Bed 220 × 220 × 250 mm');
@@ -207,7 +211,7 @@ describe('idioma en caliente: textos ocultos o para lectores de pantalla', () =>
     vi.stubGlobal('Worker', undefined);
     window.localStorage.clear();
     document.body.innerHTML = body;
-    document.head.innerHTML = '<meta name="description" content="" />';
+    document.head.innerHTML = head;
     vi.stubGlobal('fetch', vi.fn(async () => new Response(binaryStl(cubeTriangles(20)).slice(0))));
   });
   afterEach(() => {

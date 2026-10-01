@@ -1,13 +1,16 @@
 # MEMORY.md · printquote
-Última actualización: 2026-09-30 por builder (v0.3.0, #17)
+Última actualización: 2026-09-30 por builder (v0.3.0, #18)
 
 ## Estado actual
 
 ### v0.3.0 (hito en curso; builder: #17 a #22, una rama y un PR por issue, cada rama parte de la anterior)
 - #17 PDF con fuente incrustada (rama `agent/builder/17-pdf-fuente`): hecho, ver abajo.
-- #18 a #22: pendientes.
+- #18 Metadatos en inglés (rama `agent/builder/18-metadatos-en`): hecho, ver abajo.
+- #19 a #22: pendientes.
 
 **#17 PDF con fuente incrustada.** `src/pdf/fonts.ts` (`loadFonts`: `fetch` de cuatro `.ttf` con `new URL(…, import.meta.url)`, que Vite emite como recursos aparte), `src/pdf/fonts/` (las cuatro fuentes y las licencias OFL) y `render.ts` (`pdf.registerFontkit(fontkit)`, `embedFont(bytes, { subset: true })`; `renderQuotePdf(doc, fontBytes?)` acepta las fuentes ya cargadas, que es como lo prueban los tests). La transcripción sin marcas (ǎ → a) y el «?» final siguen para lo que las fuentes no cubren. Los tests leen el texto del PDF con la tabla ToUnicode (`tests/helpers/pdf-text.ts`): el PDF ya no lleva cadenas WinAnsi sino identificadores de glifo.
+
+**#18 Metadatos.** Las `<meta>` de la cabecera (`description`, `og:title`, `og:description`, `og:image:alt`, `og:locale` y las nuevas `twitter:title/description/image/image:alt`) llevan `data-i18n-attr="content:meta.xxx"` y las pinta `applyStaticTranslations` como el resto del HTML estático (se eliminó la línea suelta de `app.ts` que solo cambiaba `description`). Claves nuevas: `meta.ogImageAlt`, `meta.ogLocale` (`es_ES` / `en_GB`). El test de «el HTML coincide con el diccionario» ahora incluye la cabecera. Límite: el HTML servido sigue en español; los rastreadores que no ejecutan JS (la mayoría de los que generan vistas previas) ven el español, y solo el navegador cambia las etiquetas.
 
 ### v0.2.0 (fusionado en `main`, PR #11 a #16)
 Una rama y un PR por issue, cada rama parte de la anterior y todos van contra `main`:
@@ -102,7 +105,7 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 (builder, #8): i18n sin dependencias: diccionarios planos tipados por `Key = keyof typeof es` (mejor que anidados: búsqueda trivial, `t('clave')` verificado por el compilador). Tests: mismas claves y mismos marcadores en `es`/`en`, ningún texto vacío, ninguna frase larga idéntica en los dos idiomas, ninguna clave huérfana, todas las claves que pide el código existen, y el texto español del HTML estático coincide con `es.ts` (así el HTML sirve de valor por defecto sin JS y no se desvía).
 - 2026-09-30 (builder, #8): Idioma inicial: guardado → primer idioma del navegador que sea `es` o `en` → si el navegador declara otros (fr, de…), **inglés** → si no declara ninguno, español. Los tests fijan `navigator.language = es-ES` en `tests/setup.ts` (happy-dom dice `en-US`).
 - 2026-09-30 (builder, #8): Los errores de lectura pasan de mensajes a `ModelParseError(code, params)`; su `message` sigue siendo español (registros, pruebas y `tests/*`), y la interfaz traduce `code`+`params` en el idioma activo (también los avisos abiertos se vuelven a pintar al cambiar de idioma). El worker envía `{ code, params }` en lugar de un `boolean`; carga solo `es.ts` (no el inglés).
-- 2026-09-30 (builder, #8): La moneda no depende del idioma: siempre euros (`€`), solo cambia el formato (`12,34 €` / `€12.34`). Las unidades («mm», «g», «kWh»…) no se traducen; sí «uds.» → «pcs» y «días» → «days». Los metadatos Open Graph y Twitter del `<head>` siguen en español (los leen rastreadores sin JS); título y descripción sí cambian en el navegador.
+- 2026-09-30 (builder, #8): La moneda no depende del idioma: siempre euros (`€`), solo cambia el formato (`12,34 €` / `€12.34`). Las unidades («mm», «g», «kWh»…) no se traducen; sí «uds.» → «pcs» y «días» → «days». Los metadatos Open Graph y Twitter del `<head>` siguen en español en el HTML servido (los leen rastreadores sin JS); **desde #18 cambian con el idioma en el navegador** (ver v0.3.0).
 - 2026-09-30 (builder, #8): El JS inicial pasa de ~50 kB a ~77 kB (27 kB gzip) por los dos diccionarios; sigue siendo pequeño frente al visor (139 kB gzip) y al PDF (178 kB gzip), que se cargan bajo demanda.
 - 2026-09-30 (qa, #9): Sin fuente incrustada en el PDF: pdf-lib no trae ninguna con cobertura amplia y fontkit + TTF añadiría una dependencia y cientos de kB; se transcribe lo latino y el resto es «?». Unidad 3MF desconocida = error, no milímetros. IVA limitado a 2 decimales.
 - 2026-09-30 (qa): Imagen Open Graph = copia de `docs/captura.png` en `public/og.png` (1440 × 900), URL absoluta de GitHub Pages.
@@ -128,7 +131,7 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - Modelo de coste simplificado: no incluye soportes, balsa ni purga; la cáscara (área × grosor) sobreestima en piezas muy detalladas.
 - Los OBJ y 3MF no se han probado con archivos reales de laminadores (solo con los construidos en los tests y una prueba manual en Chrome).
 - PDF: una página; sin campo de cliente. Revisar el PDF impreso/abierto en distintos visores (solo se ha comprobado renderizado con PyMuPDF y la descarga en Chrome).
-- Las notas de impresora y demás textos están traducidos, pero `docs/USO.md` y el README siguen solo en español (documentación); los meta Open Graph también. `docs/captura.png` muestra la interfaz de la v0.1.0.
+- Las notas de impresora y demás textos están traducidos, pero `docs/USO.md` y el README siguen solo en español (documentación); los meta Open Graph del HTML servido también (en el navegador sí cambian). `docs/captura.png` muestra la interfaz de la v0.1.0.
 - El bloque del emisor del PDF se recorta a 10 líneas por el final: una dirección muy larga puede tapar teléfono, correo y web (está documentado en `docs/USO.md`).
 - Mallas muy grandes (> 400 000 triángulos) no dibujan las aristas marcadas, por rendimiento. Con mallas grandes (< 400 000) el `EdgesGeometry` y las normales del visor se calculan aún en el hilo principal (unos cientos de ms de bloqueo tras la lectura).
 - Si falla la lectura de un archivo, se mantiene la pieza anterior en pantalla junto al aviso de error (intencionado, pero puede confundir).
@@ -147,3 +150,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 qa · Claude Code Sonnet (agent/qa-9-revision-v0.2): revisión de v0.2.0 (#9): OBJ cóncavo/índices, PDF (transcripción, IVA, dirección), 3MF/ZIP (unidades, ZIP64), idioma en caliente, contraste y 360 px; PR #15.
 - 2026-09-30 docs · Claude Code Sonnet (agent/docs-10-documentacion-v0.2): #10 documentación de v0.2.0 (`CHANGELOG.md`, `docs/USO.md`, README, CONTRIBUTING y este archivo); sin cambios de código; PR #16 (después de #15).
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder/17-pdf-fuente): #17 PDF con fuente incrustada (Noto Sans + JetBrains Mono subconjunto, fontkit bajo demanda, tests de cirílico y griego con lectura ToUnicode, docs).
+- 2026-09-30 builder · Claude Code Sonnet (agent/builder/18-metadatos-en): #18 metadatos Open Graph y Twitter traducidos con `data-i18n-attr`, `twitter:*` completos, tests en los dos idiomas.
