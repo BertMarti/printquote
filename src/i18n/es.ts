@@ -149,6 +149,7 @@ export const es = {
   'summary.line': '{copies} · {material} {infill} % · {time} (estimación)',
   'action.copy': 'Copiar presupuesto',
   'action.print': 'Imprimir',
+  'action.print.batch': 'Imprimir lote',
   'action.pdf': 'Descargar PDF',
   'copy.done': 'Copiado',
   'copy.failed': 'No se pudo copiar',

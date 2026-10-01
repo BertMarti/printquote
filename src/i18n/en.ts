@@ -145,6 +145,7 @@ export const en: Record<Key, string> = {
   'summary.line': '{copies} · {material} {infill} % · {time} (estimate)',
   'action.copy': 'Copy quote',
   'action.print': 'Print',
+  'action.print.batch': 'Print batch',
   'action.pdf': 'Download PDF',
   'copy.done': 'Copied',
   'copy.failed': 'Could not copy',
