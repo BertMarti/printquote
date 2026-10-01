@@ -1,5 +1,6 @@
 import { tIn, type Key, type Lang } from '../i18n';
 import type { MeshStats } from '../stl/types';
+import { BATCH_MAX, computeBatch, type BatchPart } from './batch';
 import type { Quote } from './model';
 import { getPrinter } from './printers';
 import { normalizeSettings, type QuoteSettings } from './settings';
@@ -21,18 +22,27 @@ export interface HistoryResult {
   readonly total: number;
 }
 
-/** Un presupuesto guardado. Nunca lleva el archivo 3D ni su malla, ni los datos del negocio. */
-export interface HistoryEntry {
-  readonly id: string;
-  /** Fecha y hora (ISO 8601, UTC). */
-  readonly savedAt: string;
+/** Una pieza guardada, con los ajustes y el resultado del momento. Nunca lleva el archivo 3D ni su malla. */
+export interface HistoryPart {
   readonly fileName: string;
-  readonly client: string;
   readonly volumeMm3: number;
   readonly size: { readonly x: number; readonly y: number; readonly z: number };
   readonly triangles: number;
   readonly settings: QuoteSettings;
   readonly result: HistoryResult;
+}
+
+/**
+ * Un presupuesto guardado (nunca lleva los datos del negocio). En un lote, `parts` trae cada pieza y los campos de
+ * primer nivel son el agregado: nombres unidos, volumen y triángulos sumados, medidas máximas por eje, los ajustes de
+ * la primera pieza y el resultado de todo el lote.
+ */
+export interface HistoryEntry extends HistoryPart {
+  readonly id: string;
+  /** Fecha y hora (ISO 8601, UTC). */
+  readonly savedAt: string;
+  readonly client: string;
+  readonly parts?: readonly HistoryPart[];
 }
 
 export interface NewEntryInput {
@@ -54,17 +64,13 @@ function newId(): string {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function createEntry(input: NewEntryInput): HistoryEntry {
-  const { stats, quote } = input;
+function toPart(fileName: string, stats: MeshStats, settings: QuoteSettings, quote: Quote): HistoryPart {
   return {
-    id: input.id ?? newId(),
-    savedAt: (input.now ?? new Date()).toISOString(),
-    fileName: input.fileName.slice(0, FILE_NAME_MAX),
-    client: cleanClient(input.client),
+    fileName: fileName.slice(0, FILE_NAME_MAX),
     volumeMm3: stats.volume,
     size: { x: stats.bounds.size.x, y: stats.bounds.size.y, z: stats.bounds.size.z },
     triangles: stats.triangleCount,
-    settings: input.settings,
+    settings,
     result: {
       weightGrams: quote.totalWeightGrams,
       hours: quote.totalHours,
@@ -74,6 +80,50 @@ export function createEntry(input: NewEntryInput): HistoryEntry {
       subtotal: quote.subtotal,
       total: quote.total,
     },
+  };
+}
+
+export function createEntry(input: NewEntryInput): HistoryEntry {
+  return {
+    id: input.id ?? newId(),
+    savedAt: (input.now ?? new Date()).toISOString(),
+    client: cleanClient(input.client),
+    ...toPart(input.fileName, input.stats, input.settings, input.quote),
+  };
+}
+
+export interface NewBatchEntryInput {
+  readonly client: string;
+  readonly parts: readonly BatchPart[];
+  readonly now?: Date;
+  readonly id?: string;
+}
+
+/** Entrada de un lote: cada pieza con sus ajustes y su resultado, y el agregado en el primer nivel (ver `HistoryEntry`). */
+export function createBatchEntry(input: NewBatchEntryInput): HistoryEntry {
+  const first = input.parts[0];
+  if (!first) throw new Error('Un lote vacío no se guarda');
+  const totals = computeBatch(input.parts);
+  const max = (axis: 'x' | 'y' | 'z'): number => Math.max(...input.parts.map((part) => part.stats.bounds.size[axis]));
+  return {
+    id: input.id ?? newId(),
+    savedAt: (input.now ?? new Date()).toISOString(),
+    client: cleanClient(input.client),
+    fileName: input.parts.map((part) => part.fileName).join(', ').slice(0, FILE_NAME_MAX),
+    volumeMm3: input.parts.reduce((acc, part) => acc + part.stats.volume, 0),
+    size: { x: max('x'), y: max('y'), z: max('z') },
+    triangles: input.parts.reduce((acc, part) => acc + part.stats.triangleCount, 0),
+    settings: first.settings,
+    result: {
+      weightGrams: totals.weightGrams,
+      hours: totals.hours,
+      materialCost: totals.materialCost,
+      energyCost: totals.energyCost,
+      marginAmount: totals.marginAmount,
+      subtotal: totals.subtotal,
+      total: totals.total,
+    },
+    parts: input.parts.map((part) => toPart(part.fileName, part.stats, part.settings, part.quote)),
   };
 }
 
@@ -92,13 +142,11 @@ const isObject = (value: unknown): value is Record<string, unknown> => typeof va
 
 const RESULT_FIELDS = ['weightGrams', 'hours', 'materialCost', 'energyCost', 'marginAmount', 'subtotal', 'total'] as const;
 
-/** Una entrada válida o `null`. Lo que viene de `localStorage` se valida campo a campo. */
-function normalizeEntry(raw: unknown): HistoryEntry | null {
+/** Una pieza válida o `null`. Lo que viene de `localStorage` se valida campo a campo. */
+function normalizePart(raw: unknown): HistoryPart | null {
   if (!isObject(raw) || !isObject(raw['result']) || !isObject(raw['size'])) return null;
-  const { id, savedAt, fileName, client, volumeMm3, triangles } = raw;
-  if (typeof id !== 'string' || id === '' || id.length > 100) return null;
-  if (typeof savedAt !== 'string' || Number.isNaN(Date.parse(savedAt))) return null;
-  if (typeof fileName !== 'string' || typeof client !== 'string') return null;
+  const { fileName, volumeMm3, triangles } = raw;
+  if (typeof fileName !== 'string') return null;
   if (!isFiniteNumber(volumeMm3) || !isFiniteNumber(triangles)) return null;
 
   const { x, y, z } = raw['size'];
@@ -107,16 +155,30 @@ function normalizeEntry(raw: unknown): HistoryEntry | null {
   if (!RESULT_FIELDS.every((key) => isFiniteNumber(result[key]))) return null;
 
   return {
-    id,
-    savedAt,
     fileName: fileName.slice(0, FILE_NAME_MAX),
-    client: cleanClient(client),
     volumeMm3,
     size: { x, y, z },
     triangles,
     settings: normalizeSettings(raw['settings']),
     result: Object.fromEntries(RESULT_FIELDS.map((key) => [key, result[key]])) as unknown as HistoryResult,
   };
+}
+
+/** Una entrada válida o `null`. Un lote con una sola pieza rota (o vacío, o enorme) se descarta entero. */
+function normalizeEntry(raw: unknown): HistoryEntry | null {
+  const part = normalizePart(raw);
+  if (!part || !isObject(raw)) return null;
+  const { id, savedAt, client } = raw;
+  if (typeof id !== 'string' || id === '' || id.length > 100) return null;
+  if (typeof savedAt !== 'string' || Number.isNaN(Date.parse(savedAt))) return null;
+  if (typeof client !== 'string') return null;
+  const base = { id, savedAt, client: cleanClient(client), ...part };
+  if (raw['parts'] === undefined) return base;
+
+  const list = raw['parts'];
+  if (!Array.isArray(list) || list.length === 0 || list.length > BATCH_MAX) return null;
+  const parts = list.map(normalizePart);
+  return parts.every((item) => item !== null) ? { ...base, parts } : null;
 }
 
 /** Lista válida a partir de lo leído: descarta una a una las entradas rotas y las repetidas. */
@@ -173,29 +235,32 @@ export function historyToCsv(entries: readonly HistoryEntry[], lang: Lang): stri
     return decimal(rounded, Number.isInteger(rounded) ? 0 : 1);
   };
 
-  const rows = entries.map((entry) => {
-    const { settings, result, size } = entry;
-    return [
-      localDate(entry.savedAt),
-      text(entry.client),
-      text(entry.fileName),
-      decimal(entry.volumeMm3 / 1000, 2),
-      decimal(size.x, 1),
-      decimal(size.y, 1),
-      decimal(size.z, 1),
-      text(settings.material),
-      text(getPrinter(settings.printerId)?.name ?? tIn(lang, 'printer.custom')),
-      compact(settings.infillPercent),
-      String(settings.perimeters),
-      String(settings.copies),
-      decimal(result.weightGrams, 1),
-      decimal(result.hours, 2),
-      decimal(result.materialCost, 2),
-      decimal(result.energyCost, 2),
-      decimal(result.marginAmount, 2),
-      decimal(result.total, 2),
-    ].join(separator);
-  });
+  // Un lote da una fila por pieza (misma fecha y cliente): la columna «Total» de la hoja suma lo presupuestado.
+  const rows = entries.flatMap((entry) =>
+    (entry.parts ?? [entry]).map((piece) => {
+      const { settings, result, size } = piece;
+      return [
+        localDate(entry.savedAt),
+        text(entry.client),
+        text(piece.fileName),
+        decimal(piece.volumeMm3 / 1000, 2),
+        decimal(size.x, 1),
+        decimal(size.y, 1),
+        decimal(size.z, 1),
+        text(settings.material),
+        text(getPrinter(settings.printerId)?.name ?? tIn(lang, 'printer.custom')),
+        compact(settings.infillPercent),
+        String(settings.perimeters),
+        String(settings.copies),
+        decimal(result.weightGrams, 1),
+        decimal(result.hours, 2),
+        decimal(result.materialCost, 2),
+        decimal(result.energyCost, 2),
+        decimal(result.marginAmount, 2),
+        decimal(result.total, 2),
+      ].join(separator);
+    }),
+  );
   const header = COLUMNS.map((key) => text(tIn(lang, key))).join(separator);
   return `\uFEFF${[header, ...rows].join('\r\n')}\r\n`;
 }

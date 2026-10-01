@@ -285,7 +285,7 @@ El bloque **06 Lote** (plegable) sirve para pedidos con varias piezas distintas:
 - **Copiar lote** copia un texto con todas las piezas (una sección por pieza con su importe) y el desglose y el total del lote.
 - **PDF del lote** descarga un único presupuesto con la tabla de todas las piezas (pieza, material, copias, peso, tiempo e importe), el desglose del lote y el **IVA calculado una sola vez sobre la suma**. No lleva la vista 3D (mostraría una sola pieza). Con muchas piezas pasa a **varias páginas** (la cabecera de la tabla se repite y cada página lleva «Página n de N»). Usa los datos del negocio y el número de presupuesto igual que el PDF de una pieza, y el número también sube al descargarlo.
 - Los botones «Copiar presupuesto», «Imprimir» y «Descargar PDF» de abajo siguen siendo **de la pieza cargada**; los del lote son los de su bloque.
-- El lote vive solo en la página abierta: si la recargas, se pierde (el historial lo conserva; ver más abajo).
+- El lote vive solo en la página abierta: si la recargas, se pierde. Para conservarlo, **Guardar lote** (en el bloque **08 Presupuestos**, junto a «Guardar este presupuesto»; usa el mismo campo de cliente): el historial guarda cada pieza con sus ajustes y el total del lote. Un lote guardado se ve como «Lote de N piezas», **no tiene «Abrir»** (no se guarda la geometría de las piezas, así que no se puede reconstruir) y se borra como cualquier otro presupuesto.
 
 ## 10. Copiar, imprimir y descargar el presupuesto en PDF
 
@@ -305,7 +305,7 @@ El bloque **08 Presupuestos** (plegado por defecto; el número entre paréntesis
 2. Cada presupuesto aparece en la lista con la pieza, la fecha, el cliente, el material y el total (sin IVA, tal como salió).
 3. **Abrir** restaura todos los parámetros (material, precios, impresora, relleno, copias…) y el cliente. El archivo 3D **no se guarda**: si no hay pieza cargada, arrastra la pieza para recalcular; si ya hay una, se recalcula con ella (el total puede diferir del guardado si la pieza es otra).
 4. **Borrar** quita un presupuesto; **Borrar todos** pide confirmar con un segundo clic.
-5. **Exportar CSV** descarga `presupuestos-AAAA-MM-DD.csv` con una fila por presupuesto (fecha, cliente, pieza, volumen, medidas, material, impresora, relleno, perímetros, copias, peso, tiempo, costes, margen y total sin IVA). En español usa `;` y coma decimal (lo que abre bien Excel en español); en inglés, `,` y punto. Los textos que una hoja de cálculo podría tomar por fórmula (los que empiezan por `=`, `+`, `-` o `@`) llevan un apóstrofo delante para que no se ejecuten.
+5. **Exportar CSV** descarga `presupuestos-AAAA-MM-DD.csv` con una fila por presupuesto (un lote da **una fila por pieza**, con la misma fecha y cliente, así que la columna del total suma lo presupuestado) (fecha, cliente, pieza, volumen, medidas, material, impresora, relleno, perímetros, copias, peso, tiempo, costes, margen y total sin IVA). En español usa `;` y coma decimal (lo que abre bien Excel en español); en inglés, `,` y punto. Los textos que una hoja de cálculo podría tomar por fórmula (los que empiezan por `=`, `+`, `-` o `@`) llevan un apóstrofo delante para que no se ejecuten.
 
 **Límites:** se guardan como máximo **100** presupuestos (al guardar el 101.º se descarta el más antiguo y se avisa); el cliente admite 80 caracteres. Si el navegador no deja guardar (sin espacio o modo privado) se avisa y lo que ya tenías sigue ahí. Los presupuestos están **solo en este navegador**: no se sincronizan entre dispositivos ni se envían a ningún sitio.
 

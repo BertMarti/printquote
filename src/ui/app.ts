@@ -734,6 +734,7 @@ export function startApp(demoScale = 1): void {
   // ── Historial de presupuestos ──
   history = setupHistory({
     current: () => (part && quote ? { fileName: part.fileName, stats: part.stats, quote, settings } : null),
+    batch: () => batch?.parts() ?? [],
     applySettings,
     announce,
     showNotice: (title, message) => showNotice(() => [title, message]),
