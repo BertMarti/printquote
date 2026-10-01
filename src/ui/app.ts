@@ -143,6 +143,8 @@ export function startApp(demoScale = 1): void {
   let settings = loadSettings();
   let business = loadBusiness();
   let pdfBusy = false;
+  /** Botón que lanzó el PDF en curso: conserva «Generando…» si cambia el idioma. */
+  let pdfTrigger: HTMLButtonElement | null = null;
   let part: LoadedPart | null = null;
   /** Se aplicaron los parámetros de un enlace y aún no hay pieza: el estado vacío lo dice. */
   let sharedApplied = false;
@@ -682,6 +684,7 @@ export function startApp(demoScale = 1): void {
   /** Genera y descarga un PDF (el de la pieza o el del lote): comparten el estado de «ocupado», el aviso de fallo y el nº. */
   const runPdf = (trigger: HTMLButtonElement, idleKey: Key, issuer: BusinessProfile, build: () => QuoteDocument): void => {
     pdfBusy = true;
+    pdfTrigger = trigger;
     pdfButton.disabled = batchPdfButton.disabled = true;
     trigger.textContent = t('pdf.generating');
     announce(t('pdf.generating.announce'));
@@ -703,6 +706,7 @@ export function startApp(demoScale = 1): void {
         showNotice(() => [t('pdf.failed.title'), t(fonts ? 'pdf.failed.fonts' : 'pdf.failed.text')]);
       } finally {
         pdfBusy = false;
+        pdfTrigger = null;
         trigger.textContent = t(idleKey);
         pdfButton.disabled = !part;
         batchPdfButton.disabled = (batch?.parts().length ?? 0) === 0;
@@ -858,7 +862,7 @@ export function startApp(demoScale = 1): void {
     batch?.render();
     shareButton.textContent = t('share.copy');
     if (noticeBuilder) showNotice(noticeBuilder);
-    if (!pdfBusy) pdfButton.textContent = t('action.pdf');
+    if (pdfTrigger) pdfTrigger.textContent = t('pdf.generating');
     render();
   }
 

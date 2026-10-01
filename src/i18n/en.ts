@@ -308,6 +308,7 @@ export const en: Record<Key, string> = {
   'batch.remove': 'Remove',
   'batch.remove.label': 'Remove {name} from the batch',
   'batch.added': 'Part added to the batch: {name}. {n} in the batch; total {total}.',
+  'batch.added.full': 'Part added to the batch: {name}. Batch full ({max} parts); total {total}.',
   'batch.removed': 'Part removed from the batch: {name}. {n} left; total {total}.',
   'batch.removed.empty': 'Part removed from the batch: {name}. The batch is empty.',
   'batch.sum.parts': 'Parts',

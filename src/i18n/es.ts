@@ -314,6 +314,7 @@ export const es = {
   'batch.remove': 'Quitar',
   'batch.remove.label': 'Quitar {name} del lote',
   'batch.added': 'Pieza añadida al lote: {name}. Hay {n} en el lote; total {total}.',
+  'batch.added.full': 'Pieza añadida al lote: {name}. Lote lleno ({max} piezas); total {total}.',
   'batch.removed': 'Pieza quitada del lote: {name}. Quedan {n}; total {total}.',
   'batch.removed.empty': 'Pieza quitada del lote: {name}. El lote está vacío.',
   'batch.sum.parts': 'Piezas',

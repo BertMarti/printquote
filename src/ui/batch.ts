@@ -122,6 +122,12 @@ export function setupBatch(host: BatchHost): { render(): void; sync(): void; par
     parts = [...parts, part];
     details.open = true;
     change();
+    if (parts.length >= BATCH_MAX) {
+      // «Añadir» queda desactivado: el foco pasa a «Copiar lote» (el siguiente paso natural) y se avisa de que está lleno.
+      byId('batch-copy').focus();
+      host.announce(t('batch.added.full', { name: part.fileName, max: BATCH_MAX, total: totalText() }));
+      return;
+    }
     host.announce(t('batch.added', { name: part.fileName, n: parts.length, total: totalText() }));
   });
 

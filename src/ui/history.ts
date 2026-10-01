@@ -19,9 +19,9 @@ import { loadHistory, saveHistory } from './storage';
 export interface HistoryHost {
   /** La pieza cargada y su presupuesto, o `null` si no hay. */
   current(): { fileName: string; stats: MeshStats; quote: Quote; settings: QuoteSettings } | null;
-  /** Aplica unos ajustes a la interfaz (y los guarda como los de trabajo). */
   /** Las piezas del lote (vacío si no hay lote). */
   batch(): readonly BatchPart[];
+  /** Aplica unos ajustes a la interfaz (y los guarda como los de trabajo). */
   applySettings(settings: QuoteSettings): void;
   announce(message: string): void;
   showNotice(title: string, message: string): void;
@@ -80,7 +80,7 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
     const kind = entry.parts ? t('hist.batch.meta', { n: entry.parts.length }) : entry.settings.material;
     meta.textContent = [formatDate(entry.savedAt), entry.client, kind].filter((part) => part !== '').join(' · ');
 
-    const label = { name: entry.fileName, date: formatDate(entry.savedAt) };
+    const label = { name: entry.parts ? t('hist.batch.name', { n: entry.parts.length }) : entry.fileName, date: formatDate(entry.savedAt) };
     const action = (kind: 'open' | 'delete'): HTMLButtonElement => {
       const button = document.createElement('button');
       button.type = 'button';

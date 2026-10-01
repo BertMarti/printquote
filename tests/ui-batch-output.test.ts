@@ -108,4 +108,15 @@ describe('lote: copiar y PDF en la interfaz', () => {
     expect(button('pdf-button').disabled).toBe(false);
     expect($<HTMLInputElement>('in-biz-number').value).toBe('2026-101');
   });
+
+  it('cambiar de idioma con el PDF del lote en curso conserva «Generando…» en su botón', async () => {
+    button('batch-add').click();
+    button('batch-pdf').click();
+    expect(button('batch-pdf').textContent).toBe('Generando PDF…');
+    document.querySelector<HTMLButtonElement>('button[data-lang="en"]')?.click();
+    expect(button('batch-pdf').textContent).toBe('Creating PDF…');
+    expect(button('pdf-button').textContent).toBe('Download PDF');
+    await until(() => !button('batch-pdf').disabled);
+    expect(button('batch-pdf').textContent).toBe('Batch PDF');
+  });
 });
