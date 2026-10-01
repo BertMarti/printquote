@@ -1,6 +1,6 @@
 import { tIn, type Key, type Lang } from '../i18n';
 import type { MeshStats } from '../stl/types';
-import { BATCH_MAX, computeBatch, type BatchPart } from './batch';
+import { BATCH_MAX, computeBatch, makePart, type BatchPart } from './batch';
 import type { Quote } from './model';
 import { getPrinter } from './printers';
 import { normalizeSettings, type QuoteSettings } from './settings';
@@ -28,6 +28,8 @@ export interface HistoryPart {
   readonly volumeMm3: number;
   readonly size: { readonly x: number; readonly y: number; readonly z: number };
   readonly triangles: number;
+  /** Área de superficie en mm²: con ella y el volumen `computeQuote` recalcula la línea al reabrir un lote. Las entradas de v0.6 no la traen. */
+  readonly surfaceMm2?: number;
   readonly settings: QuoteSettings;
   readonly result: HistoryResult;
 }
@@ -70,6 +72,7 @@ function toPart(fileName: string, stats: MeshStats, settings: QuoteSettings, quo
     volumeMm3: stats.volume,
     size: { x: stats.bounds.size.x, y: stats.bounds.size.y, z: stats.bounds.size.z },
     triangles: stats.triangleCount,
+    surfaceMm2: stats.surfaceArea,
     settings,
     result: {
       weightGrams: quote.totalWeightGrams,
@@ -81,6 +84,33 @@ function toPart(fileName: string, stats: MeshStats, settings: QuoteSettings, quo
       total: quote.total,
     },
   };
+}
+
+/** La línea de un lote tal como se guarda (lote persistido y entrada del historial). */
+export const partToHistory = (part: BatchPart): HistoryPart => toPart(part.fileName, part.stats, part.settings, part.quote);
+
+/**
+ * Líneas de un lote a partir de lo guardado, o `null` si alguna pieza no trae el área (entradas de v0.6).
+ * Cada línea se recalcula con `computeQuote` (vía `makePart`): no se copia ningún importe. Lo que no se guarda
+ * (esquina de la caja, aristas abiertas, volumen con signo) toma valores neutros.
+ */
+export function batchFromParts(list: readonly HistoryPart[]): BatchPart[] | null {
+  const parts: BatchPart[] = [];
+  for (const saved of list) {
+    if (saved.surfaceMm2 === undefined) return null;
+    const { x, y, z } = saved.size;
+    const zero = { x: 0, y: 0, z: 0 };
+    const stats = {
+      triangleCount: saved.triangles,
+      volume: saved.volumeMm3,
+      signedVolume: saved.volumeMm3,
+      surfaceArea: saved.surfaceMm2,
+      bounds: { min: zero, max: { x, y, z }, size: { x, y, z } },
+      openEdges: 0,
+    };
+    parts.push(makePart(saved.fileName, stats, saved.settings));
+  }
+  return parts;
 }
 
 export function createEntry(input: NewEntryInput): HistoryEntry {
@@ -153,12 +183,15 @@ function normalizePart(raw: unknown): HistoryPart | null {
   const result = raw['result'];
   if (!isFiniteNumber(x) || !isFiniteNumber(y) || !isFiniteNumber(z)) return null;
   if (!RESULT_FIELDS.every((key) => isFiniteNumber(result[key]))) return null;
+  const surface = raw['surfaceMm2'];
+  if (surface !== undefined && (!isFiniteNumber(surface) || surface < 0)) return null;
 
   return {
     fileName: fileName.slice(0, FILE_NAME_MAX),
     volumeMm3,
     size: { x, y, z },
     triangles,
+    ...(surface === undefined ? {} : { surfaceMm2: surface }),
     settings: normalizeSettings(raw['settings']),
     result: Object.fromEntries(RESULT_FIELDS.map((key) => [key, result[key]])) as unknown as HistoryResult,
   };
@@ -175,10 +208,21 @@ function normalizeEntry(raw: unknown): HistoryEntry | null {
   const base = { id, savedAt, client: cleanClient(client), ...part };
   if (raw['parts'] === undefined) return base;
 
-  const list = raw['parts'];
+  const parts = normalizeParts(raw['parts']);
+  return parts ? { ...base, parts } : null;
+}
+
+/** Las piezas de un lote (1 a `BATCH_MAX`), o `null` si falta alguna o hay una rota. */
+function normalizeParts(list: unknown): HistoryPart[] | null {
   if (!Array.isArray(list) || list.length === 0 || list.length > BATCH_MAX) return null;
   const parts = list.map(normalizePart);
-  return parts.every((item) => item !== null) ? { ...base, parts } : null;
+  return parts.every((item) => item !== null) ? parts : null;
+}
+
+/** El lote persistido: como el historial, pero cada pieza debe traer el área (es lo que permite recalcularla). */
+export function normalizeBatchParts(list: unknown): HistoryPart[] | null {
+  const parts = normalizeParts(list);
+  return parts?.every((part) => part.surfaceMm2 !== undefined) ? parts : null;
 }
 
 /** Lista válida a partir de lo leído: descarta una a una las entradas rotas y las repetidas. */

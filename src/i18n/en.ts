@@ -298,7 +298,7 @@ export const en: Record<Key, string> = {
   // ── Batch (orders with several parts) ──
   'batch.title': 'Batch',
   'batch.intro':
-    'For orders with several parts: set up one part, add it to the batch and move on to the next. Each line keeps the settings it was added with. The batch is not kept when you reload the page.',
+    'For orders with several parts: set up one part, add it to the batch and move on to the next. Each line keeps the settings it was added with. The batch is saved in this browser and comes back when you reload the page.',
   'batch.add': 'Add this part',
   'batch.add.price': 'Add this part · {price}',
   'batch.full': 'Batch full ({max} parts)',

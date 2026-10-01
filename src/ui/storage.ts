@@ -1,6 +1,7 @@
 import { isLang, type Lang } from '../i18n';
 import { normalizeBusiness, type BusinessProfile } from '../quote/business';
-import { normalizeHistory, type HistoryEntry } from '../quote/history';
+import type { BatchPart } from '../quote/batch';
+import { batchFromParts, normalizeBatchParts, normalizeHistory, partToHistory, type HistoryEntry } from '../quote/history';
 import { DEFAULT_SETTINGS, normalizeSettings, type QuoteSettings } from '../quote/settings';
 
 const STORAGE_KEY = 'printquote:ajustes:v1';
@@ -100,5 +101,29 @@ export function saveHistory(entries: readonly HistoryEntry[]): boolean {
     return true;
   } catch {
     return false;
+  }
+}
+
+const BATCH_KEY = 'printquote:lote:v1';
+
+/** El lote guardado (vacío si no hay, está corrupto, es de otra versión del esquema o el navegador bloquea el almacenamiento). */
+export function loadBatch(): BatchPart[] {
+  try {
+    const raw = window.localStorage.getItem(BATCH_KEY);
+    const data = (raw ? (JSON.parse(raw) as unknown) : null) as { v?: unknown; parts?: unknown } | null;
+    const saved = data?.v === 1 ? normalizeBatchParts(data.parts) : null;
+    return (saved && batchFromParts(saved)) ?? [];
+  } catch {
+    return [];
+  }
+}
+
+/** Guarda el lote (uno vacío borra la clave). Si no cabe o el navegador no deja, la app sigue sin recordarlo. */
+export function saveBatch(parts: readonly BatchPart[]): void {
+  try {
+    if (parts.length === 0) window.localStorage.removeItem(BATCH_KEY);
+    else window.localStorage.setItem(BATCH_KEY, JSON.stringify({ v: 1, parts: parts.map(partToHistory) }));
+  } catch {
+    // Modo privado o almacenamiento lleno: el lote vive solo en esta sesión.
   }
 }

@@ -158,6 +158,55 @@ describe('lote en la interfaz', () => {
     expect(document.activeElement).toBe(button('batch-copy'));
   });
 
+  it('el lote sobrevive a recargar: mismas líneas y mismo total; vaciarlo borra lo guardado', async () => {
+    await start();
+    type('in-copies', '3');
+    button('batch-add').click();
+    document.querySelector<HTMLInputElement>('input[name="material"][value="PETG"]')?.click();
+    button('batch-add').click();
+    const total = $('out-batch-total').textContent;
+    const names = items().map((item) => item.querySelector('.history-name')?.textContent);
+    expect(window.localStorage.getItem('printquote:lote:v1')).not.toBeNull();
+
+    // «Recargar»: la página vuelve a arrancar sin pieza cargada.
+    await start(false);
+    expect(items()).toHaveLength(2);
+    expect(items().map((item) => item.querySelector('.history-name')?.textContent)).toEqual(names);
+    expect($('out-batch-total').textContent).toBe(total);
+    expect($('batch-count').textContent).toBe('(2)');
+    expect(button('batch-copy').disabled).toBe(false);
+    expect(button('batch-pdf').disabled).toBe(false);
+    expect(button('history-save-batch').disabled).toBe(false);
+    expect($('batch-empty').hidden).toBe(true);
+
+    button('batch-clear').click();
+    button('batch-clear').click();
+    expect(window.localStorage.getItem('printquote:lote:v1')).toBeNull();
+    await start(false);
+    expect(items()).toHaveLength(0);
+    expect(button('batch-copy').disabled).toBe(true);
+  });
+
+  it('un lote guardado corrupto se ignora y la app arranca vacía', async () => {
+    window.localStorage.setItem('printquote:lote:v1', '{"v":1,"parts":[{"fileName":"x"}]}');
+    await start(false);
+    expect(items()).toHaveLength(0);
+    expect($('batch-empty').hidden).toBe(false);
+  });
+
+  it('si no se puede guardar el lote, la lista sigue funcionando', async () => {
+    await start();
+    const set = vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
+      throw new DOMException('lleno', 'QuotaExceededError');
+    });
+    try {
+      button('batch-add').click();
+    } finally {
+      set.mockRestore();
+    }
+    expect(items()).toHaveLength(1);
+  });
+
   it('el nombre del archivo nunca se interpreta como HTML', async () => {
     document.body.innerHTML = body;
     startApp();

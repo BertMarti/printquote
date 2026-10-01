@@ -304,7 +304,7 @@ export const es = {
   // ── Lote (pedidos de varias piezas) ──
   'batch.title': 'Lote',
   'batch.intro':
-    'Para pedidos de varias piezas: ajusta una pieza, añádela al lote y sigue con la siguiente. Cada línea conserva los ajustes con que se añadió. El lote no se conserva al recargar la página.',
+    'Para pedidos de varias piezas: ajusta una pieza, añádela al lote y sigue con la siguiente. Cada línea conserva los ajustes con que se añadió. El lote se guarda en este navegador y vuelve al recargar la página.',
   'batch.add': 'Añadir esta pieza',
   'batch.add.price': 'Añadir esta pieza · {price}',
   'batch.full': 'Lote lleno ({max} piezas)',

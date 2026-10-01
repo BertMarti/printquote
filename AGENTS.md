@@ -23,7 +23,7 @@ Web que calcula el presupuesto de una pieza de impresión 3D: arrastras un STL, 
 - `src/pdf/` presupuesto en PDF: contenido puro en `document.ts` (`buildQuoteDocument`, `buildBatchDocument`) y dibujo con pdf-lib en `render.ts`; un lote lleva `batch` (tabla de piezas a todo el ancho) y el dibujo pasa de página y numera («Página n de N»).
 - `src/viewer/` visor three.js.
 - `src/ui/` panel y controles.
-- `src/ui/batch.ts` bloque «06 Lote» (instantáneas por pieza, en memoria; recibe un `BatchHost`, no importa `app.ts`). El bloque 07 es «Datos del negocio» y el 08, «Presupuestos».
+- `src/ui/batch.ts` bloque «06 Lote» (instantáneas por pieza, persistidas; recibe un `BatchHost`, no importa `app.ts`). El bloque 07 es «Datos del negocio» y el 08, «Presupuestos».
 - `src/ui/demo.ts` modo demo: guion `DEMO_STEPS` en datos y su control; no importa `app.ts`, recibe un `DemoHost` (ver «Modo demo»).
 - `public/samples/` pieza de ejemplo original.
 - `tests/` pruebas unitarias.
@@ -52,7 +52,8 @@ Recorrido guiado de ~13 s (`DEMO_END_MS`) que dirige `src/ui/demo.ts`. El guion 
 ## Lote («06 Lote»)
 Presupuesto de pedidos con varias piezas. Contrato:
 - **Sin fórmula propia**: cada línea es `computeQuote(stats, settings)`; `src/quote/batch.ts` solo suma líneas ya redondeadas a céntimos (`computeBatch`, como una factura) y el IVA se aplica **una vez** sobre la suma (`computeTax`).
-- **Instantánea**: la línea (`BatchPart`) conserva los ajustes con que se añadió; no se edita (quitar y volver a añadir). Máximo `BATCH_MAX` = 50. Solo en memoria.
+- **Instantánea**: la línea (`BatchPart`) conserva los ajustes con que se añadió; no se edita (quitar y volver a añadir). Máximo `BATCH_MAX` = 50.
+- **Persistencia**: el lote se guarda en `localStorage` (`printquote:lote:v1`, `{ v: 1, parts: HistoryPart[] }`; `loadBatch`/`saveBatch` en `ui/storage.ts`). Cada línea se guarda como `HistoryPart` (con `surfaceMm2`, sin geometría) y al leer se valida con las mismas funciones que el historial (`normalizeBatchParts`) y se recalcula con `computeQuote` (`batchFromParts`). Una pieza rota o sin área descarta el lote entero; si no cabe, falla en silencio.
 - **Botones explícitos**: «Copiar presupuesto», «Imprimir», «Descargar PDF» y «Guardar este presupuesto» son de la pieza cargada; el lote tiene «Copiar lote», «PDF del lote» (sin vista 3D, con paginación) y «Guardar lote» (historial). Imprimir no incluye el lote. No hay un «modo» oculto.
 - **Historial**: `HistoryEntry.parts?` (retrocompatible); un lote guardado no se puede abrir (no guarda la geometría) y el CSV lleva una fila por pieza.
 - El enlace para compartir **nunca** lleva el lote.

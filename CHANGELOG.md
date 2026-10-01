@@ -4,6 +4,10 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 
 ## [Sin publicar]
 
+### Añadido
+
+- **El lote sobrevive a recargar** (#51): se guarda en `localStorage` (`printquote:lote:v1`, con versión de esquema) tras cada cambio y se recupera al arrancar. Cada línea se guarda como una pieza del historial (nombre, medidas, ajustes y resultado, **más el área de la superficie**, nunca la geometría) y al leer se valida igual de estrictamente que el historial (una pieza rota, un lote vacío, de más de 50 piezas o de otra versión del esquema se descarta entero) y se recalcula con `computeQuote`. Si el navegador no deja guardar, falla en silencio. `HistoryPart` gana `surfaceMm2` opcional (las entradas antiguas se leen igual).
+
 ### Corregido
 
 - **Imágenes de 0.6.0 (#50)**: la entrada de 0.6.0 decía que `public/og.png` y `docs/captura.png` muestran el bloque «06 Lote»: no es así. Son capturas de la primera pantalla (visor y primeros bloques del panel, que se desplaza): muestran la interfaz actual (cabecera con «Ver demo», perfiles de impresora) pero el bloque 06 queda fuera de ellas.
