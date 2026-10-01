@@ -145,6 +145,7 @@ export const en: Record<Key, string> = {
   'summary.line': '{copies} · {material} {infill} % · {time} (estimate)',
   'action.copy': 'Copy quote',
   'action.print': 'Print',
+  'action.print.batch': 'Print batch',
   'action.pdf': 'Download PDF',
   'copy.done': 'Copied',
   'copy.failed': 'Could not copy',
@@ -224,7 +225,8 @@ export const en: Record<Key, string> = {
   'doc.view3d': '3D view of {name}',
   'doc.fileInfo': '{name} · {format} · {n} triangles',
   'doc.batchPartUpper': 'PART {i} OF {n}',
-  'doc.batchAmount': 'Amount (excl. VAT)',
+  'doc.batchInfo': 'Batch of {n} parts · {copies} copies',
+  'doc.batchAmount':'Amount (excl. VAT)',
   'doc.batchTotalUpper': 'BATCH TOTAL',
 
   // ── PDF ──

@@ -149,6 +149,7 @@ export const es = {
   'summary.line': '{copies} · {material} {infill} % · {time} (estimación)',
   'action.copy': 'Copiar presupuesto',
   'action.print': 'Imprimir',
+  'action.print.batch': 'Imprimir lote',
   'action.pdf': 'Descargar PDF',
   'copy.done': 'Copiado',
   'copy.failed': 'No se pudo copiar',
@@ -230,7 +231,8 @@ export const es = {
   'doc.view3d': 'Vista 3D de {name}',
   'doc.fileInfo': '{name} · {format} · {n} triángulos',
   'doc.batchPartUpper': 'PIEZA {i} DE {n}',
-  'doc.batchAmount': 'Importe (sin IVA)',
+  'doc.batchInfo': 'Lote de {n} piezas · {copies} copias',
+  'doc.batchAmount':'Importe (sin IVA)',
   'doc.batchTotalUpper': 'TOTAL DEL LOTE',
 
   // ── PDF ──

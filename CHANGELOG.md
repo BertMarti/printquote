@@ -4,8 +4,13 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 
 ## [Sin publicar]
 
+## [0.7.0] - 2026-10-01
+
+Hito v0.7.0 «Lotes completos»: el lote sobrevive a recargar, se reabre desde el historial, se corrige en la lista y se imprime; más los retoques de la revisión de v0.6. Especificación en `docs/specs/v0.7.md`.
+
 ### Añadido
 
+- **Imprimir el lote** (#54): con un lote no vacío, «Imprimir» (que pasa a llamarse «Imprimir lote») imprime el lote en la hoja de impresión de siempre: tabla de piezas (pieza, material, copias, peso, tiempo e importe, con la cabecera repetida si pasa de página), desglose y total del lote, sin vista 3D. También con Ctrl+P y con un lote recuperado o reabierto sin pieza cargada. Sin lote, imprime la pieza como antes. `renderBatchSheet` (`src/ui/print-sheet.ts`) reutiliza `table` y las clases `ps-*`; ningún importe se calcula ahí (líneas de `computeQuote`, totales de `computeBatch`).
 - **Editar las copias de una línea del lote** (#53): cada línea trae un campo numérico accesible («Copias de {nombre}», 1 a 10 000, entero) que se aplica al salir del campo o con Intro. Recalcula esa línea con `computeQuote` y los ajustes originales de la línea (`withCopies`, `src/quote/batch.ts`) y el total del lote; la fila se actualiza en su sitio (no pierde el foco), se anuncia el nuevo total y un valor vacío o no numérico vuelve al actual. Dianas de 44 px en táctil; sin desborde a 320 px.
 - **Reabrir un lote guardado desde el historial** (#52): «Abrir» en una entrada de lote carga las líneas en el bloque «06 Lote» (se despliega) y restaura el cliente, sin necesidad de pieza 3D. Se guarda lo mínimo para reconstruir cada línea (`surfaceMm2` además de nombre, medidas y ajustes; nunca la geometría) y las líneas se recalculan con `computeQuote`. Con un lote en curso, el botón pide un segundo clic («¿Reemplazar el lote?»). Los lotes guardados con 0.6.0 (sin área) se siguen listando, exportando y borrando, pero no se abren.
 - **El lote sobrevive a recargar** (#51): se guarda en `localStorage` (`printquote:lote:v1`, con versión de esquema) tras cada cambio y se recupera al arrancar. Cada línea se guarda como una pieza del historial (nombre, medidas, ajustes y resultado, **más el área de la superficie**, nunca la geometría) y al leer se valida igual de estrictamente que el historial (una pieza rota, un lote vacío, de más de 50 piezas o de otra versión del esquema se descarta entero) y se recalcula con `computeQuote`. Si el navegador no deja guardar, falla en silencio. `HistoryPart` gana `surfaceMm2` opcional (las entradas antiguas se leen igual).
@@ -114,7 +119,8 @@ Primera versión: el MVP.
 - **Revisión de QA** (PR #2): parser ASCII byte a byte, soldado de vértices con tolerancia, lectura en un Web Worker, three.js cargado bajo demanda, regiones vivas accesibles, Open Graph y tests de interfaz (57 → 132 tests).
 - **Documentación** (PR #4): guía de uso (`docs/USO.md`) y guía de contribución (`CONTRIBUTING.md`).
 
-[Sin publicar]: https://github.com/BertMarti/printquote/compare/v0.6.0...HEAD
+[Sin publicar]: https://github.com/BertMarti/printquote/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/BertMarti/printquote/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/BertMarti/printquote/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/BertMarti/printquote/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/BertMarti/printquote/compare/v0.3.0...v0.4.0

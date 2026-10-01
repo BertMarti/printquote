@@ -1750,6 +1750,40 @@ input {
     font-variant-numeric: tabular-nums;
   }
 
+  /* Tabla de piezas de un lote: puede pasar de página (repite la cabecera) pero no parte una fila */
+  .ps-parts {
+    break-inside: auto;
+    font-size: 9pt;
+  }
+
+  .ps-parts thead {
+    display: table-header-group;
+  }
+
+  .ps-parts tr {
+    break-inside: avoid;
+  }
+
+  .ps-parts thead th {
+    padding: 4px 6px 4px 0;
+    border-bottom: 1px solid #000;
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .ps-parts thead th:not(:first-child),
+  .ps-parts tbody td {
+    text-align: right;
+    padding-left: 6px;
+    white-space: nowrap;
+  }
+
+  .ps-parts tbody th {
+    overflow-wrap: anywhere;
+    padding-right: 6px;
+  }
+
   .ps-total th,
   .ps-total td {
     border-top: 2px solid #000;

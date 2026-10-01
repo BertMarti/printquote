@@ -1,4 +1,5 @@
 import { getLocale, t } from '../i18n';
+import type { BatchPart, BatchTotals } from '../quote/batch';
 import { formatDuration, formatEuro, formatNumber } from '../quote/format';
 import { MATERIALS } from '../quote/materials';
 import type { Quote } from '../quote/model';
@@ -41,19 +42,77 @@ function table(caption: string, rows: readonly Row[], totalRow?: Row): HTMLTable
   return t;
 }
 
+/** Cabecera (marca y fecha) y título, comunes a la hoja de una pieza y a la de un lote. */
+function sheetHeader(): HTMLElement[] {
+  const date = new Intl.DateTimeFormat(getLocale(), { dateStyle: 'long' }).format(new Date());
+  const head = el('header', 'ps-head');
+  const meta = el('div', 'ps-meta');
+  meta.append(el('div', undefined, date), el('div', undefined, 'bertmarti.github.io/printquote'));
+  head.append(el('div', 'ps-brand', 'printquote'), meta);
+  return [head, el('h1', 'ps-title', t('doc.title'))];
+}
+
+/**
+ * Hoja de impresión de un lote: tabla de piezas (sin vista 3D: mostraría una sola de varias), desglose y total.
+ * Reutiliza el contenedor, las clases `ps-*` y `table`; los importes son los de las líneas (`computeQuote`) y los totales, los de `computeBatch`.
+ */
+export function renderBatchSheet(container: HTMLElement, data: { parts: readonly BatchPart[]; totals: BatchTotals }): void {
+  const { parts, totals } = data;
+  const info = el('p', 'ps-file', t('doc.batchInfo', { n: formatNumber(totals.parts, 0), copies: formatNumber(totals.copies, 0) }));
+
+  const list = el('table', 'ps-table ps-parts');
+  list.append(el('caption', undefined, t('batch.list.label')));
+  const headRow = el('tr');
+  const columns = [t('doc.part'), t('doc.material'), t('doc.copies'), t('breakdown.weight'), t('breakdown.time'), t('doc.batchAmount')];
+  for (const label of columns) {
+    const th = el('th', undefined, label);
+    th.scope = 'col';
+    headRow.append(th);
+  }
+  const thead = el('thead');
+  thead.append(headRow);
+  const tbody = el('tbody');
+  for (const { fileName, settings, quote } of parts) {
+    const tr = el('tr');
+    const name = el('th', undefined, fileName);
+    name.scope = 'row';
+    tr.append(
+      name,
+      ...[
+        MATERIALS[settings.material].name,
+        formatNumber(quote.copies, 0),
+        `${formatNumber(quote.totalWeightGrams, 1)} g`,
+        formatDuration(quote.totalHours),
+        formatEuro(quote.total),
+      ].map((text) => el('td', undefined, text)),
+    );
+    tbody.append(tr);
+  }
+  list.append(thead, tbody);
+
+  const breakdown = table(
+    t('doc.breakdown'),
+    [
+      [t('doc.weightTotal'), `${formatNumber(totals.weightGrams, 1)} g`],
+      [t('doc.timeTotal'), formatDuration(totals.hours)],
+      [t('doc.material'), formatEuro(totals.materialCost)],
+      [t('doc.energy'), `${formatNumber(totals.energyKwh, 2)} kWh · ${formatEuro(totals.energyCost)}`],
+      [t('doc.subtotal'), formatEuro(totals.subtotal)],
+      [t('breakdown.margin'), formatEuro(totals.marginAmount)],
+    ],
+    [t('batch.total'), formatEuro(totals.total)],
+  );
+
+  container.replaceChildren(...sheetHeader(), info, list, breakdown, el('p', 'ps-note', t('doc.printNote')));
+}
+
 /** Rellena la hoja de impresión. Se construye con nodos DOM (nunca innerHTML) porque el nombre del archivo lo pone la persona usuaria. */
 export function renderPrintSheet(container: HTMLElement, data: PrintSheetData): void {
   const { fileName, format, stats, settings, quote, image } = data;
   const material = MATERIALS[settings.material];
   const size = stats.bounds.size;
-  const date = new Intl.DateTimeFormat(getLocale(), { dateStyle: 'long' }).format(new Date());
 
-  const head = el('header', 'ps-head');
-  const meta = el('div', 'ps-meta');
-  meta.append(el('div', undefined, date), el('div', undefined, 'bertmarti.github.io/printquote'));
-  head.append(el('div', 'ps-brand', 'printquote'), meta);
-
-  const title = el('h1', 'ps-title', t('doc.title'));
+  const [head, title] = sheetHeader() as [HTMLElement, HTMLElement];
   const file = el(
     'p',
     'ps-file',

@@ -19,7 +19,7 @@ import { supportsWebGL } from '../viewer/webgl';
 import { formatLabel } from './format-label';
 import { setupDemo } from './demo';
 import { NumberField } from './number-field';
-import { renderPrintSheet } from './print-sheet';
+import { renderBatchSheet, renderPrintSheet } from './print-sheet';
 import { setupBatch } from './batch';
 import { setupHistory } from './history';
 import { LogoError, prepareLogo } from './logo';
@@ -329,7 +329,7 @@ export function startApp(demoScale = 1): void {
     stage.classList.toggle('has-part', hasPart);
     resetCameraButton.disabled = !hasPart || !viewer;
     copyButton.disabled = !hasPart;
-    printButton.disabled = !hasPart;
+    syncPrint();
     if (!pdfBusy) pdfButton.disabled = !hasPart;
 
     const warningsList = byId('warnings');
@@ -570,7 +570,16 @@ export function startApp(demoScale = 1): void {
     copyFrom(batchCopyButton, 'batch.copy', buildBatchText({ parts, totals: computeBatch(parts) }), 'batch.copy.announce.ok', 'batch.copy.announce.failed');
   });
 
+  /** «Imprimir» imprime el lote si lo hay (y lo dice en el botón); si no, la pieza cargada. */
+  function syncPrint(): void {
+    const inBatch = (batch?.parts().length ?? 0) > 0;
+    printButton.disabled = part === null && !inBatch;
+    printButton.textContent = t(inBatch ? 'action.print.batch' : 'action.print');
+  }
+
   const fillPrintSheet = (): void => {
+    const lines = batch?.parts() ?? [];
+    if (lines.length > 0) return renderBatchSheet(byId('print-sheet'), { parts: lines, totals: computeBatch(lines) });
     if (!part || !quote) return;
     renderPrintSheet(byId('print-sheet'), {
       fileName: part.fileName,
@@ -749,6 +758,7 @@ export function startApp(demoScale = 1): void {
   // ── Lote ──
   function syncBatchButtons(): void {
     history?.sync();
+    syncPrint();
     const empty = (batch?.parts().length ?? 0) === 0;
     batchCopyButton.disabled = empty;
     batchPdfButton.disabled = empty || pdfBusy;
