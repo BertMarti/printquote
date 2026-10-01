@@ -124,6 +124,12 @@ export function saveBatch(parts: readonly BatchPart[]): void {
     if (parts.length === 0) window.localStorage.removeItem(BATCH_KEY);
     else window.localStorage.setItem(BATCH_KEY, JSON.stringify({ v: 1, parts: parts.map(partToHistory) }));
   } catch {
-    // Modo privado o almacenamiento lleno: el lote vive solo en esta sesión.
+    // Modo privado o almacenamiento lleno: el lote vive solo en esta sesión. Se borra la copia vieja para que, al
+    // recargar, no reaparezca un lote desfasado.
+    try {
+      window.localStorage.removeItem(BATCH_KEY);
+    } catch {
+      // Ni eso: sin almacenamiento.
+    }
   }
 }
