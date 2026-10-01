@@ -1,22 +1,24 @@
 // @vitest-environment happy-dom
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { PDFDocument, decodePDFRawStream, PDFRawStream } from 'pdf-lib';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setLang } from '../src/i18n';
 import { buildQuoteDocument } from '../src/pdf/document';
 import { pdfLabels } from '../src/pdf/labels';
-import { renderQuotePdf } from '../src/pdf/render';
+import { renderQuotePdf as render } from '../src/pdf/render';
 import { DEFAULT_BUSINESS } from '../src/quote/business';
 import { computeQuote } from '../src/quote/model';
 import { DEFAULT_SETTINGS } from '../src/quote/settings';
 import { buildQuoteText } from '../src/quote/text';
 import { computeStats } from '../src/stl/geometry';
 import { startApp } from '../src/ui/app';
+import { testFonts } from './helpers/fonts';
 import { binaryStl, cubeTriangles, toPositions } from './helpers/mesh';
+import { pageTexts as pdfTexts } from './helpers/pdf-text';
 
 const html = readFileSync(join(process.cwd(), 'index.html'), 'utf8');
 const body = (html.match(/<body>([\s\S]*)<\/body>/)?.[1] ?? '').replace(/<script[\s\S]*?<\/script>/g, '');
+const renderQuotePdf = (doc: Parameters<typeof render>[0]): Promise<Uint8Array> => render(doc, testFonts);
 const $ = <T extends HTMLElement = HTMLElement>(id: string): T => document.getElementById(id) as T;
 
 async function until(check: () => boolean): Promise<void> {
@@ -157,26 +159,6 @@ describe('interfaz en inglés', () => {
     expect(text).toContain('The time is an estimate.');
   });
 });
-
-/** Textos de la primera página de un PDF (cadenas hexadecimales WinAnsi de pdf-lib). */
-async function pdfTexts(bytes: Uint8Array): Promise<string[]> {
-  const pdf = await PDFDocument.load(bytes);
-  const contents = pdf.getPage(0).node.Contents();
-  const refs = contents && 'asArray' in contents ? contents.asArray() : contents ? [contents] : [];
-  const out: string[] = [];
-  for (const ref of refs) {
-    const stream = pdf.context.lookup(ref);
-    if (!(stream instanceof PDFRawStream)) continue;
-    const source = new TextDecoder('latin1').decode(decodePDFRawStream(stream).decode());
-    for (const match of source.matchAll(/<([0-9A-Fa-f]+)>\s*Tj/g)) {
-      const hex = match[1] ?? '';
-      let text = '';
-      for (let i = 0; i < hex.length; i += 2) text += String.fromCharCode(parseInt(hex.slice(i, i + 2), 16));
-      out.push(text.replace(/\u0080/g, '€'));
-    }
-  }
-  return out;
-}
 
 describe('PDF en inglés', () => {
   afterEach(() => setLang('es'));

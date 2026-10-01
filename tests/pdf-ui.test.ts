@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { firstQuoteNumber } from '../src/quote/business';
 import { startApp } from '../src/ui/app';
 import { loadBusiness } from '../src/ui/storage';
+import { fontResponse } from './helpers/fonts';
 import { binaryStl, cubeTriangles } from './helpers/mesh';
 
 const html = readFileSync(join(process.cwd(), 'index.html'), 'utf8');
@@ -44,7 +45,7 @@ describe('datos del negocio y PDF en la interfaz', () => {
       downloads.push(this.download);
     });
     const stl = binaryStl(cubeTriangles(20));
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(stl.slice(0))));
+    vi.stubGlobal('fetch', vi.fn(async (url: unknown) => fontResponse(url) ?? new Response(stl.slice(0))));
   });
 
   afterEach(() => {

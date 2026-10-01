@@ -6,9 +6,9 @@ export default defineConfig({
   base: '/printquote/',
   build: {
     target: 'es2022',
-    // El chunk del visor (three.js) pesa ~560 kB sin comprimir; es esperado. Se carga
-    // con import() después de pintar la interfaz, así que no retrasa el primer render.
-    chunkSizeWarningLimit: 800,
+    // Dos chunks pesados y esperados, ambos con import(): el visor (three.js, ~560 kB) tras pintar la
+    // interfaz, y el PDF (pdf-lib + fontkit, ~1,1 MB) solo al pulsar «Descargar PDF».
+    chunkSizeWarningLimit: 1200,
   },
   test: {
     include: ['tests/**/*.test.ts'],

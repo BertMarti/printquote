@@ -1,0 +1,11 @@
+Fuentes incrustadas en el PDF (subconjuntos de las fuentes variables de github.com/google/fonts, licencia SIL OFL 1.1):
+- Noto Sans (Copyright 2022 The Noto Project Authors): Regular (wght 400) y Bold (700).
+- JetBrains Mono (Copyright 2020 The JetBrains Mono Project Authors): Regular (400) y Bold (700).
+Ninguna de las dos declara nombre reservado, asi que el subconjunto puede conservar el nombre.
+Cobertura: latino (U+0020-017F, U+0218-021B), griego (U+0370-03FF), cirilico (U+0400-04FF), puntuacion general
+(U+2010-2027, U+2030-203A), EUR, N. numero, TM y signo menos. Con kern y sin hinting.
+Como se generaron:
+  fonttools varLib.instancer <fuente-variable>.ttf --update-name-table wght=<400|700> [wdth=100] -o inst.ttf
+  pyftsubset inst.ttf --unicodes="U+0020-007E,U+00A0-017F,U+0218-021B,U+0370-03FF,U+0400-04FF,U+2010-2027,U+2030-203A,U+20AC,U+2116,U+2122,U+2212" --layout-features=kern --no-hinting
+(el Bold con --update-name-table para que el nombre interno sea Bold)
+Las licencias completas estan en OFL-NotoSans.txt y OFL-JetBrainsMono.txt.

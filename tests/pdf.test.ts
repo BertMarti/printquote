@@ -1,7 +1,7 @@
-import { decodePDFRawStream, PDFDocument, PDFName, PDFRawStream } from 'pdf-lib';
+import { PDFDocument, PDFName } from 'pdf-lib';
 import { describe, expect, it } from 'vitest';
-import { buildQuoteDocument } from '../src/pdf/document';
-import { renderQuotePdf } from '../src/pdf/render';
+import { buildQuoteDocument, type QuoteDocument } from '../src/pdf/document';
+import { renderQuotePdf as render } from '../src/pdf/render';
 import {
   BUSINESS_MAX,
   DEFAULT_BUSINESS,
@@ -18,7 +18,9 @@ import { DEFAULT_SETTINGS } from '../src/quote/settings';
 import { computeTax, DEFAULT_VAT_PERCENT } from '../src/quote/tax';
 import { computeStats } from '../src/stl/geometry';
 import { logoSize } from '../src/ui/logo';
+import { testFonts } from './helpers/fonts';
 import { cubeTriangles, toPositions } from './helpers/mesh';
+import { pageTexts } from './helpers/pdf-text';
 
 /** PNG de 1 × 1 píxel naranja. */
 const PNG_1X1 =
@@ -197,26 +199,8 @@ describe('contenido del PDF', () => {
   });
 });
 
-/** Textos dibujados en la primera página (pdf-lib los escribe como cadenas hexadecimales WinAnsi). */
-async function pageTexts(bytes: Uint8Array): Promise<string[]> {
-  const pdf = await PDFDocument.load(bytes);
-  const contents = pdf.getPage(0).node.Contents();
-  const refs = contents && 'asArray' in contents ? contents.asArray() : contents ? [contents] : [];
-  const texts: string[] = [];
-  for (const ref of refs) {
-    const stream = pdf.context.lookup(ref);
-    if (!(stream instanceof PDFRawStream)) continue;
-    const source = new TextDecoder('latin1').decode(decodePDFRawStream(stream).decode());
-    for (const match of source.matchAll(/<([0-9A-Fa-f]+)>\s*Tj/g)) {
-      const hex = match[1] ?? '';
-      let text = '';
-      for (let i = 0; i < hex.length; i += 2) text += String.fromCharCode(parseInt(hex.slice(i, i + 2), 16));
-      // 0x80 es «€» en WinAnsi.
-      texts.push(text.replace(/\u0080/g, '€'));
-    }
-  }
-  return texts;
-}
+/** Las fuentes se leen del disco (en el navegador se piden con fetch). */
+const renderQuotePdf = (doc: QuoteDocument): Promise<Uint8Array> => render(doc, testFonts);
 
 describe('generación del PDF', () => {
   it('genera un PDF de una página A4 con los metadatos y los importes correctos', async () => {
@@ -253,7 +237,7 @@ describe('generación del PDF', () => {
     expect(await imageCount(await renderQuotePdf(make('data:image/png;base64,AAAA', 'data:image/png;base64,AAAA')))).toBe(0);
   });
 
-  it('caracteres que la fuente estándar no tiene se transcriben o salen como «?» en vez de fallar', async () => {
+  it('caracteres que la fuente no tiene se transcriben o salen como «?» en vez de fallar', async () => {
     const stats = cube(20);
     const doc = buildQuoteDocument({
       business: business({ name: 'Łódź 印刷 3D', address: 'Ünïcode → ✓' }),
@@ -265,7 +249,7 @@ describe('generación del PDF', () => {
       date: fixedDate,
     });
     const texts = await pageTexts(await renderQuotePdf(doc));
-    expect(texts).toContain('Lódz ?? 3D');
+    expect(texts).toContain('Łódź ?? 3D');
     expect(texts.join('')).toContain('Ünïcode');
   });
 
@@ -307,16 +291,58 @@ describe('PDF: caracteres del español y transliteración', () => {
     for (const expected of ['Áé íó úñ Ü', '¿Qué tal? ¡Hola! 5 € · Ñ É Í Ó Ú']) expect(text).toContain(expected);
   });
 
-  it('las letras que la fuente no tiene se convierten en su equivalente sin acento en vez de «?»', async () => {
+  it('el latino extendido (polaco, turco, rumano, checo…) sale tal cual', async () => {
     const text = await render('Łódź Ćerić Çağrı Đorđe Őrs Ștefan', 'Řeka ě ř ň ť ů');
-    expect(text).toContain('Lódz Ceric Çagri Dorde Ors Stefan'); // Ç sí está en WinAnsi
-    expect(text).toContain('Reka e r n t u');
+    expect(text).toContain('Łódź Ćerić Çağrı Đorđe Őrs Ștefan');
+    expect(text).toContain('Řeka ě ř ň ť ů');
+    expect(text).not.toContain('?');
+  });
+
+  it('lo que queda fuera de la fuente (vietnamita) se transcribe sin marcas en vez de «?»', async () => {
+    const text = await render('Nguyễn Thị Ảnh', 'ǎ ǐ');
+    expect(text).toContain('Nguyen Thi Anh');
+    expect(text).toContain('a i');
     expect(text).not.toContain('?');
   });
 
   it('lo que no es transliterable da un solo «?» por carácter y los caracteres invisibles desaparecen', async () => {
     const text = await render('A印刷B 🚀 C​d️');
     expect(text).toContain('A??B ? Cd');
+  });
+});
+
+describe('PDF: cirílico y griego', () => {
+  it('el texto en cirílico y griego se ve en el PDF, sin «?» ni cuadros', async () => {
+    const name = 'Печати «Ёж» Ελληνικά ώ';
+    const address = 'ул. Ленина, 5 · Αθήνα 105 57';
+    const texts = await pageTexts(await renderQuotePdf(documentFor(20, { name, address })));
+    expect(texts).toContain(name);
+    expect(texts).toContain('ул. Ленина, 5 · Αθήνα 105 57');
+    const all = texts.join('');
+    expect(all).not.toContain('?');
+    expect(all).not.toContain('�');
+  });
+
+  it('también en los textos del documento: archivo, material y mayúsculas del título', async () => {
+    const stats = cube(20);
+    const doc = buildQuoteDocument({
+      business: business({ name: 'Ελληνική Φάρμα' }),
+      fileName: 'деталь-ω.stl',
+      stats,
+      settings: DEFAULT_SETTINGS,
+      quote: computeQuote(stats, DEFAULT_SETTINGS),
+      image: null,
+      date: fixedDate,
+    });
+    const texts = await pageTexts(await renderQuotePdf(doc));
+    expect(texts).toContain('деталь-ω.stl');
+    expect(texts).toContain('Ελληνική Φάρμα');
+  });
+
+  it('el PDF solo lleva los glifos usados (subconjunto): pesa mucho menos que las fuentes completas', async () => {
+    const bytes = await renderQuotePdf(documentFor(20, { name: 'Привет Ελλάδα' }));
+    const fontsTotal = Object.values(testFonts).reduce((sum, font) => sum + font.length, 0);
+    expect(bytes.length).toBeLessThan(fontsTotal / 3);
   });
 });
 
