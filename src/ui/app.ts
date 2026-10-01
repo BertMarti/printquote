@@ -712,6 +712,56 @@ export function startApp(demoScale = 1): void {
     download,
   });
 
+  // ── Demo («Ver demo») ──
+  // Va antes que el bloque de enlaces: su `hashchange` se registra primero y para la demo antes de que la aplicación aplique el enlace.
+  // Nunca guarda nada: aplica los ajustes con `persist = false` y, al acabar, devuelve los de la persona
+  // (y su pieza, si había una). Así una edición posterior no guarda por sorpresa los valores de la demo.
+  const liveRegions = [byId('out-total').closest<HTMLElement>('[aria-live]'), byId('warnings')];
+  let before: { settings: QuoteSettings; part: LoadedPart | null } | null = null;
+  /** La pieza que cargó la demo: si al acabar ya es otra, la persona soltó un archivo y no se pisa con la anterior. */
+  let demoPart: LoadedPart | null = null;
+  /** Lo último que puso la demo: si al acabar ya es otro objeto, algo (un enlace) cambió los ajustes y no se pisan. */
+  let demoSettings: QuoteSettings | null = null;
+  const demoApply = (next: QuoteSettings): void => {
+    applySettings(next, false);
+    demoSettings = settings;
+  };
+  setupDemo(
+    {
+      async begin() {
+        before = { settings, part };
+        silent = true;
+        for (const region of liveRegions) region?.setAttribute('aria-live', 'off');
+        demoApply(DEFAULT_SETTINGS);
+        const loaded = await loadSample();
+        demoPart = part;
+        return loaded;
+      },
+      apply: (patch) => demoApply(patch === 'restore' ? (before?.settings ?? settings) : { ...settings, ...patch }),
+      spin: (on) => viewer?.setAutoRotate(on),
+      end() {
+        if (before) {
+          if (settings === demoSettings) {
+            settings = normalizeSettings(before.settings);
+            syncForm();
+          }
+          // La pieza solo se devuelve si sigue siendo la de la demo: un archivo cargado a mitad manda.
+          if (before.part && part === demoPart) {
+            part = before.part;
+            viewer?.setPart(part.mesh.positions);
+          }
+        }
+        before = demoPart = demoSettings = null;
+        render();
+        viewer?.resetCamera();
+        silent = false;
+        for (const region of liveRegions) region?.setAttribute('aria-live', 'polite');
+      },
+      announce,
+    },
+    demoScale,
+  );
+
   // ── Enlace con los parámetros (en el hash de la URL) ──
   const shareButton = byId<HTMLButtonElement>('share-copy');
   let shareLabelTimer = 0;
@@ -740,42 +790,6 @@ export function startApp(demoScale = 1): void {
   detachHash?.();
   window.addEventListener('hashchange', applyHash);
   detachHash = () => window.removeEventListener('hashchange', applyHash);
-
-  // ── Demo («Ver demo») ──
-  // Nunca guarda nada: aplica los ajustes con `persist = false` y, al acabar, devuelve los de la persona
-  // (y su pieza, si había una). Así una edición posterior no guarda por sorpresa los valores de la demo.
-  const liveRegions = [byId('out-total').closest<HTMLElement>('[aria-live]'), byId('warnings')];
-  let before: { settings: QuoteSettings; part: LoadedPart | null } | null = null;
-  setupDemo(
-    {
-      async begin() {
-        before = { settings, part };
-        silent = true;
-        for (const region of liveRegions) region?.setAttribute('aria-live', 'off');
-        applySettings(DEFAULT_SETTINGS, false);
-        return loadSample();
-      },
-      apply: (patch) => applySettings(patch === 'restore' ? (before?.settings ?? settings) : { ...settings, ...patch }, false),
-      spin: (on) => viewer?.setAutoRotate(on),
-      end() {
-        if (before) {
-          settings = normalizeSettings(before.settings);
-          syncForm();
-          if (before.part) {
-            part = before.part;
-            viewer?.setPart(part.mesh.positions);
-          }
-        }
-        before = null;
-        render();
-        viewer?.resetCamera();
-        silent = false;
-        for (const region of liveRegions) region?.setAttribute('aria-live', 'polite');
-      },
-      announce,
-    },
-    demoScale,
-  );
 
   // ── Idioma ──
   const langButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('button[data-lang]'));

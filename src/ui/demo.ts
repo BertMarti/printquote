@@ -21,6 +21,8 @@ export const DEMO_STEPS: readonly DemoStep[] = [
 
 /** La demo termina sola a los 13 s. */
 export const DEMO_END_MS = 13_000;
+/** Gestos de la persona que paran la demo (salvo sobre sus propios controles). */
+const GESTURES = ['pointerdown', 'keydown', 'wheel'];
 /** El resaltado de cada bloque dura poco. */
 const HIGHLIGHT_MS = 2_200;
 
@@ -135,10 +137,12 @@ export function setupDemo(host: DemoHost, scale = 1): void {
     const { signal } = listeners;
     const interrupt = (event: Event): void => {
       if (event instanceof KeyboardEvent && event.key === 'Escape') return stop();
-      if (event.target instanceof Element && event.target.closest('[data-demo-ui]')) return; // sus propios controles
+      // Sus propios controles no la paran (solo los gestos de la persona; un archivo que llega, siempre).
+      if (GESTURES.includes(event.type) && event.target instanceof Element && event.target.closest('[data-demo-ui]')) return;
       stop();
     };
-    for (const type of ['pointerdown', 'keydown', 'wheel']) document.addEventListener(type, interrupt, { capture: true, signal });
+    for (const type of [...GESTURES, 'dragenter', 'drop']) document.addEventListener(type, interrupt, { capture: true, signal });
+    // Un archivo soltado no genera pointerdown ni keydown: también la para (el de `hashchange` está en `setupDemo`).
     document.addEventListener('visibilitychange', () => document.hidden && stop(), { signal });
 
     begun = host.begin().catch(() => false);
@@ -162,5 +166,8 @@ export function setupDemo(host: DemoHost, scale = 1): void {
   }
 
   button.addEventListener('click', () => (running ? stop() : start()));
+  // Un enlace nuevo (#ejemplo, #v=1…) también la para. Se registra aquí, una vez y antes que el de la aplicación
+  // (si `setupDemo` se llama antes), para que la aplicación lo aplique con la demo ya parada.
+  window.addEventListener('hashchange', () => stop());
   next.addEventListener('click', () => (step >= DEMO_STEPS.length - 1 ? stop() : show(step + 1)));
 }

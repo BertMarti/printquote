@@ -1350,7 +1350,7 @@ input {
 }
 
 /* Escritorio de poca altura: el total no se come media ficha */
-@media (min-width: 901px) and (max-height: 700px) {
+@media (min-width: 901px) and (max-height: 700px) and (pointer: fine) {
   .summary {
     padding-top: 10px;
     padding-bottom: 10px;

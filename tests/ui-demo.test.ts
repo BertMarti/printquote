@@ -105,6 +105,75 @@ describe('«Ver demo» en la aplicación', () => {
     await until(() => $('file-name').textContent === 'mia.stl');
   });
 
+  /** Simula soltar un archivo del sistema (un arrastre no genera pointerdown, keydown ni wheel). */
+  function dropFile(name: string): void {
+    const file = new File([binaryStl(cubeTriangles(12)).slice(0)], name);
+    for (const type of ['dragenter', 'drop']) {
+      const event = new Event(type, { bubbles: true, cancelable: true });
+      Object.defineProperty(event, 'dataTransfer', { value: { types: ['Files'], files: [file] } });
+      document.body.dispatchEvent(event); // como en un navegador: nace en un elemento y sube hasta la ventana
+    }
+  }
+
+  it('soltar un archivo a mitad de demo conserva ese archivo (no vuelve la pieza anterior) y se anuncia', async () => {
+    const input = $<HTMLInputElement>('file-input');
+    Object.defineProperty(input, 'files', { value: [new File([binaryStl(cubeTriangles(10)).slice(0)], 'usuario.stl')], configurable: true });
+    input.dispatchEvent(new Event('change'));
+    await until(() => $('file-name').textContent === 'usuario.stl');
+    $('demo-button').click();
+    await until(() => material() === 'PETG');
+    dropFile('otro.stl');
+    expect(pressed()).toBe('false');
+    await until(() => $('file-name').textContent === 'otro.stl');
+    await new Promise((r) => setTimeout(r, 800)); // pasa el tiempo de una demo entera: nada lo pisa
+    expect($('file-name').textContent).toBe('otro.stl');
+    expect(material()).toBe('ABS'); // los ajustes de la persona sí vuelven
+    expect($('live-status').textContent).not.toBe(''); // el anuncio de la carga ya no está silenciado
+    expect($('out-total').closest('[aria-live]')?.getAttribute('aria-live')).toBe('polite');
+    expect(setItem).not.toHaveBeenCalled();
+  });
+
+  it('un enlace con parámetros a mitad de demo se respeta: no se pisa al terminar', async () => {
+    $('demo-button').click();
+    await until(() => material() === 'PETG');
+    window.location.hash = '#v=1&mat=TPU&infill=55';
+    window.dispatchEvent(new Event('hashchange'));
+    expect(pressed()).toBe('false');
+    await new Promise((r) => setTimeout(r, 800));
+    expect(material()).toBe('TPU');
+    expect($<HTMLInputElement>('in-infill').value).toBe('55');
+  });
+
+  // Red de seguridad: aunque una pieza llegue SIN gesto que pare la demo, al terminar no se pisa con la anterior.
+  it('si la pieza cambia sin gesto a mitad de demo, al terminar no se pisa con la anterior', async () => {
+    const input = $<HTMLInputElement>('file-input');
+    const choose = (name: string): void => {
+      Object.defineProperty(input, 'files', { value: [new File([binaryStl(cubeTriangles(10)).slice(0)], name)], configurable: true });
+      input.dispatchEvent(new Event('change'));
+    };
+    choose('usuario.stl');
+    await until(() => $('file-name').textContent === 'usuario.stl');
+    $('demo-button').click();
+    await until(() => material() === 'PETG');
+    choose('nueva.stl');
+    await until(() => $('file-name').textContent === 'nueva.stl');
+    await until(() => pressed() === 'false'); // la demo sigue y termina sola
+    await new Promise((r) => setTimeout(r, 100));
+    expect($('file-name').textContent).toBe('nueva.stl');
+  });
+
+  it('si los ajustes cambian por otra vía antes de pararse la demo, no se pisan con los anteriores', async () => {
+    $('demo-button').click();
+    await until(() => material() === 'PETG');
+    const select = $<HTMLSelectElement>('in-printer');
+    select.value = 'bambu-a1'; // p. ej. un enlace que la aplicación aplica antes de que la demo se entere
+    select.dispatchEvent(new Event('change'));
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await new Promise((r) => setTimeout(r, 100));
+    expect(pressed()).toBe('false');
+    expect($<HTMLSelectElement>('in-printer').value).toBe('bambu-a1');
+  });
+
   it('con una pieza que no carga, vuelve sola y el aviso de la app sigue ahí', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('no', { status: 404 })));
     $('demo-button').click();

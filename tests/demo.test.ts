@@ -134,6 +134,10 @@ describe('demo en tiempo real', () => {
     ['cualquier tecla en el panel', () => key($('in-infill'), 'a')],
     ['un clic en el panel', () => pointer($('in-price'))],
     ['la rueda sobre el visor', () => pointer($('viewer'), 'wheel')],
+    ['arrastrar un archivo sobre la ventana', () => pointer($('viewer'), 'dragenter')],
+    ['arrastrar un archivo sobre la propia barra de la demo', () => pointer($('demo-bar'), 'dragenter')],
+    ['soltar un archivo', () => pointer($('viewer'), 'drop')],
+    ['un cambio de enlace (#ejemplo, #v=1…)', () => window.dispatchEvent(new Event('hashchange'))],
     [
       'pasar la pestaña a segundo plano',
       () => {

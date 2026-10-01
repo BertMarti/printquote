@@ -10,7 +10,7 @@ Hito v0.5.0 «Demo y pulido»: modo demo en tiempo real y pulido visual y de acc
 
 ### Añadido
 
-- **Modo demo en tiempo real** (#37): botón «Ver demo» (`aria-pressed`) en la cabecera. En ~13 s carga la pieza de ejemplo, gira la cámara despacio, cambia el material a PETG y el relleno al 40 % con el total recalculándose en vivo, resalta el bloque que cambia con un subtítulo breve y devuelve los ajustes (y la pieza) de la persona. Se detiene con un segundo clic, Esc, cualquier interacción o al pasar la pestaña a segundo plano; con `prefers-reduced-motion` no corre sola (pasos manuales «Siguiente»). **No escribe en `localStorage`, en el historial ni en la URL**; un único anuncio `aria-live` al final; funciona sin conexión. Módulo `src/ui/demo.ts` con el guion en datos, sin dependencias nuevas; `Viewer.setAutoRotate`.
+- **Modo demo en tiempo real** (#37): botón «Ver demo» (`aria-pressed`) en la cabecera. En ~13 s carga la pieza de ejemplo, gira la cámara despacio, cambia el material a PETG y el relleno al 40 % con el total recalculándose en vivo, resalta el bloque que cambia con un subtítulo breve y devuelve los ajustes (y la pieza) de la persona. Se detiene con un segundo clic, Esc, cualquier interacción, al soltar un archivo o cambiar el enlace, o al pasar la pestaña a segundo plano (y nunca pisa un archivo cargado a mitad de recorrido); con `prefers-reduced-motion` no corre sola (pasos manuales «Siguiente»). **No escribe en `localStorage`, en el historial ni en la URL**; un único anuncio `aria-live` al final; funciona sin conexión. Módulo `src/ui/demo.ts` con el guion en datos, sin dependencias nuevas; `Viewer.setAutoRotate`.
 
 ### Cambiado
 
