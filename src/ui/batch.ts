@@ -38,6 +38,7 @@ export function setupBatch(host: BatchHost): { render(): void; sync(): void; par
   const out = (id: string, text: string): void => void (byId(`out-batch-${id}`).textContent = text);
 
   let parts: BatchPart[] = loadBatch();
+  details.open = parts.length > 0; // un lote recuperado al recargar se ve desplegado
   let confirmingClear = false;
 
   const el = <K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text?: string): HTMLElementTagNameMap[K] => {
@@ -174,6 +175,8 @@ export function setupBatch(host: BatchHost): { render(): void; sync(): void; par
     parts = [...next];
     details.open = true;
     change();
+    // El botón «Abrir» del historial sigue ahí, pero la persona acaba de pedir el lote: el foco va a su bloque (no se pierde en BODY).
+    details.querySelector('summary')?.focus();
   }
 
   render();
