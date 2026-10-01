@@ -746,16 +746,18 @@ export function startApp(demoScale = 1): void {
   });
 
   // ── Lote ──
+  function syncBatchButtons(): void {
+    history?.sync();
+    const empty = (batch?.parts().length ?? 0) === 0;
+    batchCopyButton.disabled = empty;
+    batchPdfButton.disabled = empty || pdfBusy;
+  }
   batch = setupBatch({
     current: () => (part && quote ? { fileName: part.fileName, stats: part.stats, quote, settings } : null),
     announce,
-    changed: () => {
-      history?.sync();
-      const empty = (batch?.parts().length ?? 0) === 0;
-      batchCopyButton.disabled = empty;
-      batchPdfButton.disabled = empty || pdfBusy;
-    },
+    changed: syncBatchButtons,
   });
+  syncBatchButtons(); // el lote recuperado al arrancar ya trae piezas
 
   // ── Demo («Ver demo») ──
   // Va antes que el bloque de enlaces: su `hashchange` se registra primero y para la demo antes de que la aplicación aplique el enlace.

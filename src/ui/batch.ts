@@ -5,6 +5,7 @@ import { MATERIALS } from '../quote/materials';
 import type { Quote } from '../quote/model';
 import type { QuoteSettings } from '../quote/settings';
 import type { MeshStats } from '../stl/types';
+import { loadBatch, saveBatch } from './storage';
 
 /** Lo que el bloque necesita de la aplicación (así no depende de `app.ts`). */
 export interface BatchHost {
@@ -23,7 +24,7 @@ const byId = <T extends HTMLElement>(id: string): T => {
 
 /**
  * Bloque «06 Lote»: varias piezas en un mismo presupuesto. Cada línea es una instantánea (la pieza con los ajustes con
- * que se añadió) y el total lo suma `computeBatch`. Vive solo en memoria: para conservarlo está el historial.
+ * que se añadió) y el total lo suma `computeBatch`. Se guarda en `localStorage` (se recupera al recargar) y para conservarlo con nombre está el historial.
  */
 export function setupBatch(host: BatchHost): { render(): void; sync(): void; parts(): readonly BatchPart[] } {
   const details = byId<HTMLDetailsElement>('batch-details');
@@ -36,7 +37,7 @@ export function setupBatch(host: BatchHost): { render(): void; sync(): void; par
   const cancelButton = byId<HTMLButtonElement>('batch-cancel');
   const out = (id: string, text: string): void => void (byId(`out-batch-${id}`).textContent = text);
 
-  let parts: BatchPart[] = [];
+  let parts: BatchPart[] = loadBatch();
   let confirmingClear = false;
 
   const el = <K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text?: string): HTMLElementTagNameMap[K] => {
@@ -110,6 +111,7 @@ export function setupBatch(host: BatchHost): { render(): void; sync(): void; par
   const totalText = (): string => formatEuro(computeBatch(parts).total);
 
   function change(): void {
+    saveBatch(parts);
     confirmingClear = false;
     render();
     host.changed();
