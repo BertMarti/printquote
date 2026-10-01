@@ -2,15 +2,19 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { HISTORY_MAX } from '../src/quote/history';
+import { createEntry, HISTORY_MAX } from '../src/quote/history';
+import { computeQuote } from '../src/quote/model';
+import { DEFAULT_SETTINGS } from '../src/quote/settings';
+import { computeStats } from '../src/stl/geometry';
 import { startApp } from '../src/ui/app';
 import { loadHistory } from '../src/ui/storage';
-import { binaryStl, cubeTriangles } from './helpers/mesh';
+import { binaryStl, cubeTriangles, toPositions } from './helpers/mesh';
 
 const html = readFileSync(join(process.cwd(), 'index.html'), 'utf8');
 const body = (html.match(/<body>([\s\S]*)<\/body>/)?.[1] ?? '').replace(/<script[\s\S]*?<\/script>/g, '');
 const $ = <T extends HTMLElement = HTMLElement>(id: string): T => document.getElementById(id) as T;
 const STORAGE_KEY = 'printquote:historial:v1';
+const stats = computeStats({ positions: toPositions(cubeTriangles(20)), triangleCount: 12, format: 'binary' });
 
 async function until(check: () => boolean): Promise<void> {
   for (let i = 0; i < 400 && !check(); i++) await new Promise((r) => setTimeout(r, 5));
@@ -227,8 +231,12 @@ describe('historial de presupuestos en la interfaz', () => {
   });
 
   it(`con ${HISTORY_MAX} guardados, al guardar otro se descarta el más antiguo y se dice`, async () => {
+    // Ya hay 100 guardados (en el almacenamiento, como si vinieran de otras sesiones).
+    const seeded = Array.from({ length: HISTORY_MAX }, (_, i) =>
+      createEntry({ fileName: `pieza-${i}.stl`, client: '', stats, settings: DEFAULT_SETTINGS, quote: computeQuote(stats, DEFAULT_SETTINGS), id: `seed-${i}` }),
+    );
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
     await start();
-    for (let i = 0; i < HISTORY_MAX; i++) button('history-save').click();
     expect(rows()).toHaveLength(HISTORY_MAX);
     type('in-client', 'el 101');
     button('history-save').click();

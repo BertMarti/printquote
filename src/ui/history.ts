@@ -44,8 +44,17 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
   let entries = loadHistory();
   let confirmingClear = false;
 
-  const formatDate = (iso: string): string =>
-    new Intl.DateTimeFormat(getLocale(), { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
+  /** Un formateador por idioma: crear uno por fila costaba más que pintar la lista. */
+  const dateFormats = new Map<string, Intl.DateTimeFormat>();
+  const formatDate = (iso: string): string => {
+    const locale = getLocale();
+    let format = dateFormats.get(locale);
+    if (!format) {
+      format = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
+      dateFormats.set(locale, format);
+    }
+    return format.format(new Date(iso));
+  };
 
   /** Fila de la lista. Todo el texto de la persona (pieza, cliente) entra con `textContent`, nunca como HTML. */
   function row(entry: HistoryEntry): HTMLLIElement {
