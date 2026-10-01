@@ -98,6 +98,7 @@ Qué **da error** en un 3MF (se muestra un cuadro en el visor con el motivo y se
 | ZIP cortado o dañado | «…está cortado o dañado…» |
 | Falta el modelo o un archivo al que se hace referencia | «El 3MF no contiene el modelo…» o «…hace referencia a … que no está dentro del archivo» |
 | Sin ninguna pieza imprimible | «El 3MF no contiene ninguna pieza imprimible…» |
+| Más de **6 millones de triángulos** en total (contando cada copia e instancia de la plantilla) | «El 3MF tiene más de 6 millones de triángulos…» (el mismo orden de magnitud que el límite de 300 MB de un STL; reduce las copias o simplifica la malla) |
 | Un archivo interno que, descomprimido, pesa más de 400 MB | «…es demasiado grande» |
 
 Si te sale algún otro error de lectura, vuelve a exportar el archivo desde tu programa o conviértelo a STL.

@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { analyzeModel } from '../src/stl/analyze';
+import { tIn } from '../src/i18n';
 import { ModelParseError } from '../src/stl/errors';
 import { meshWarnings } from '../src/stl/geometry';
-import { parse3mf } from '../src/stl/threemf';
+import { MAX_3MF_TRIANGLES, parse3mf } from '../src/stl/threemf';
 import { readZipDirectory } from '../src/stl/zip';
 import { cubeTriangles, encode } from './helpers/mesh';
 import { buildZip, cube3mf, modelXml, objectXml, RELS } from './helpers/zip';
@@ -195,6 +196,24 @@ describe('parse3mf: errores en español', () => {
   it('índice de vértice fuera de rango o coordenada no numérica', async () => {
     await expectError(await zipWithModel(valid.replace('v1="0"', 'v1="9999"')), /vértice 10000/);
     await expectError(await zipWithModel(valid.replace('x="0"', 'x="abc"')), /coordenada X no válida/);
+  });
+
+  it('un 3MF con tantas instancias que supera el tope de triángulos da un error claro, no un RangeError', async () => {
+    // Un cubo (12 triángulos) repetido en la plantilla de impresión hasta pasar el límite, sin construir esa malla.
+    const items = '<item objectid="1"/>'.repeat(MAX_3MF_TRIANGLES / 12 + 1);
+    const zip = await zipWithModel(modelXml(objectXml(1, cubeTriangles(10)), items));
+    const error = await parse3mf(zip).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ModelParseError);
+    expect((error as ModelParseError).message).toMatch(/más de 6 millones de triángulos/);
+    expect((error as ModelParseError).code).toBe('err.3mf.tooManyTriangles');
+    expect(tIn('en', 'err.3mf.tooManyTriangles', (error as ModelParseError).params)).toMatch(/more than 6 million triangles/);
+  });
+
+  it('justo en el tope (con instancias que caben) no se rechaza', async () => {
+    const items = '<item objectid="1"/>'.repeat(1000); // 12 000 triángulos
+    const { mesh } = await analyzeModel(await zipWithModel(modelXml(objectXml(1, cubeTriangles(10)), items)));
+    expect(mesh.triangleCount).toBe(12000);
+    expect(MAX_3MF_TRIANGLES).toBe(6_000_000);
   });
 
   it('transformación mal formada', async () => {

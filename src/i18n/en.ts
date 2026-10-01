@@ -299,6 +299,8 @@ export const en: Record<Key, string> = {
   'err.3mf.missingObject': 'The 3MF refers to object {id}, which does not exist.',
   'err.3mf.circular': 'The 3MF has objects that contain themselves (circular references).',
   'err.3mf.empty': 'The 3MF contains nothing printable: there are no triangles in the build plate.',
+  'err.3mf.tooManyTriangles':
+    'The 3MF has more than {millions} million triangles counting all its copies and instances, which is the most that can be opened without running the browser out of memory. Reduce the copies or simplify the mesh in your program and export it again.',
   'err.3mf.vertexRange': 'A triangle uses vertex {index}, but the mesh only has {count} vertices.',
 
   // ── Logo ──

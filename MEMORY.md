@@ -1,5 +1,5 @@
 # MEMORY.md · printquote
-Última actualización: 2026-09-30 por builder (v0.3.0, #19)
+Última actualización: 2026-09-30 por builder (v0.3.0, #20)
 
 ## Estado actual
 
@@ -7,13 +7,16 @@
 - #17 PDF con fuente incrustada (rama `agent/builder/17-pdf-fuente`): hecho, ver abajo.
 - #18 Metadatos en inglés (rama `agent/builder/18-metadatos-en`): hecho, ver abajo.
 - #19 Aviso OBJ de más de 200 vértices (rama `agent/builder/19-aviso-obj`): hecho, ver abajo.
-- #20 a #22: pendientes.
+- #20 Tope de triángulos en 3MF (rama `agent/builder/20-tope-3mf`): hecho, ver abajo.
+- #21 y #22: pendientes.
 
 **#17 PDF con fuente incrustada.** `src/pdf/fonts.ts` (`loadFonts`: `fetch` de cuatro `.ttf` con `new URL(…, import.meta.url)`, que Vite emite como recursos aparte), `src/pdf/fonts/` (las cuatro fuentes y las licencias OFL) y `render.ts` (`pdf.registerFontkit(fontkit)`, `embedFont(bytes, { subset: true })`; `renderQuotePdf(doc, fontBytes?)` acepta las fuentes ya cargadas, que es como lo prueban los tests). La transcripción sin marcas (ǎ → a) y el «?» final siguen para lo que las fuentes no cubren. Los tests leen el texto del PDF con la tabla ToUnicode (`tests/helpers/pdf-text.ts`): el PDF ya no lleva cadenas WinAnsi sino identificadores de glifo.
 
 **#18 Metadatos.** Las `<meta>` de la cabecera (`description`, `og:title`, `og:description`, `og:image:alt`, `og:locale` y las nuevas `twitter:title/description/image/image:alt`) llevan `data-i18n-attr="content:meta.xxx"` y las pinta `applyStaticTranslations` como el resto del HTML estático (se eliminó la línea suelta de `app.ts` que solo cambiaba `description`). Claves nuevas: `meta.ogImageAlt`, `meta.ogLocale` (`es_ES` / `en_GB`). El test de «el HTML coincide con el diccionario» ahora incluye la cabecera. Límite: el HTML servido sigue en español; los rastreadores que no ejecutan JS (la mayoría de los que generan vistas previas) ven el español, y solo el navegador cambia las etiquetas.
 
 **#19 Aviso de polígonos grandes.** `parseObj` cuenta en `Mesh.largePolygons` (campo opcional, solo OBJ) las caras de más de `MAX_EAR_CLIPPING` = 200 vértices; `meshWarnings(stats, bed, largePolygons)` añade el aviso `big-polygons`, que la interfaz pinta en la lista de avisos existente (`aria-live="polite"`) con `warn.bigPolygons` (es/en, con `{count}`). Decisión sencilla: se avisa por todo polígono de más de 200 vértices, sin comprobar si es cóncavo (comprobarlo costaría una pasada extra y el aviso ya dice «si alguno es cóncavo»). Sin estilos nuevos: reutiliza el de los demás avisos.
+
+**#20 Tope de triángulos en 3MF.** `MAX_3MF_TRIANGLES` = 6 000 000 en `threemf.ts` (exportado): se acumulan los triángulos de cada instancia al recorrer la plantilla (`visit`) y, al pasar el tope, `ModelParseError('err.3mf.tooManyTriangles', { millions: 6 })` (es/en) **antes** de reservar el `Float32Array` (216 MB a 36 B por triángulo). Por qué 6 M: es lo que cabe en un STL de 300 MB (50 B por triángulo), el límite de archivo de la interfaz, así que los tres formatos tienen el mismo orden de magnitud. El test construye un 3MF sintético con 500 001 `item` de un cubo (6 000 012 triángulos) sin construir esa malla. Límite conocido: un árbol de componentes vacíos (sin triángulos) no suma y no se corta por este tope, solo por la profundidad máxima (32).
 
 ### v0.2.0 (fusionado en `main`, PR #11 a #16)
 Una rama y un PR por issue, cada rama parte de la anterior y todos van contra `main`:
@@ -128,7 +131,7 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 
 ## Problemas conocidos
 - OBJ: polígonos cóncavos de más de 200 vértices siguen en abanico (recorte de orejas es O(n³)); desde #19 se avisa, pero no se corrigen.
-- PDF: chino, japonés, árabe y emojis siguen saliendo como «?» (las fuentes cubren latino, griego y cirílico). Sin tope de triángulos totales en 3MF con muchas instancias (un RangeError sale como error genérico).
+- PDF: chino, japonés, árabe y emojis siguen saliendo como «?» (las fuentes cubren latino, griego y cirílico). 3MF: tope de 6 millones de triángulos (#20); una malla justo por debajo aún puede ser pesada en equipos modestos.
 - Sin revisar por falta de tiempo: descarga del PDF y hoja de impresión con lector real, foco de teclado del resumen de «Datos del negocio» a ojo, anuncio al pasar a «Personalizada» al editar un campo.
 - El chunk del visor pesa ~560 kB (139 kB gzip) por three.js y el del PDF ~1,1 MB (507 kB gzip, pdf-lib + fontkit); ambos se cargan aparte con `import()` y `chunkSizeWarningLimit` está en 1200 kB.
 - Modelo de coste simplificado: no incluye soportes, balsa ni purga; la cáscara (área × grosor) sobreestima en piezas muy detalladas.
@@ -155,3 +158,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder/17-pdf-fuente): #17 PDF con fuente incrustada (Noto Sans + JetBrains Mono subconjunto, fontkit bajo demanda, tests de cirílico y griego con lectura ToUnicode, docs).
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder/18-metadatos-en): #18 metadatos Open Graph y Twitter traducidos con `data-i18n-attr`, `twitter:*` completos, tests en los dos idiomas.
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder/19-aviso-obj): #19 aviso de OBJ con polígonos de más de 200 vértices (contador en el parser, `big-polygons`, textos es/en, tests, docs).
+- 2026-09-30 builder · Claude Code Sonnet (agent/builder/20-tope-3mf): #20 tope de 6 millones de triángulos en 3MF con error traducido y test sintético.
