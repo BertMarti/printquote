@@ -11,7 +11,11 @@ export default tseslint.config(
     languageOptions: { globals: globals.browser },
   },
   {
-    files: ['scripts/**/*.mjs', 'tests/**/*.ts', '*.config.{js,ts}'],
+    files: ['src/sw.js'],
+    languageOptions: { globals: { ...globals.serviceworker, __PRECACHE__: 'readonly' } }, // lo rellena el plugin de Vite
+  },
+  {
+    files: ['scripts/**/*.{mjs,ts}', 'tests/**/*.ts', '*.config.{js,ts}'],
     languageOptions: { globals: globals.node },
   },
   {
@@ -22,7 +26,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['scripts/**/*.mjs'],
+    files: ['scripts/**/*.{mjs,ts}'],
     rules: { 'no-console': 'off' },
   },
 );

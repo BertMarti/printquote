@@ -1,7 +1,20 @@
 # MEMORY.md · printquote
-Última actualización: 2026-10-01 por builder (pulido de v0.3.0)
+Última actualización: 2026-10-01 por builder (v0.4.0, #30)
 
 ## Estado actual
+
+### v0.4.0 «Pro» (hito en curso; especificación en `docs/specs/v0.4.md`; issues #30 PWA, #31 historial, #32 enlace; una rama y un PR por issue, encadenados)
+- #30 App instalable y sin conexión (rama `agent/builder/30-pwa`): hecho, ver abajo.
+- #31 Historial y #32 Enlace para compartir: pendientes.
+
+**#30 PWA.** `public/manifest.webmanifest` (scope y `start_url` `/printquote/`, `standalone`, iconos 192/512/maskable) e iconos en `public/icons/` generados por `scripts/iconos.mjs` (Chrome/Edge headless; la parte de DevTools se extrajo a `scripts/chrome.mjs` y la comparte `captura.mjs`). Service worker a mano en `src/sw.js` (plantilla; no entra en el paquete de Vite) y plugin `scripts/pwa-plugin.ts` (`closeBundle`: lee `dist/`, calcula la lista de precaché y la versión y escribe `dist/sw.js`). `src/pwa.ts` lo registra tras `load`, solo en producción, con `updateViaCache: 'none'`.
+- Precaché (12 archivos, ~0,76 MB): HTML, JS de entrada, CSS, worker, visor, pieza de ejemplo, iconos, favicon, manifiesto. **No** el chunk del PDF (`assets/render-*.js`), las fuentes (`assets/*.ttf`), `og.png` ni las licencias: el service worker los guarda la primera vez que se piden (lo comprobé: tras un PDF quedan en caché y se genera otro sin red). Nombres en la lista `LAZY` del plugin (si se renombra el módulo `pdf/render.ts`, hay que tocarla; el test lo vigila con nombres reales).
+- Estrategias: navegación con red primero y respaldo `index.html` (clave: la raíz del scope, `ignoreSearch`); el resto, caché primero y guardar; no toca otros orígenes, ni lo que no sea GET, ni Range, ni `sw.js`. `ignoreVary: true` en las búsquedas: sin él, `vite preview` (que manda `Vary: Origin`) hacía fallar las peticiones de módulos desde la caché (lo vi en el navegador).
+- Versión de la caché = hash del contenido de `dist/` (menos `sw.js`) **y** de la plantilla del service worker. Al activarse borra las `printquote-*` de otras versiones y hace `clients.claim()` (así la primera visita ya pasa por el service worker y el PDF se cachea sin recargar). **Sin `skipWaiting`**: una pestaña abierta con la versión vieja no pierde archivos de carga diferida a media sesión; la versión nueva manda al cerrar todas las pestañas. Con red, las navegaciones ya traen la versión publicada.
+- Tests: `tests/sw.test.ts` (carga `src/sw.js` en `vm` con `caches`/`fetch` simulados), `tests/pwa-plugin.test.ts` (lista, versión, escritura) y `tests/manifest.test.ts` (campos, rutas, medidas de los PNG, enlaces del HTML).
+- Comprobado en Chrome headless (el panel del navegador de Claude no deja registrar service workers): registro y activación, caché con lo esperado, **servidor parado + recarga: abre, calcula, dibuja el visor y genera PDF**; `Page.getInstallabilityErrors` vacío y manifiesto sin errores.
+- Rendimiento (Chrome headless, sin limitación de red, 1 corrida fría y 2 calientes; ruido de ±40 ms): antes de `load` la primera visita descarga 175,8 kB frente a 175,0 kB de v0.3.0 (+manifiesto e icono); JS inicial 80,62 kB (28,11 kB gzip) frente a 80,42 kB (28,03 kB): +0,2 kB. FCP en frío 484 ms frente a 444 ms y en caliente 44 ms frente a 40 ms, dentro del ruido. El precaché (~0,76 MB) se descarga después de `load`.
+- Decisión: sin `vite-plugin-pwa`/Workbox (sin dependencias, el comportamiento cabe en una página y se prueba entero).
 
 ### v0.3.0 (#17 a #22 fusionados en `main`; PR de pulido `agent/builder/v0.3-pulido` pendiente de fusionar antes de la release)
 - #17 PDF con fuente incrustada (rama `agent/builder/17-pdf-fuente`): hecho, ver abajo.
@@ -174,3 +187,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder/21-zoom-teclado): #21 zoom con teclado en el visor (`zoom.ts`, listener en `Viewer`, pista y etiqueta accesible, tests, docs).
 - 2026-09-30 builder · Claude Code Sonnet (agent/builder/22-captura-readme): #22 capturas nuevas de README y Open Graph con `scripts/captura.mjs` (Chrome headless), CONTRIBUTING al día con #17 a #22.
 - 2026-10-01 builder · Claude Code Sonnet (agent/builder/v0.3-pulido): pulido de v0.3.0 tras la revisión (licencias OFL en la web, `loadFonts` memoizado, aviso de fuentes sin conexión, guarda del zoom, test de frontera 3MF, comentarios, CHANGELOG 0.3.0 y versión).
+- 2026-10-01 builder · Claude Code Sonnet (agent/builder/30-pwa): #30 PWA (manifiesto, iconos, service worker propio con plugin de Vite, tests, comprobación sin conexión en Chrome headless) y especificación de v0.4.0 (`docs/specs/v0.4.md`).

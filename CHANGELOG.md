@@ -4,6 +4,10 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 
 ## [Sin publicar]
 
+### Añadido
+
+- **App instalable y sin conexión (PWA)** (#30): `manifest.webmanifest` con iconos (192, 512 y maskable, más el de iOS, generados desde el favicon con `scripts/iconos.mjs`) y un service worker propio, sin dependencias nuevas. Precachea la app, el visor y la pieza de ejemplo; el chunk del PDF y las fuentes se guardan la primera vez que se piden. Navegación con red primero (se ve la versión publicada) y respaldo en caché; la caché lleva la versión (hash del contenido de `dist/`) y se limpian las antiguas al activarse. El JS inicial crece 0,2 kB.
+
 ## [0.3.0] - 2026-10-01
 
 Hito v0.3.0: PDF en cualquier alfabeto, metadatos traducidos, avisos y límites en OBJ y 3MF, zoom con teclado y capturas nuevas.
