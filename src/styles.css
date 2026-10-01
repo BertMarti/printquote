@@ -983,7 +983,7 @@ input {
   margin-bottom: 10px;
 }
 
-/* Historial de presupuestos (bloque 07): lista de filas con filete, sin tarjetas */
+/* Historial de presupuestos (bloque 08): lista de filas con filete, sin tarjetas */
 
 .history-count {
   font-weight: 400;
@@ -1048,6 +1048,31 @@ input {
 .history-empty {
   margin-top: 14px;
 }
+
+/* Lote (bloque 06): reutiliza la lista del historial; el total es la cifra mayor del bloque */
+
+.batch-list:empty {
+  display: none;
+}
+
+.batch-summary {
+  margin-top: 16px;
+}
+
+.batch-summary[hidden] {
+  display: none;
+}
+
+.rows .batch-total {
+  align-items: flex-end;
+  padding-top: 10px;
+  font-weight: 600;
+}
+
+.rows .batch-total dd .num {
+  font-size: 22px;
+}
+
 
 .history-empty[hidden] {
   display: none;

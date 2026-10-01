@@ -210,9 +210,36 @@
             </dl>
           </section>
 
+          <section class="block" aria-labelledby="h-batch">
+            <details class="details" id="batch-details">
+              <summary><span class="block-title" id="h-batch"><span class="block-num">06</span><span data-i18n="batch.title">Lote</span> <span class="history-count num" id="batch-count"></span></span></summary>
+              <p class="caption caption--plain" data-i18n="batch.intro">Para pedidos de varias piezas: ajusta una pieza, añádela al lote y sigue con la siguiente. Cada línea conserva los ajustes con que se añadió. El lote no se conserva al recargar la página.</p>
+              <div class="history-actions">
+                <button type="button" class="button" id="batch-add" disabled>Añadir esta pieza</button>
+              </div>
+              <ul class="history-list batch-list" id="batch-list" aria-label="Piezas del lote" data-i18n-attr="aria-label:batch.list.label"></ul>
+              <p class="caption field-note history-empty" id="batch-empty" data-i18n="batch.empty">El lote está vacío. Carga una pieza, ajústala y pulsa «Añadir esta pieza».</p>
+              <div class="batch-summary" id="batch-summary" hidden>
+                <dl class="rows">
+                  <div class="row"><dt data-i18n="batch.sum.parts">Piezas</dt><dd><span class="num" id="out-batch-parts">—</span><span class="unit"></span></dd></div>
+                  <div class="row"><dt data-i18n="batch.sum.copies">Copias</dt><dd><span class="num" id="out-batch-copies">—</span><span class="unit"></span></dd></div>
+                  <div class="row"><dt data-i18n="breakdown.weight">Peso</dt><dd><span class="num" id="out-batch-weight">—</span><span class="unit">g</span></dd></div>
+                  <div class="row"><dt><span data-i18n="breakdown.time">Tiempo</span> <span class="tag" data-i18n="breakdown.estimate">estimación</span></dt><dd><span class="num" id="out-batch-time">—</span><span class="unit"></span></dd></div>
+                  <div class="row row--rule"><dt data-i18n="breakdown.subtotal">Subtotal</dt><dd><span class="num" id="out-batch-subtotal">—</span><span class="unit">€</span></dd></div>
+                  <div class="row"><dt data-i18n="breakdown.margin">Margen</dt><dd><span class="num" id="out-batch-margin">—</span><span class="unit">€</span></dd></div>
+                  <div class="row row--rule batch-total"><dt><span data-i18n="batch.total">Total del lote</span> <span class="sub" data-i18n="batch.total.sub">sin IVA</span></dt><dd><span class="num" id="out-batch-total">—</span><span class="unit">€</span></dd></div>
+                </dl>
+              </div>
+              <div class="history-footer">
+                <button type="button" class="link-button" id="batch-clear" data-i18n="batch.clear" disabled>Vaciar lote</button>
+                <button type="button" class="link-button" id="batch-cancel" data-i18n="batch.clear.cancel" hidden>Cancelar</button>
+              </div>
+            </details>
+          </section>
+
           <section class="block" aria-labelledby="h-business">
             <details class="details" id="business-details">
-              <summary><span class="block-title" id="h-business"><span class="block-num">06</span><span data-i18n="biz.title">Datos del negocio</span></span></summary>
+              <summary><span class="block-title" id="h-business"><span class="block-num">07</span><span data-i18n="biz.title">Datos del negocio</span></span></summary>
               <p class="caption caption--plain" data-i18n="biz.intro">Salen en el PDF del presupuesto. Se guardan solo en este navegador: no se envían a ningún servidor.</p>
               <div class="field field--text">
                 <label for="in-biz-name" data-i18n="biz.name">Nombre del negocio</label>
@@ -268,7 +295,7 @@
 
           <section class="block" aria-labelledby="h-history">
             <details class="details" id="history-details">
-              <summary><span class="block-title" id="h-history"><span class="block-num">07</span><span data-i18n="hist.title">Presupuestos</span> <span class="history-count num" id="history-count"></span></span></summary>
+              <summary><span class="block-title" id="h-history"><span class="block-num">08</span><span data-i18n="hist.title">Presupuestos</span> <span class="history-count num" id="history-count"></span></span></summary>
               <p class="caption caption--plain" data-i18n="hist.intro">Guarda cada presupuesto en este navegador para repetirlo o exportarlo. No se guarda el archivo 3D ni los datos del negocio, y no se envía nada a ningún servidor.</p>
               <div class="field field--text">
                 <label for="in-client"><span data-i18n="hist.client">Cliente</span> <span class="sub" data-i18n="biz.optional">(opcional)</span></label>

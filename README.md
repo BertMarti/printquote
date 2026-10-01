@@ -18,6 +18,7 @@
 - **Avisa** si la malla parece abierta o tiene las normales invertidas, si no cabe en tu cama (por defecto 220 × 220 × 250 mm) o si mide menos de 1 mm (¿exportada en metros o pulgadas?).
 - **Visor 3D** con la pieza apoyada en la cama, rejilla de 10 mm, órbita, zoom (rueda, pellizco o teclas + y −) y «Restablecer vista».
 - **Perfiles de impresora**: elige Bambu Lab A1 o P1S, Prusa MK4 o MINI+, Creality Ender-3 V3 o K1, Elegoo Neptune 4 (o «Personalizada») y se rellenan caudal, potencia y cama con valores de partida **orientativos**; al editar cualquiera de ellos vuelve a «Personalizada».
+- **Lote**: presupuesta un pedido de varias piezas (bloque «06 Lote»): cada pieza se añade con los ajustes del momento, la lista muestra volumen, peso, tiempo, copias e importe, y el total suma las líneas ya redondeadas a céntimos con el mismo modelo de coste que una pieza suelta (`src/quote/batch.ts`).
 - **Presupuesto en vivo**: material, relleno, perímetros, caudal, energía, margen y copias. Cualquier cambio recalcula al instante.
 - **Copiar presupuesto** en texto plano, **Imprimir** una hoja limpia con la vista 3D y el desglose, o **Descargar PDF**: un presupuesto de una página con el nombre y el logotipo de tu negocio, tus datos de contacto, número, fecha, validez, desglose e **IVA** (21 % por defecto, configurable). Los datos del negocio se rellenan una vez en el bloque plegable «Datos del negocio» y se guardan en tu navegador. Límites: una página A4, sin campo de cliente, y el PDF incrusta Noto Sans y JetBrains Mono (latino, griego y cirílico); chino, japonés y emojis salen como «?».
 - **Español e inglés**: el idioma inicial sale de tu navegador (`navigator.language`), se cambia con el selector ES / EN de la cabecera y se recuerda. Textos, avisos, errores, números, moneda, fechas y PDF cambian de idioma (la moneda sigue siendo el euro).
@@ -119,7 +120,7 @@ npm run dev        # http://localhost:5173/printquote/
 ```text
 src/
   stl/        parsers STL, OBJ y 3MF (ZIP + XML), geometría (volumen, área, caja, aristas abiertas) y Web Worker
-  quote/      modelo de coste, materiales, perfiles de impresora, ajustes, IVA, datos del negocio, historial y CSV, enlace para compartir (`share.ts`), formato es-ES y presupuesto en texto
+  quote/      modelo de coste, lote de piezas (`batch.ts`), materiales, perfiles de impresora, ajustes, IVA, datos del negocio, historial y CSV, enlace para compartir (`share.ts`), formato es-ES y presupuesto en texto
   pdf/        contenido del presupuesto en PDF (puro) y su dibujo con pdf-lib
   viewer/     visor three.js (cama, cámara, luces)
   sw.js       service worker (plantilla que el plugin de Vite copia a `dist/sw.js` con la versión y el precaché)

@@ -30,7 +30,7 @@ const byId = <T extends HTMLElement>(id: string): T => {
   return node as T;
 };
 
-/** Bloque «07 Presupuestos»: guardar, listar, reabrir, borrar y exportar a CSV. Todo en `localStorage`. */
+/** Bloque «08 Presupuestos»: guardar, listar, reabrir, borrar y exportar a CSV. Todo en `localStorage`. */
 export function setupHistory(host: HistoryHost): { render(): void; sync(): void } {
   const client = byId<HTMLInputElement>('in-client');
   const saveButton = byId<HTMLButtonElement>('history-save');

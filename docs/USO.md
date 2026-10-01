@@ -275,6 +275,15 @@ El campo **Copias** es el número de veces que vas a imprimir la pieza. printquo
 
 Si imprimes varias copias juntas en una misma cama, el tiempo real puede ser algo menor que el calculado, porque la preparación se hace una sola vez. Como printquote redondea a céntimos línea a línea (ver [sección 11](#11-cómo-se-calcula-con-un-ejemplo-completo)), el total de N copias puede diferir en uno o dos céntimos de N veces el precio de una copia. Con la pieza de ejemplo, 1 copia son 1,59 € y 3 copias son 4,75 € (1,58 € por copia).
 
+### Presupuestar un pedido de varias piezas (lote)
+
+El bloque **06 Lote** (plegable) sirve para pedidos con varias piezas distintas: ajusta una pieza (material, relleno, copias…), pulsa **Añadir esta pieza** (el botón muestra su importe) y sigue con la siguiente. Cada línea de la lista muestra el nombre, el material, el volumen, el peso, el tiempo y las copias, y su **importe** (sin IVA).
+
+- Cada línea **conserva los ajustes con que se añadió**: cambiar el formulario después no la altera. Para cambiar algo de una línea, **Quitar** y vuelve a añadirla.
+- El **total del lote** es la suma de los importes de las líneas, ya redondeados a céntimos (como en una factura): lo que ves suma. Cada línea usa el mismo cálculo que una pieza suelta.
+- **Quitar** recalcula el total; **Vaciar lote** pide confirmar con un segundo clic. Admite hasta **50 piezas**.
+- El lote vive solo en la página abierta: si la recargas, se pierde (el historial lo conserva; ver más abajo).
+
 ## 10. Copiar, imprimir y descargar el presupuesto en PDF
 
 Los botones están en la parte inferior del panel, junto al **Total** (en el móvil, esa barra queda fija al fondo de la pantalla). Se activan cuando hay una pieza cargada.
@@ -287,7 +296,7 @@ El texto copiado y la hoja impresa muestran el total **sin IVA** (es la base imp
 
 ### Guardar y reabrir presupuestos (historial)
 
-El bloque **07 Presupuestos** (plegado por defecto; el número entre paréntesis es cuántos tienes guardados) recuerda tus presupuestos en este navegador, para repetirlos o llevarlos a una hoja de cálculo:
+El bloque **08 Presupuestos** (plegado por defecto; el número entre paréntesis es cuántos tienes guardados) recuerda tus presupuestos en este navegador, para repetirlos o llevarlos a una hoja de cálculo:
 
 1. Con una pieza cargada, escribe el **cliente** si quieres (opcional; solo se ve en el historial y en el CSV, no sale en el PDF) y pulsa **Guardar este presupuesto** (o Intro en el campo del cliente).
 2. Cada presupuesto aparece en la lista con la pieza, la fecha, el cliente, el material y el total (sin IVA, tal como salió).
@@ -299,7 +308,7 @@ El bloque **07 Presupuestos** (plegado por defecto; el número entre paréntesis
 
 ### Compartir los parámetros con un enlace
 
-En el bloque **07 Presupuestos**, **Copiar enlace** copia una dirección con los **parámetros** de tu presupuesto (material y su precio, impresora, relleno, perímetros, ancho de línea, caudal, potencia, energía, margen, copias y cama). Quien la abra ve exactamente esa configuración y **solo tiene que arrastrar su pieza**. Ejemplo:
+En el bloque **08 Presupuestos**, **Copiar enlace** copia una dirección con los **parámetros** de tu presupuesto (material y su precio, impresora, relleno, perímetros, ancho de línea, caudal, potencia, energía, margen, copias y cama). Quien la abra ve exactamente esa configuración y **solo tiene que arrastrar su pieza**. Ejemplo:
 
 ```text
 https://bertmarti.github.io/printquote/#v=1&mat=PETG&price=24&printer=bambu-a1&infill=15&per=3&lw=0.45&flow=12&oh=5&pw=100&ep=0.15&mg=30&cp=2&bx=256&by=256&bz=256
@@ -312,7 +321,7 @@ https://bertmarti.github.io/printquote/#v=1&mat=PETG&price=24&printer=bambu-a1&i
 
 ### Datos del negocio
 
-Para que el PDF lleve tu nombre y tus datos, rellena el bloque plegable **«06 · Datos del negocio»**, al final del panel (está plegado por defecto; púlsalo para abrirlo). Se rellena una sola vez: todo se guarda en tu navegador y no se envía a ningún sitio.
+Para que el PDF lleve tu nombre y tus datos, rellena el bloque plegable **«07 · Datos del negocio»**, al final del panel (está plegado por defecto; púlsalo para abrirlo). Se rellena una sola vez: todo se guarda en tu navegador y no se envía a ningún sitio.
 
 | Campo | Qué poner | Límite |
 |---|---|---|
