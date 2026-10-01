@@ -223,6 +223,9 @@ export const en: Record<Key, string> = {
     'The print time is an estimate based on an average volumetric flow; your slicer will give the real figure. The file was processed in the browser and was not sent to any server.',
   'doc.view3d': '3D view of {name}',
   'doc.fileInfo': '{name} · {format} · {n} triangles',
+  'doc.batchPartUpper': 'PART {i} OF {n}',
+  'doc.batchAmount': 'Amount (excl. VAT)',
+  'doc.batchTotalUpper': 'BATCH TOTAL',
 
   // ── PDF ──
   'pdf.title': 'Quote',
@@ -256,6 +259,12 @@ export const en: Record<Key, string> = {
   'pdf.noteValidity': 'Quote valid until the date shown. It does not include any costs that are not itemised.',
   'pdf.footer': 'Created with printquote · bertmarti.github.io/printquote',
   'pdf.documentTitle': '3D print quote',
+  'pdf.parts': 'Parts',
+  'pdf.copiesShort': 'Qty',
+  'pdf.weightShort': 'Weight',
+  'pdf.timeShort': 'Time',
+  'pdf.amount': 'Amount',
+  'pdf.pageOf': 'Page {n} of {total}',
 
   // ── Quote history ──
   'hist.title': 'Quotes',
@@ -306,6 +315,10 @@ export const en: Record<Key, string> = {
   'batch.clear.confirm': 'Confirm: remove all {n}',
   'batch.clear.cancel': 'Cancel',
   'batch.cleared': 'The batch is empty.',
+  'batch.copy': 'Copy batch',
+  'batch.copy.announce.ok': 'Batch copied to the clipboard.',
+  'batch.copy.announce.failed': 'The batch could not be copied.',
+  'batch.pdf': 'Batch PDF',
 
   // ── Share link ──
   'share.copy': 'Copy link',

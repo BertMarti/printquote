@@ -229,6 +229,9 @@ export const es = {
     'El tiempo de impresión es una estimación basada en un caudal volumétrico medio; el laminador dará la cifra real. El archivo se ha procesado en el navegador y no se ha enviado a ningún servidor.',
   'doc.view3d': 'Vista 3D de {name}',
   'doc.fileInfo': '{name} · {format} · {n} triángulos',
+  'doc.batchPartUpper': 'PIEZA {i} DE {n}',
+  'doc.batchAmount': 'Importe (sin IVA)',
+  'doc.batchTotalUpper': 'TOTAL DEL LOTE',
 
   // ── PDF ──
   'pdf.title': 'Presupuesto',
@@ -262,6 +265,12 @@ export const es = {
   'pdf.noteValidity': 'Presupuesto válido hasta la fecha indicada. No incluye otros gastos que no se detallen.',
   'pdf.footer': 'Generado con printquote · bertmarti.github.io/printquote',
   'pdf.documentTitle': 'Presupuesto de impresión 3D',
+  'pdf.parts': 'Piezas',
+  'pdf.copiesShort': 'Cop.',
+  'pdf.weightShort': 'Peso',
+  'pdf.timeShort': 'Tiempo',
+  'pdf.amount': 'Importe',
+  'pdf.pageOf': 'Página {n} de {total}',
 
   // ── Historial de presupuestos ──
   'hist.title': 'Presupuestos',
@@ -312,6 +321,10 @@ export const es = {
   'batch.clear.confirm': 'Confirmar: quitar las {n}',
   'batch.clear.cancel': 'Cancelar',
   'batch.cleared': 'El lote está vacío.',
+  'batch.copy': 'Copiar lote',
+  'batch.copy.announce.ok': 'Lote copiado al portapapeles.',
+  'batch.copy.announce.failed': 'No se ha podido copiar el lote.',
+  'batch.pdf': 'PDF del lote',
 
   // ── Enlace para compartir ──
   'share.copy': 'Copiar enlace',

@@ -7,6 +7,7 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 ### Añadido
 
 - **Lote: presupuesto de varias piezas** (#40): bloque «06 Lote» (plegable) con «Añadir esta pieza» (muestra su importe), una lista con nombre, material, volumen, peso, tiempo, copias e importe de cada línea, «Quitar» y «Vaciar lote» (dos clics), y el **total del lote**. Cada línea conserva los ajustes con que se añadió y usa `computeQuote` (`src/quote/batch.ts` solo suma líneas ya redondeadas a céntimos, como una factura). Hasta 50 piezas; vive en memoria. Foco y anuncios accesibles, sin desborde a 320 px.
+- **Lote en el texto copiado y en el PDF** (#41): «Copiar lote» (texto con todas las piezas, su importe y el desglose del lote) y «PDF del lote» (tabla de piezas, desglose del lote y el IVA sobre la suma, sin vista 3D). El PDF pasa a **varias páginas** cuando no caben todas las piezas (cabecera de la tabla repetida y «Página n de N»). `buildBatchDocument` y `buildBatchText` reutilizan las utilidades de una pieza; el PDF de una pieza no cambia.
 
 ### Cambiado
 
