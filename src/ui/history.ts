@@ -1,8 +1,9 @@
 import { getLang, getLocale, t } from '../i18n';
-import type { BatchPart } from '../quote/batch';
+import { computeBatch, type BatchPart } from '../quote/batch';
 import { formatEuro } from '../quote/format';
 import {
   addEntry,
+  batchFromParts,
   createBatchEntry,
   createEntry,
   HISTORY_MAX,
@@ -21,6 +22,8 @@ export interface HistoryHost {
   current(): { fileName: string; stats: MeshStats; quote: Quote; settings: QuoteSettings } | null;
   /** Las piezas del lote (vacío si no hay lote). */
   batch(): readonly BatchPart[];
+  /** Sustituye el lote por estas líneas y lo muestra. */
+  openBatch(parts: readonly BatchPart[]): void;
   /** Aplica unos ajustes a la interfaz (y los guarda como los de trabajo). */
   applySettings(settings: QuoteSettings): void;
   announce(message: string): void;
@@ -48,6 +51,8 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
 
   let entries = loadHistory();
   let confirmingClear = false;
+  /** Entrada de lote cuyo «Abrir» espera confirmación (hay un lote en curso que se reemplazaría). */
+  let confirmingOpen: string | null = null;
 
   /** Un formateador por idioma: crear uno por fila costaba más que pintar la lista. */
   const dateFormats = new Map<string, Intl.DateTimeFormat>();
@@ -87,14 +92,16 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
       button.className = 'button button--small';
       button.dataset['action'] = kind;
       button.dataset['id'] = entry.id;
-      button.textContent = t(`hist.${kind}`);
-      button.setAttribute('aria-label', t(`hist.${kind}.label`, label));
+      const confirming = kind === 'open' && confirmingOpen === entry.id;
+      button.textContent = t(confirming ? 'hist.open.confirm' : `hist.${kind}`);
+      button.setAttribute('aria-label', t(confirming ? 'hist.open.confirm.label' : `hist.${kind}.label`, label));
       return button;
     };
     const buttons = document.createElement('div');
     buttons.className = 'history-buttons';
-    // Un lote no se reabre (no guarda la geometría de las piezas): se lista, se exporta y se borra.
-    buttons.append(...(entry.parts ? [] : [action('open')]), action('delete'));
+    // Un lote se abre si todas sus piezas traen el área (las guardadas con v0.6 no): se lista, se exporta y se borra.
+    const canOpen = !entry.parts || entry.parts.every((piece) => piece.surfaceMm2 !== undefined);
+    buttons.append(...(canOpen ? [action('open')] : []), action('delete'));
     item.append(head, meta, buttons);
     return item;
   }
@@ -130,6 +137,7 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
     }
     entries = next;
     confirmingClear = false;
+    confirmingOpen = null;
     render();
     const params = { name, total: formatEuro(entry.result.total), max: HISTORY_MAX };
     host.announce(t(dropped > 0 ? 'hist.saved.dropped' : 'hist.saved', params));
@@ -148,7 +156,24 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
     store(createBatchEntry({ client: client.value, parts }), t('hist.batch.name', { n: parts.length }));
   }
 
+  /** Reabre un lote en el bloque 06. Con un lote en curso hace falta un segundo clic: se perdería. */
+  function openBatch(entry: HistoryEntry, lines: readonly BatchPart[]): void {
+    if (host.batch().length > 0 && confirmingOpen !== entry.id) {
+      confirmingOpen = entry.id;
+      render();
+      list.querySelector<HTMLButtonElement>(`button[data-action="open"][data-id="${CSS.escape(entry.id)}"]`)?.focus();
+      return;
+    }
+    confirmingOpen = null;
+    host.openBatch(lines);
+    client.value = entry.client;
+    render();
+    host.announce(t('hist.opened.batch', { n: lines.length, total: formatEuro(computeBatch(lines).total) }));
+  }
+
   function open(entry: HistoryEntry): void {
+    const lines = entry.parts && batchFromParts(entry.parts);
+    if (lines) return openBatch(entry, lines);
     const hasPart = host.current() !== null;
     host.applySettings(entry.settings);
     client.value = entry.client;
@@ -162,6 +187,7 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
       return;
     }
     entries = next;
+    confirmingOpen = null;
     render();
     host.announce(t('hist.deleted', { name: entry.fileName }));
   }
@@ -203,6 +229,7 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
     }
     entries = [];
     confirmingClear = false;
+    confirmingOpen = null;
     render();
     host.announce(t('hist.cleared'));
   });
