@@ -39,6 +39,11 @@ export function makePart(fileName: string, stats: MeshStats, settings: QuoteSett
   return { id, fileName, stats, settings, quote: computeQuote(stats, settings) };
 }
 
+/** La misma línea con otras copias: se recalcula con `computeQuote` y los ajustes con que se añadió. */
+export function withCopies(part: BatchPart, copies: number): BatchPart {
+  return makePart(part.fileName, part.stats, { ...part.settings, copies }, part.id);
+}
+
 /** Suma las líneas como una factura: cada una ya está en céntimos, así que lo que se ve suma el total. */
 export function computeBatch(parts: readonly BatchPart[]): BatchTotals {
   const sum = (pick: (quote: Quote) => number): number => parts.reduce((acc, part) => acc + pick(part.quote), 0);

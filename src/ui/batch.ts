@@ -1,9 +1,9 @@
 import { t } from '../i18n';
-import { BATCH_MAX, computeBatch, makePart, type BatchPart } from '../quote/batch';
+import { BATCH_MAX, computeBatch, makePart, withCopies, type BatchPart } from '../quote/batch';
 import { formatDuration, formatEuro, formatNumber } from '../quote/format';
 import { MATERIALS } from '../quote/materials';
 import type { Quote } from '../quote/model';
-import type { QuoteSettings } from '../quote/settings';
+import { clampToLimit, LIMITS, type QuoteSettings } from '../quote/settings';
 import type { MeshStats } from '../stl/types';
 import { loadBatch, saveBatch } from './storage';
 
@@ -48,29 +48,39 @@ export function setupBatch(host: BatchHost): { render(): void; sync(): void; par
     return node;
   };
 
+  const metaText = ({ quote, settings, stats }: BatchPart): string =>
+    [
+      MATERIALS[settings.material].name,
+      `${formatNumber(stats.volume / 1000, 2)} cm³`,
+      `${formatNumber(quote.totalWeightGrams, 1)} g`,
+      formatDuration(quote.totalHours),
+      quote.copies === 1 ? t('summary.copies.one') : t('batch.copies', { n: formatNumber(quote.copies, 0) }),
+    ].join(' · ');
+
   /** Fila de la lista. El nombre del archivo lo pone la persona: entra con `textContent`, nunca como HTML. */
   function row(part: BatchPart): HTMLLIElement {
-    const { quote, settings } = part;
     const item = el('li', 'history-item');
     const head = el('div', 'history-head');
-    head.append(el('span', 'history-name', part.fileName), el('span', 'history-total num', formatEuro(quote.total)));
-    const meta = el(
-      'p',
-      'history-meta',
-      [
-        MATERIALS[settings.material].name,
-        `${formatNumber(part.stats.volume / 1000, 2)} cm³`,
-        `${formatNumber(quote.totalWeightGrams, 1)} g`,
-        formatDuration(quote.totalHours),
-        quote.copies === 1 ? t('summary.copies.one') : t('batch.copies', { n: formatNumber(quote.copies, 0) }),
-      ].join(' · '),
-    );
+    head.append(el('span', 'history-name', part.fileName), el('span', 'history-total num', formatEuro(part.quote.total)));
+    const meta = el('p', 'history-meta', metaText(part));
+    // Copias de la línea: se corrigen aquí (se recalcula con los ajustes de la línea) en vez de quitar y volver a añadir.
+    const copies = el('label', 'batch-copies');
+    const field = el('input', 'batch-copies-input num');
+    field.type = 'number';
+    field.min = String(LIMITS.copies.min);
+    field.max = String(LIMITS.copies.max);
+    field.step = '1';
+    field.inputMode = 'numeric';
+    field.value = String(part.settings.copies);
+    field.dataset['copies'] = part.id;
+    field.setAttribute('aria-label', t('batch.copies.label', { name: part.fileName }));
+    copies.append(el('span', 'batch-copies-text', t('batch.copies.field')), field);
     const remove = el('button', 'button button--small', t('batch.remove'));
     remove.type = 'button';
     remove.dataset['id'] = part.id;
     remove.setAttribute('aria-label', t('batch.remove.label', { name: part.fileName }));
     const buttons = el('div', 'history-buttons');
-    buttons.append(remove);
+    buttons.append(copies, remove);
     item.append(head, meta, buttons);
     return item;
   }
@@ -87,8 +97,9 @@ export function setupBatch(host: BatchHost): { render(): void; sync(): void; par
         : t('batch.add');
   }
 
-  function render(): void {
-    list.replaceChildren(...parts.map(row));
+  /** `keepList`: la lista ya está al día (se editó una línea en su sitio) y no se reconstruye, para no perder el foco. */
+  function render(keepList = false): void {
+    if (!keepList) list.replaceChildren(...parts.map(row));
     empty.hidden = parts.length > 0;
     summary.hidden = parts.length === 0;
     count.textContent = parts.length > 0 ? `(${parts.length})` : '';
@@ -111,10 +122,10 @@ export function setupBatch(host: BatchHost): { render(): void; sync(): void; par
   const focusAdd = (): void => (addButton.disabled ? details.querySelector('summary') : addButton)?.focus();
   const totalText = (): string => formatEuro(computeBatch(parts).total);
 
-  function change(): void {
+  function change(keepList = false): void {
     saveBatch(parts);
     confirmingClear = false;
-    render();
+    render(keepList);
     host.changed();
   }
 
@@ -152,6 +163,26 @@ export function setupBatch(host: BatchHost): { render(): void; sync(): void; par
     );
   });
 
+  // Copias de una línea: se aplica al salir del campo o con Intro. La fila se actualiza en su sitio (no se recrea).
+  list.addEventListener('change', (event) => {
+    const field = (event.target as Element).closest<HTMLInputElement>('input[data-copies]');
+    const current = parts.find((part) => part.id === field?.dataset['copies']);
+    if (!field || !current) return;
+    const typed = field.value.trim() === '' ? Number.NaN : Number(field.value);
+    const copies = Number.isFinite(typed) ? clampToLimit(typed, LIMITS.copies) : current.settings.copies;
+    field.value = String(copies);
+    if (copies === current.settings.copies) return;
+    const next = withCopies(current, copies);
+    parts = parts.map((part) => (part === current ? next : part));
+    const item = field.closest('li');
+    const total = item?.querySelector('.history-total');
+    const meta = item?.querySelector('.history-meta');
+    if (total) total.textContent = formatEuro(next.quote.total);
+    if (meta) meta.textContent = metaText(next);
+    change(true);
+    host.announce(t('batch.copies.changed', { name: next.fileName, n: formatNumber(copies, 0), total: totalText() }));
+  });
+
   // Vaciar pide confirmar con un segundo clic (sin `confirm()`, que bloquea y no se puede traducir ni probar).
   clearButton.addEventListener('click', () => {
     if (!confirmingClear) {
@@ -180,5 +211,5 @@ export function setupBatch(host: BatchHost): { render(): void; sync(): void; par
   }
 
   render();
-  return { render, sync, parts: () => parts, set };
+  return { render: () => render(), sync, parts: () => parts, set };
 }

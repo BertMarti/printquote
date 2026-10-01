@@ -208,6 +208,97 @@ describe('lote en la interfaz', () => {
     expect(items()).toHaveLength(1);
   });
 
+  describe('copias de una línea', () => {
+    const copiesInput = (index = 0): HTMLInputElement => items()[index]?.querySelector<HTMLInputElement>('input[data-copies]') as HTMLInputElement;
+    const setCopies = (input: HTMLInputElement, value: string): void => {
+      input.value = value;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
+    it('cada línea tiene un campo numérico accesible con sus copias', async () => {
+      await start();
+      type('in-copies', '4');
+      button('batch-add').click();
+      const input = copiesInput();
+      expect(input.type).toBe('number');
+      expect(input.min).toBe('1');
+      expect(input.max).toBe('10000');
+      expect(input.step).toBe('1');
+      expect(input.value).toBe('4');
+      expect(input.getAttribute('aria-label')).toBe('Copias de soporte-movil.stl');
+      expect(items()[0]?.querySelector('label')?.textContent).toContain('Copias');
+    });
+
+    it('cambiar las copias recalcula la línea con SUS ajustes (no los del formulario) y el total del lote', async () => {
+      await start();
+      document.querySelector<HTMLInputElement>('input[name="material"][value="PETG"]')?.click();
+      type('in-copies', '3');
+      const expected = euros($('out-total').textContent); // PETG × 3, calculado por la ficha
+      type('in-copies', '1');
+      button('batch-add').click();
+      const oneCopy = euros(items()[0]?.querySelector('.history-total')?.textContent);
+      document.querySelector<HTMLInputElement>('input[name="material"][value="ABS"]')?.click(); // el formulario ya no es PETG
+      button('batch-add').click();
+      const second = euros(items()[1]?.querySelector('.history-total')?.textContent);
+
+      const input = copiesInput(0);
+      setCopies(input, '3');
+      expect(euros(items()[0]?.querySelector('.history-total')?.textContent)).toBe(expected);
+      expect(expected).toBeGreaterThan(oneCopy);
+      expect(items()[0]?.querySelector('.history-meta')?.textContent).toMatch(/PETG.*3 copias/);
+      expect(euros(items()[1]?.querySelector('.history-total')?.textContent)).toBe(second);
+      expect(euros($('out-batch-total').textContent)).toBeCloseTo(expected + second, 2);
+      expect($('out-batch-copies').textContent).toBe('4');
+      // El campo no se vuelve a crear: el foco y el cursor no se pierden.
+      expect(copiesInput(0)).toBe(input);
+      // Persiste.
+      expect(JSON.parse(window.localStorage.getItem('printquote:lote:v1') ?? '{}').parts[0].settings.copies).toBe(3);
+      await until(() => /Copias de soporte-movil\.stl: 3\. Total del lote/.test($('live-status').textContent ?? ''));
+    });
+
+    it('un valor vacío o no numérico vuelve al actual; fuera de rango o decimal se acota', async () => {
+      await start();
+      type('in-copies', '2');
+      button('batch-add').click();
+      const input = copiesInput();
+      setCopies(input, '');
+      expect(input.value).toBe('2');
+      setCopies(input, 'abc');
+      expect(input.value).toBe('2');
+      setCopies(input, '0');
+      expect(input.value).toBe('1');
+      setCopies(input, '-4');
+      expect(input.value).toBe('1');
+      setCopies(input, '99999');
+      expect(input.value).toBe('10000');
+      setCopies(input, '2.6');
+      expect(input.value).toBe('3');
+      expect(items()[0]?.querySelector('.history-meta')?.textContent).toMatch(/3 copias/);
+    });
+
+    it('con 1 copia la línea dice «1 copia» y no se anuncia nada si no hay cambio', async () => {
+      await start();
+      type('in-copies', '2');
+      button('batch-add').click();
+      setCopies(copiesInput(), '1');
+      expect(items()[0]?.querySelector('.history-meta')?.textContent).toContain('1 copia');
+      expect(items()[0]?.querySelector('.history-meta')?.textContent).not.toMatch(/1 copias/);
+      await until(() => /Copias de/.test($('live-status').textContent ?? ''));
+      $('live-status').textContent = '';
+      setCopies(copiesInput(), '1');
+      await new Promise((r) => setTimeout(r, 80));
+      expect($('live-status').textContent).toBe('');
+    });
+
+    it('en inglés el campo se llama «Copies of …»', async () => {
+      await start();
+      button('batch-add').click();
+      setLang('en');
+      document.querySelector<HTMLButtonElement>('button[data-lang="en"]')?.click();
+      expect(copiesInput().getAttribute('aria-label')).toBe('Copies of soporte-movil.stl');
+    });
+  });
+
   it('el nombre del archivo nunca se interpreta como HTML', async () => {
     document.body.innerHTML = body;
     startApp();

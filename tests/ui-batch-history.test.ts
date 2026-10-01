@@ -202,6 +202,18 @@ describe('lote en el historial (interfaz)', () => {
     expect(open().textContent).toBe('¿Reemplazar el lote?');
   });
 
+  it('cambiar las copias de una línea también cancela la confirmación de «Abrir»', () => {
+    saveTwoPartBatch();
+    button('batch-add').click();
+    const open = (): HTMLButtonElement => rows()[0]?.querySelector('button[data-action="open"]') as HTMLButtonElement;
+    open().click();
+    expect(open().textContent).toBe('¿Reemplazar el lote?');
+    const input = $('batch-list').querySelector<HTMLInputElement>('input[data-copies]') as HTMLInputElement;
+    input.value = '7';
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(open().textContent).toBe('Abrir');
+  });
+
   it('la confirmación caduca al salir del botón (focusout), pero no al volver a pintar la lista', () => {
     saveTwoPartBatch();
     button('batch-add').click();
