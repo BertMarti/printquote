@@ -32,8 +32,9 @@ export const es = {
     'STL, OBJ o 3MF. También puedes usar «Abrir modelo 3D». ¿No tienes ninguno a mano? Prueba con la pieza de ejemplo.',
   'drop.text': 'Suelta el archivo para calcular',
   'viewer.roledescription': 'visor 3D',
-  'viewer.label':
-    'Vista 3D de la pieza. Flechas: desplazar. Mayúsculas más flechas: girar. Más y menos: acercar y alejar. «Restablecer vista» la vuelve a encuadrar.',
+  'viewer.label': 'Vista 3D de la pieza.',
+  'viewer.help':
+    'Flechas: desplazar. Mayúsculas más flechas: girar. Más y menos: acercar y alejar. «Restablecer vista» la vuelve a encuadrar.',
   'viewer.none.title': 'Sin vista 3D',
   'viewer.none.text': 'Tu navegador no ha podido iniciar WebGL. El presupuesto funciona igualmente.',
 

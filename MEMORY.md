@@ -1,7 +1,17 @@
 # MEMORY.md · printquote
-Última actualización: 2026-10-01 por builder (v0.4.0, #32)
+Última actualización: 2026-10-01 por builder (v0.5.0, #36)
 
 ## Estado actual
+
+### v0.5.0 «Demo y pulido» (en curso; especificación en `docs/specs/v0.5.md`; hito v0.5.0; #36 pulido, #37 demo; una rama y un PR por issue, encadenados)
+- #36 Pulido visual y de accesibilidad (rama `agent/builder/36-pulido`): hecho, ver abajo.
+- #37 Modo demo (rama `agent/builder/37-demo`): pendiente.
+
+**#36 Pulido: auditoría de OpenCode contra el código real** (`docs/claude-session-report/evidence/auditoria-ux-printquote.md`; medidas con `getBoundingClientRect` en Chrome headless a 1440 × 1000, 1440 × 600, 360 × 740 y 320 × 640).
+- **Aplicado**: (1) jerarquía de la cabecera: ya solo «Abrir» era primario, pero la pieza de ejemplo pesaba igual (36 px, borde `ink`): pasa a `button--ghost` (terciario). (3) Aviso sobre el nombre de la pieza: `.stage-meta` y `.notice` viven ahora en `.stage-top` (flex en columna), así el aviso nunca se pisa con la ficha; con aviso visible (`.has-notice` en el visor) se oculta el texto del estado vacío y se queda el título. (4) Dianas: con `pointer: coarse` o ≤ 900 px campos, selector, deslizador (pista de 44 y cursor de 22), botones, idioma, enlaces de texto y `<summary>` miden 44 px (comprobado: ningún interactivo visible < 44 a 360 y 320 px); en ≤ 480 px la cama X/Y/Z va bajo su rótulo en tres columnas (a 320 px la página desbordaba: `scrollWidth` 344 > 320, ahora 320). (5, a medias) Ayuda del visor: el nombre accesible largo pasa a ser corto («Vista 3D de la pieza.») y las teclas, la descripción (`aria-describedby` → `#viewer-help`, `hidden`, texto en `viewer.help`).
+- **Descartado**: (2) «`.summary` solo sticky en móvil, en escritorio el total se pierde»: falso; en escritorio `.summary` es hermano de `.sheet` (que es el desplazable) y queda a `bottom = innerHeight` (medido 1000/1000 y 600/600). Se aplicó solo lo cierto: con 600 px de alto el total ocupaba 205 de 536 px útiles (38 %), así que en escritorio bajo (`max-height: 700px`) se compacta. (5, resto) «No ocultar las medidas del visor»: `#stage-dims` duplica la fila «Dimensiones» del bloque 01, que sí se lee; mantenerlas `aria-hidden` evita leerlas dos veces. Además la afirmación de que el visor «queda sin instrucciones» era falsa: ya tenía `role="application"` y `aria-label` con las teclas desde #21 (lo que fallaba era que esa frase larga fuera el nombre).
+- También: rótulos del visor con pastilla del color del visor (la ayuda se mezclaba con la rejilla), filete de acento de 3 px sobre el total, y en móvil el visor pasa de `62vh` a `clamp(320px, 50vh, 520px)` con la cabecera algo más baja para que se vea el total sin desplazarse. Probé a tocar `html, body { height: 100% }` por una sospecha (el total sticky no se fijaba abajo en el primer pantallazo) y lo revertí: el comportamiento es el normal de `position: sticky` (limitado por su contenedor) y se fija bien al desplazarse.
+- Tests: `tests/ui-layout.test.ts` (un solo primario, aviso dentro de la banda, `has-notice`, ayuda del visor).
 
 ### v0.4.0 «Pro» (los tres PR abiertos, pendientes de fusionar #33, #34 y #35 en ese orden; `version` 0.4.0 y CHANGELOG `[0.4.0]` ya en #35; especificación en `docs/specs/v0.4.md`; issues #30 PWA, #31 historial, #32 enlace; una rama y un PR por issue, encadenados)
 - #30 App instalable y sin conexión (rama `agent/builder/30-pwa`): hecho, ver abajo.
@@ -206,3 +216,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-10-01 builder · Claude Code Sonnet (agent/builder/30-pwa): #30 PWA (manifiesto, iconos, service worker propio con plugin de Vite, tests, comprobación sin conexión en Chrome headless) y especificación de v0.4.0 (`docs/specs/v0.4.md`).
 - 2026-10-01 builder · Claude Code Sonnet (agent/builder/31-historial): #31 historial de presupuestos (lógica pura y CSV, bloque 07, `applySettings`, tests, docs).
 - 2026-10-01 builder · Claude Code Sonnet (agent/builder/32-compartir): #32 enlace para compartir los parámetros (`share.ts`, `applyHash`, botón «Copiar enlace», tests, docs).
+- 2026-10-01 builder · Claude Code Sonnet (agent/builder/36-pulido): #36 pulido visual y de accesibilidad (auditoría de UX verificada punto por punto; v0.5.0 en curso).
