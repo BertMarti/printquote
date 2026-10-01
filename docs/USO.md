@@ -307,7 +307,7 @@ El bloque **08 Presupuestos** (plegado por defecto; el número entre paréntesis
 4. **Borrar** quita un presupuesto; **Borrar todos** pide confirmar con un segundo clic.
 5. **Exportar CSV** descarga `presupuestos-AAAA-MM-DD.csv` con una fila por presupuesto (un lote da **una fila por pieza**, con la misma fecha y cliente, así que la columna del total suma lo presupuestado) (fecha, cliente, pieza, volumen, medidas, material, impresora, relleno, perímetros, copias, peso, tiempo, costes, margen y total sin IVA). En español usa `;` y coma decimal (lo que abre bien Excel en español); en inglés, `,` y punto. Los textos que una hoja de cálculo podría tomar por fórmula (los que empiezan por `=`, `+`, `-` o `@`) llevan un apóstrofo delante para que no se ejecuten.
 
-**Límites:** se guardan como máximo **100** presupuestos (al guardar el 101.º se descarta el más antiguo y se avisa); el cliente admite 80 caracteres. Si el navegador no deja guardar (sin espacio o modo privado) se avisa y lo que ya tenías sigue ahí. Los presupuestos están **solo en este navegador**: no se sincronizan entre dispositivos ni se envían a ningún sitio.
+**Límites:** se guardan como máximo **100** presupuestos (al guardar el 101.º se descarta el más antiguo y se avisa); cada pieza ocupa ≈ 1,1 kB (un lote de 50, ≈ 27 kB), así que el máximo real depende del espacio que te deje el navegador; el cliente admite 80 caracteres. Si el navegador no deja guardar (sin espacio o modo privado) se avisa y lo que ya tenías sigue ahí. Los presupuestos están **solo en este navegador**: no se sincronizan entre dispositivos ni se envían a ningún sitio.
 
 ### Compartir los parámetros con un enlace
 
@@ -399,7 +399,7 @@ Datos de la pieza: volumen 123 830 mm³ (123,83 cm³) y superficie 32 078 mm² (
 | Margen | 30 % de 1,22 | 0,37 € |
 | **Total** | 1,22 + 0,37 | **1,59 €** |
 
-**Redondeo:** cada importe (material, energía y margen) se redondea a céntimos por separado y el subtotal y el total son la suma de esas líneas ya redondeadas, como en una factura. Así lo que ves en el desglose siempre suma el total.
+**Redondeo:** cada importe (material, energía y margen) se redondea a céntimos por separado y el subtotal y el total son la suma de esas líneas ya redondeadas, como en una factura. Así lo que ves en el desglose siempre suma el total. En una pieza muy barata esto puede mostrar «Energía 0,00 €» (o «Material 0,00 €»): la energía de esa pieza no llega al medio céntimo y se redondea a cero, aunque no sea exactamente nula; en un lote, cada línea se redondea por separado, igual que en una factura.
 
 **Límites del modelo:** no cuenta soportes, balsa (*raft*), purga de filamento, altura de capa ni la velocidad real de cada movimiento, y la cáscara es una aproximación (sobreestima algo en piezas con muchos detalles finos). Úsalo para presupuestar; para el dato exacto, consulta tu laminador.
 

@@ -1,7 +1,10 @@
 # MEMORY.md · printquote
-Última actualización: 2026-10-01 por builder (v0.6.0, #43)
+Última actualización: 2026-10-01 por builder (v0.7.0, #50)
 
 ## Estado actual
+
+### v0.7.0 «Lotes completos» (PR encadenados por issue, pendientes de fusionar en orden; especificación en `docs/specs/v0.7.md`; hito v0.7.0; `version` 0.7.0 y CHANGELOG `[0.7.0]` en el último; ramas `agent/builder/50-retoques` → `51-lote-persistente` → `52-lote-reabrir` → `53-lote-copias` → `54-lote-imprimir`)
+- #50 Retoques de la revisión de v0.6 (rama `agent/builder/50-retoques`): hecho. «Lote lleno» (anuncio `batch.added.full` y foco a «Copiar lote» al añadir la pieza 50, con test); «Generando…» sobrevive al cambio de idioma (`pdfTrigger` en `app.ts`: el botón que lanzó el PDF); aria-label de «Borrar»/«Abrir» de un lote usa «lote de N piezas»; comentarios de `history.ts` (≈ 1,1 kB por pieza) y de `ui/history.ts`; README, USO (máximo de 100 según espacio; redondeo por línea y «Energía 0,00 €») y spec v0.6 (`batch-output.test.ts`). Las imágenes **no** se regeneraron: el panel se desplaza y el bloque 06 queda fuera de la primera pantalla; se corrige el texto del CHANGELOG (entrada «Corregido»).
 
 ### v0.6.0 «Lotes» (PR #44, #45, #47, #48 y el de imágenes y versión, encadenados y pendientes de fusionar en ese orden; `version` 0.6.0 y CHANGELOG `[0.6.0] - 2026-10-01` en el último; v0.5.0 ya publicada; especificación en `docs/specs/v0.6.md`; hito v0.6.0; issues #40 lote, #41 texto y PDF, #42 historial, #43 imágenes y versión; una rama y un PR por issue, encadenados: `agent/builder/40-lote` → `41-lote-salida` → `42-lote-historial` → `43-imagenes`)
 - #40 Lote (rama `agent/builder/40-lote`): hecho. `src/quote/batch.ts` (`BatchPart` = instantánea con `settings`, `stats` y `quote` de `computeQuote`; `computeBatch` suma las líneas ya redondeadas con `roundCents`: sin fórmula propia; `BATCH_MAX` = 50) y `src/ui/batch.ts` (`setupBatch(BatchHost)`: añadir, quitar, vaciar con confirmación, total; foco al «Quitar» siguiente y anuncio). Bloque nuevo **06 Lote** (`<details>`); «Datos del negocio» pasa a 07 y «Presupuestos» a 08. Reutiliza las clases `.history-*` y `.rows`.
@@ -242,3 +245,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-10-01 builder · Claude Code Sonnet (agent/builder/46-sw-cache): #46 service worker: assets con hash sin doble descarga al instalar.
 - 2026-10-01 builder · Claude Code Sonnet (agent/builder/42-lote-historial): #42 lote en el historial (`parts`, «Guardar lote», CSV por pieza, tests).
 - 2026-10-01 builder · Claude Code Sonnet (agent/builder/43-imagenes): #43 og.png y captura.png regeneradas, versión 0.6.0, CHANGELOG, AGENTS (contrato del lote), `CHROME_PORT`.
+- 2026-10-01 builder · Claude Code Sonnet (agent/builder/50-retoques): #50 retoques de la revisión de v0.6 y especificación de v0.7.0 (`docs/specs/v0.7.md`).

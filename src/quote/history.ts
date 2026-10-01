@@ -5,7 +5,7 @@ import type { Quote } from './model';
 import { getPrinter } from './printers';
 import { normalizeSettings, type QuoteSettings } from './settings';
 
-/** Presupuestos que se guardan como máximo: protege el espacio de `localStorage` (≈ 0,6 kB cada uno). */
+/** Presupuestos que se guardan como máximo: protege el espacio de `localStorage` (≈ 1,1 kB por pieza: ≈ 27 kB un lote de 50; el máximo real depende del espacio libre). */
 export const HISTORY_MAX = 100;
 export const CLIENT_MAX = 80;
 const FILE_NAME_MAX = 200;

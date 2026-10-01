@@ -76,6 +76,7 @@ describe('lote en el historial (interfaz)', () => {
     expect(row.querySelector('.history-total')?.textContent).toBe($('out-batch-total').textContent + ' €');
     expect(row.querySelector('button[data-action="open"]')).toBeNull();
     expect(row.querySelector('button[data-action="delete"]')).not.toBeNull();
+    expect(row.querySelector('button[data-action="delete"]')?.getAttribute('aria-label')).toMatch(/^Borrar el presupuesto de lote de 2 piezas del /);
     await until(() => /lote de 2 piezas/.test($('live-status').textContent ?? ''));
 
     const stored = loadHistory();

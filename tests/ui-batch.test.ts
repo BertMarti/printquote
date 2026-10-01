@@ -150,6 +150,14 @@ describe('lote en la interfaz', () => {
     expect(button('batch-add').disabled).toBe(false);
   });
 
+  it('al añadir la pieza 50 se anuncia «Lote lleno» y el foco no se queda en el botón desactivado', async () => {
+    await start();
+    for (let i = 0; i < BATCH_MAX; i++) button('batch-add').click();
+    expect(button('batch-add').disabled).toBe(true);
+    await until(() => /Lote lleno/.test($('live-status').textContent ?? ''));
+    expect(document.activeElement).toBe(button('batch-copy'));
+  });
+
   it('el nombre del archivo nunca se interpreta como HTML', async () => {
     document.body.innerHTML = body;
     startApp();

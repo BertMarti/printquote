@@ -4,6 +4,13 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 
 ## [Sin publicar]
 
+### Corregido
+
+- **Imágenes de 0.6.0 (#50)**: la entrada de 0.6.0 decía que `public/og.png` y `docs/captura.png` muestran el bloque «06 Lote»: no es así. Son capturas de la primera pantalla (visor y primeros bloques del panel, que se desplaza): muestran la interfaz actual (cabecera con «Ver demo», perfiles de impresora) pero el bloque 06 queda fuera de ellas.
+- **«Lote lleno» (#50)**: al añadir la pieza 50 el anuncio dice que el lote está lleno y el foco pasa a «Copiar lote» (antes se quedaba en el botón desactivado).
+- **Idioma durante el PDF (#50)**: cambiar de idioma con un PDF en curso ya no pierde «Generando…» en `#batch-pdf` (ni en `#pdf-button`).
+- **Historial (#50)**: el nombre accesible de «Borrar» (y de «Abrir») en un lote dice «lote de N piezas»; comentarios de `history.ts` (tamaño ≈ 1,1 kB por pieza) y de `ui/history.ts` corregidos; README (A4 y lotes, redacción del historial) y USO (el máximo de 100 depende del espacio; el redondeo por línea puede mostrar «Energía 0,00 €»); la especificación v0.6 cita `tests/batch-output.test.ts`.
+
 ## [0.6.0] - 2026-10-01
 
 Hito v0.6.0 «Lotes»: presupuesto de pedidos con varias piezas, service worker más ligero e imágenes actualizadas. Especificación en `docs/specs/v0.6.md`.
