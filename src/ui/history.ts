@@ -1,8 +1,9 @@
 import { getLang, getLocale, t } from '../i18n';
-import type { BatchPart } from '../quote/batch';
+import { computeBatch, type BatchPart } from '../quote/batch';
 import { formatEuro } from '../quote/format';
 import {
   addEntry,
+  batchFromParts,
   createBatchEntry,
   createEntry,
   HISTORY_MAX,
@@ -21,6 +22,8 @@ export interface HistoryHost {
   current(): { fileName: string; stats: MeshStats; quote: Quote; settings: QuoteSettings } | null;
   /** Las piezas del lote (vacío si no hay lote). */
   batch(): readonly BatchPart[];
+  /** Sustituye el lote por estas líneas y lo muestra. */
+  openBatch(parts: readonly BatchPart[]): void;
   /** Aplica unos ajustes a la interfaz (y los guarda como los de trabajo). */
   applySettings(settings: QuoteSettings): void;
   announce(message: string): void;
@@ -48,6 +51,12 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
 
   let entries = loadHistory();
   let confirmingClear = false;
+  /** Entrada de lote cuyo «Abrir» espera confirmación (hay un lote en curso que se reemplazaría). */
+  let confirmingOpen: string | null = null;
+  /** El lote que había al armar la confirmación: si cambia (quitar, vaciar, copias…), la confirmación caduca. */
+  let armedBatch: readonly BatchPart[] = [];
+  /** `render` reemplaza los botones: el `focusout` que eso provoque no debe cancelar nada. */
+  let rendering = false;
 
   /** Un formateador por idioma: crear uno por fila costaba más que pintar la lista. */
   const dateFormats = new Map<string, Intl.DateTimeFormat>();
@@ -60,6 +69,24 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
     }
     return format.format(new Date(iso));
   };
+
+  const batchName = (n: number): string => t(n === 1 ? 'hist.batch.name.one' : 'hist.batch.name', { n });
+
+  /** Rótulo y nombre accesible de «Abrir» / «Borrar» (con la confirmación de «Abrir» de un lote en curso). */
+  function labelAction(button: HTMLButtonElement, kind: 'open' | 'delete', entry: HistoryEntry, confirming: boolean): void {
+    const label = { name: entry.parts ? batchName(entry.parts.length) : entry.fileName, date: formatDate(entry.savedAt) };
+    button.textContent = t(confirming ? 'hist.open.confirm' : `hist.${kind}`);
+    button.setAttribute('aria-label', t(confirming ? 'hist.open.confirm.label' : `hist.${kind}.label`, label));
+  }
+
+  /** Cancela la confirmación de «Abrir» devolviendo su botón al rótulo normal, sin reconstruir la lista (no se pierde el clic). */
+  function disarm(): void {
+    const id = confirmingOpen;
+    confirmingOpen = null;
+    const entry = entries.find((candidate) => candidate.id === id);
+    const button = id === null ? null : list.querySelector<HTMLButtonElement>(`button[data-action="open"][data-id="${CSS.escape(id)}"]`);
+    if (entry && button) labelAction(button, 'open', entry, false);
+  }
 
   /** Fila de la lista. Todo el texto de la persona (pieza, cliente) entra con `textContent`, nunca como HTML. */
   function row(entry: HistoryEntry): HTMLLIElement {
@@ -77,24 +104,23 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
 
     const meta = document.createElement('p');
     meta.className = 'history-meta';
-    const kind = entry.parts ? t('hist.batch.meta', { n: entry.parts.length }) : entry.settings.material;
+    const kind = entry.parts ? t(entry.parts.length === 1 ? 'hist.batch.meta.one' : 'hist.batch.meta', { n: entry.parts.length }) : entry.settings.material;
     meta.textContent = [formatDate(entry.savedAt), entry.client, kind].filter((part) => part !== '').join(' · ');
 
-    const label = { name: entry.parts ? t('hist.batch.name', { n: entry.parts.length }) : entry.fileName, date: formatDate(entry.savedAt) };
     const action = (kind: 'open' | 'delete'): HTMLButtonElement => {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'button button--small';
       button.dataset['action'] = kind;
       button.dataset['id'] = entry.id;
-      button.textContent = t(`hist.${kind}`);
-      button.setAttribute('aria-label', t(`hist.${kind}.label`, label));
+      labelAction(button, kind, entry, kind === 'open' && confirmingOpen === entry.id);
       return button;
     };
     const buttons = document.createElement('div');
     buttons.className = 'history-buttons';
-    // Un lote no se reabre (no guarda la geometría de las piezas): se lista, se exporta y se borra.
-    buttons.append(...(entry.parts ? [] : [action('open')]), action('delete'));
+    // Un lote se abre si todas sus piezas traen el área (las guardadas con v0.6 no): se lista, se exporta y se borra.
+    const canOpen = !entry.parts || entry.parts.every((piece) => piece.surfaceMm2 !== undefined);
+    buttons.append(...(canOpen ? [action('open')] : []), action('delete'));
     item.append(head, meta, buttons);
     return item;
   }
@@ -103,10 +129,13 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
   function sync(): void {
     saveButton.disabled = host.current() === null;
     saveBatchButton.disabled = host.batch().length === 0;
+    if (confirmingOpen !== null && host.batch() !== armedBatch) disarm();
   }
 
   function render(): void {
+    rendering = true;
     list.replaceChildren(...entries.map(row));
+    rendering = false;
     empty.hidden = entries.length > 0;
     count.textContent = entries.length > 0 ? `(${entries.length})` : '';
     sync();
@@ -130,6 +159,7 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
     }
     entries = next;
     confirmingClear = false;
+    confirmingOpen = null;
     render();
     const params = { name, total: formatEuro(entry.result.total), max: HISTORY_MAX };
     host.announce(t(dropped > 0 ? 'hist.saved.dropped' : 'hist.saved', params));
@@ -145,10 +175,38 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
   function saveBatch(): void {
     const parts = host.batch();
     if (parts.length === 0) return;
-    store(createBatchEntry({ client: client.value, parts }), t('hist.batch.name', { n: parts.length }));
+    store(createBatchEntry({ client: client.value, parts }), batchName(parts.length));
+  }
+
+  /** Reabre un lote en el bloque 06. Con un lote en curso hace falta un segundo clic: se perdería. */
+  function openBatch(entry: HistoryEntry, lines: readonly BatchPart[]): void {
+    if (host.batch().length > 0 && confirmingOpen !== entry.id) {
+      confirmingOpen = entry.id;
+      armedBatch = host.batch();
+      render();
+      list.querySelector<HTMLButtonElement>(`button[data-action="open"][data-id="${CSS.escape(entry.id)}"]`)?.focus();
+      return;
+    }
+    confirmingOpen = null;
+    host.openBatch(lines);
+    client.value = entry.client;
+    render();
+    // Las líneas se recalculan con el modelo actual: si el total ya no es el guardado, se dice.
+    const total = computeBatch(lines).total;
+    const moved = Math.abs(total - entry.result.total) >= 0.005;
+    host.announce(
+      [
+        t(lines.length === 1 ? 'hist.opened.batch.one' : 'hist.opened.batch', { n: lines.length, total: formatEuro(total) }),
+        moved ? t('hist.opened.batch.before', { before: formatEuro(entry.result.total) }) : '',
+      ]
+        .filter((text) => text !== '')
+        .join(' '),
+    );
   }
 
   function open(entry: HistoryEntry): void {
+    const lines = entry.parts && batchFromParts(entry.parts);
+    if (lines) return openBatch(entry, lines);
     const hasPart = host.current() !== null;
     host.applySettings(entry.settings);
     client.value = entry.client;
@@ -162,6 +220,7 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
       return;
     }
     entries = next;
+    confirmingOpen = null;
     render();
     host.announce(t('hist.deleted', { name: entry.fileName }));
   }
@@ -189,6 +248,10 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
     if (button.dataset['action'] === 'open') open(entry);
     else remove(entry);
   });
+  // Salir del botón de confirmación (Tab, clic fuera) la cancela.
+  list.addEventListener('focusout', () => {
+    if (!rendering) disarm();
+  });
   exportButton.addEventListener('click', exportCsv);
   // Borrar todos pide confirmar con un segundo clic (sin `confirm()`, que bloquea y no se puede traducir ni probar).
   clearButton.addEventListener('click', () => {
@@ -203,6 +266,7 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
     }
     entries = [];
     confirmingClear = false;
+    confirmingOpen = null;
     render();
     host.announce(t('hist.cleared'));
   });

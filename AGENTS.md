@@ -55,7 +55,7 @@ Presupuesto de pedidos con varias piezas. Contrato:
 - **Instantánea**: la línea (`BatchPart`) conserva los ajustes con que se añadió; no se edita (quitar y volver a añadir). Máximo `BATCH_MAX` = 50.
 - **Persistencia**: el lote se guarda en `localStorage` (`printquote:lote:v1`, `{ v: 1, parts: HistoryPart[] }`; `loadBatch`/`saveBatch` en `ui/storage.ts`). Cada línea se guarda como `HistoryPart` (con `surfaceMm2`, sin geometría) y al leer se valida con las mismas funciones que el historial (`normalizeBatchParts`) y se recalcula con `computeQuote` (`batchFromParts`). Una pieza rota o sin área descarta el lote entero; si no cabe, falla en silencio.
 - **Botones explícitos**: «Copiar presupuesto», «Imprimir», «Descargar PDF» y «Guardar este presupuesto» son de la pieza cargada; el lote tiene «Copiar lote», «PDF del lote» (sin vista 3D, con paginación) y «Guardar lote» (historial). Imprimir no incluye el lote. No hay un «modo» oculto.
-- **Historial**: `HistoryEntry.parts?` (retrocompatible); un lote guardado no se puede abrir (no guarda la geometría) y el CSV lleva una fila por pieza.
+- **Historial**: `HistoryEntry.parts?` (retrocompatible); `HistoryPart.surfaceMm2` (opcional) permite reabrir un lote: «Abrir» llama a `HistoryHost.openBatch` → `batchFromParts` → `setupBatch().set()` (reemplaza el lote; con uno en curso pide un segundo clic). Los lotes de v0.6 (sin área) no tienen «Abrir». No se guarda geometría. El CSV lleva una fila por pieza.
 - El enlace para compartir **nunca** lleva el lote.
 - `src/ui/batch.ts` recibe un `BatchHost` (`current`, `announce`, `changed`) y no importa `app.ts`; la lista reutiliza las clases `.history-*` y `.rows`. Tras quitar, el foco pasa al siguiente «Quitar» o a «Añadir esta pieza».
 

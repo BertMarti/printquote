@@ -26,7 +26,7 @@ const byId = <T extends HTMLElement>(id: string): T => {
  * Bloque «06 Lote»: varias piezas en un mismo presupuesto. Cada línea es una instantánea (la pieza con los ajustes con
  * que se añadió) y el total lo suma `computeBatch`. Se guarda en `localStorage` (se recupera al recargar) y para conservarlo con nombre está el historial.
  */
-export function setupBatch(host: BatchHost): { render(): void; sync(): void; parts(): readonly BatchPart[] } {
+export function setupBatch(host: BatchHost): { render(): void; sync(): void; parts(): readonly BatchPart[]; set(next: readonly BatchPart[]): void } {
   const details = byId<HTMLDetailsElement>('batch-details');
   const addButton = byId<HTMLButtonElement>('batch-add');
   const list = byId('batch-list');
@@ -38,6 +38,7 @@ export function setupBatch(host: BatchHost): { render(): void; sync(): void; par
   const out = (id: string, text: string): void => void (byId(`out-batch-${id}`).textContent = text);
 
   let parts: BatchPart[] = loadBatch();
+  details.open = parts.length > 0; // un lote recuperado al recargar se ve desplegado
   let confirmingClear = false;
 
   const el = <K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text?: string): HTMLElementTagNameMap[K] => {
@@ -169,6 +170,15 @@ export function setupBatch(host: BatchHost): { render(): void; sync(): void; par
     clearButton.focus();
   });
 
+  /** Sustituye el lote (al reabrir uno del historial) y lo despliega. */
+  function set(next: readonly BatchPart[]): void {
+    parts = [...next];
+    details.open = true;
+    change();
+    // El botón «Abrir» del historial sigue ahí, pero la persona acaba de pedir el lote: el foco va a su bloque (no se pierde en BODY).
+    details.querySelector('summary')?.focus();
+  }
+
   render();
-  return { render, sync, parts: () => parts };
+  return { render, sync, parts: () => parts, set };
 }

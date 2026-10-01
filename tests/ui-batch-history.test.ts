@@ -60,7 +60,7 @@ describe('lote en el historial (interfaz)', () => {
     expect(button('history-save-batch').disabled).toBe(true);
   });
 
-  it('guarda el lote con su cliente: una fila sin «Abrir», con «Lote de N piezas» y el total; se anuncia y persiste', async () => {
+  it('guarda el lote con su cliente: una fila con «Abrir», con «Lote de N piezas» y el total; se anuncia y persiste', async () => {
     type('in-copies', '3');
     button('batch-add').click();
     type('in-copies', '1');
@@ -74,7 +74,7 @@ describe('lote en el historial (interfaz)', () => {
     expect(row.querySelector('.history-meta')?.textContent).toContain('Taller Ruiz');
     expect(row.querySelector('.history-meta')?.textContent).toContain('Lote de 2 piezas');
     expect(row.querySelector('.history-total')?.textContent).toBe($('out-batch-total').textContent + ' €');
-    expect(row.querySelector('button[data-action="open"]')).toBeNull();
+    expect(row.querySelector('button[data-action="open"]')?.getAttribute('aria-label')).toMatch(/^Abrir el presupuesto de lote de 2 piezas del /);
     expect(row.querySelector('button[data-action="delete"]')).not.toBeNull();
     expect(row.querySelector('button[data-action="delete"]')?.getAttribute('aria-label')).toMatch(/^Borrar el presupuesto de lote de 2 piezas del /);
     await until(() => /lote de 2 piezas/.test($('live-status').textContent ?? ''));
@@ -94,7 +94,7 @@ describe('lote en el historial (interfaz)', () => {
     button('history-save').click();
     expect(rows()).toHaveLength(2);
     expect(rows()[0]?.querySelector('button[data-action="open"]')).not.toBeNull(); // la pieza suelta, la más reciente
-    expect(rows()[1]?.querySelector('button[data-action="open"]')).toBeNull(); // el lote
+    expect(rows()[1]?.querySelector('button[data-action="open"]')).not.toBeNull(); // el lote también se abre
 
     button('history-export').click();
     const blob = created[0];
@@ -116,5 +116,146 @@ describe('lote en el historial (interfaz)', () => {
     const writeText = navigator.clipboard.writeText as ReturnType<typeof vi.fn>;
     await until(() => writeText.mock.calls.length > 0);
     expect(String((writeText.mock.calls[0] as unknown[])[0])).not.toMatch(/soporte|parts|batch|lote/i);
+  });
+
+  /** Guarda un lote de dos piezas distintas (3 copias de PLA y PETG) con cliente y devuelve su total y nombres. */
+  function saveTwoPartBatch(): { total: string | null; names: (string | null | undefined)[] } {
+    type('in-copies', '3');
+    button('batch-add').click();
+    type('in-copies', '1');
+    document.querySelector<HTMLInputElement>('input[name="material"][value="PETG"]')?.click();
+    button('batch-add').click();
+    type('in-client', 'Taller Ruiz');
+    button('history-save-batch').click();
+    const items = Array.from($('batch-list').children);
+    return { total: $('out-batch-total').textContent, names: items.map((item) => item.querySelector('.history-name')?.textContent) };
+  }
+
+  const emptyBatch = (): void => {
+    button('batch-clear').click();
+    button('batch-clear').click();
+  };
+  const reload = (): void => {
+    document.body.innerHTML = body;
+    startApp();
+  };
+
+  it('«Abrir» un lote guardado lo carga en el bloque 06 sin pieza 3D, con cliente y mismos importes', async () => {
+    const saved = saveTwoPartBatch();
+    emptyBatch();
+    reload(); // sin pieza cargada
+    expect(button('history-save').disabled).toBe(true);
+    expect($<HTMLInputElement>('in-client').value).toBe('');
+
+    rows()[0]?.querySelector<HTMLButtonElement>('button[data-action="open"]')?.click();
+    const items = Array.from($('batch-list').children);
+    expect(items).toHaveLength(2);
+    expect($('out-batch-total').textContent).toBe(saved.total);
+    expect(items.map((item) => item.querySelector('.history-name')?.textContent)).toEqual(saved.names);
+    expect(items[0]?.querySelector('.history-meta')?.textContent).toMatch(/3 copias/);
+    expect($<HTMLDetailsElement>('batch-details').open).toBe(true);
+    expect($<HTMLInputElement>('in-client').value).toBe('Taller Ruiz');
+    expect(button('batch-copy').disabled).toBe(false);
+    expect(window.localStorage.getItem('printquote:lote:v1')).not.toBeNull();
+    await until(() => /Lote de 2 piezas abierto/.test($('live-status').textContent ?? ''));
+    // Las líneas reabiertas son editables como las demás: se quitan.
+    $('batch-list').querySelector<HTMLButtonElement>('button[data-id]')?.click();
+    expect($('batch-list').children).toHaveLength(1);
+  });
+
+  it('con un lote en curso, «Abrir» pide confirmar con un segundo clic antes de reemplazarlo', async () => {
+    saveTwoPartBatch();
+    button('batch-add').click(); // ahora hay 3 en el lote
+    const open = (): HTMLButtonElement => rows()[0]?.querySelector('button[data-action="open"]') as HTMLButtonElement;
+    open().click();
+    expect($('batch-list').children).toHaveLength(3);
+    expect(open().textContent).toBe('¿Reemplazar el lote?');
+    expect(open().getAttribute('aria-label')).toMatch(/^Reemplazar el lote actual por lote de 2 piezas del /);
+    expect(document.activeElement).toBe(open());
+    open().click();
+    expect($('batch-list').children).toHaveLength(2);
+    expect(open().textContent).toBe('Abrir');
+    await until(() => /Lote de 2 piezas abierto/.test($('live-status').textContent ?? ''));
+  });
+
+  it('la confirmación de «Abrir» se cancela al cambiar la lista (por ejemplo, guardar otra cosa)', () => {
+    saveTwoPartBatch();
+    button('batch-add').click();
+    const open = (): HTMLButtonElement => rows()[0]?.querySelector('button[data-action="open"]') as HTMLButtonElement;
+    open().click();
+    expect(open().textContent).toBe('¿Reemplazar el lote?');
+    button('history-save').click();
+    expect(rows()[1]?.querySelector('button[data-action="open"]')?.textContent).toBe('Abrir');
+  });
+
+  it('la confirmación caduca si el lote cambia: tras quitar una línea, un solo clic no lo reemplaza', () => {
+    saveTwoPartBatch();
+    button('batch-add').click(); // 3 líneas
+    const open = (): HTMLButtonElement => rows()[0]?.querySelector('button[data-action="open"]') as HTMLButtonElement;
+    open().click();
+    expect(open().textContent).toBe('¿Reemplazar el lote?');
+    $('batch-list').querySelector<HTMLButtonElement>('button[data-id]')?.click(); // 2 líneas
+    expect(open().textContent).toBe('Abrir');
+    expect(open().getAttribute('aria-label')).toMatch(/^Abrir el presupuesto de lote de 2 piezas/);
+    open().click(); // vuelve a armar, no reemplaza
+    expect($('batch-list').children).toHaveLength(2);
+    expect(open().textContent).toBe('¿Reemplazar el lote?');
+  });
+
+  it('la confirmación caduca al salir del botón (focusout), pero no al volver a pintar la lista', () => {
+    saveTwoPartBatch();
+    button('batch-add').click();
+    const open = (): HTMLButtonElement => rows()[0]?.querySelector('button[data-action="open"]') as HTMLButtonElement;
+    open().click();
+    expect(open().textContent).toBe('¿Reemplazar el lote?');
+    open().dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    expect(open().textContent).toBe('Abrir');
+  });
+
+  it('tras abrir un lote el foco va al bloque 06 (no se pierde en BODY) y se despliega', () => {
+    saveTwoPartBatch();
+    emptyBatch();
+    reload();
+    rows()[0]?.querySelector<HTMLButtonElement>('button[data-action="open"]')?.click();
+    expect(document.activeElement).toBe($('batch-details').querySelector('summary'));
+    expect($<HTMLDetailsElement>('batch-details').open).toBe(true);
+  });
+
+  it('si el total recalculado ya no es el guardado, el anuncio dice cuál era', async () => {
+    saveTwoPartBatch();
+    const entries = loadHistory().map((entry) => ({ ...entry, result: { ...entry.result, total: 999.99 } }));
+    window.localStorage.setItem('printquote:historial:v1', JSON.stringify(entries));
+    emptyBatch();
+    reload();
+    rows()[0]?.querySelector<HTMLButtonElement>('button[data-action="open"]')?.click();
+    await until(() => /Antes: 999,99/.test($('live-status').textContent ?? ''));
+  });
+
+  it('un lote de una sola pieza dice «1 pieza» (singular) en la lista, el aria-label y el anuncio', async () => {
+    button('batch-add').click();
+    button('history-save-batch').click();
+    expect(rows()[0]?.querySelector('.history-meta')?.textContent).toContain('Lote de 1 pieza');
+    expect(rows()[0]?.querySelector('.history-meta')?.textContent).not.toMatch(/1 piezas/);
+    expect(rows()[0]?.querySelector('button[data-action="delete"]')?.getAttribute('aria-label')).toMatch(/lote de 1 pieza del /);
+    await until(() => /lote de 1 pieza,/.test($('live-status').textContent ?? ''));
+    emptyBatch();
+    rows()[0]?.querySelector<HTMLButtonElement>('button[data-action="open"]')?.click();
+    await until(() => /Lote de 1 pieza abierto/.test($('live-status').textContent ?? ''));
+  });
+
+  it('un lote guardado con v0.6 (sin área) se sigue listando y borrando, pero no se abre', () => {
+    saveTwoPartBatch();
+    const entries = loadHistory().map((entry) => ({
+      ...entry,
+      surfaceMm2: undefined,
+      parts: entry.parts?.map((piece) => ({ ...piece, surfaceMm2: undefined })),
+    }));
+    window.localStorage.setItem('printquote:historial:v1', JSON.stringify(entries));
+    reload();
+    expect(rows()).toHaveLength(1);
+    expect(rows()[0]?.querySelector('.history-meta')?.textContent).toContain('Lote de 2 piezas');
+    expect(rows()[0]?.querySelector('button[data-action="open"]')).toBeNull();
+    rows()[0]?.querySelector<HTMLButtonElement>('button[data-action="delete"]')?.click();
+    expect(rows()).toHaveLength(0);
   });
 });

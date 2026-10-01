@@ -6,6 +6,7 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 
 ### Añadido
 
+- **Reabrir un lote guardado desde el historial** (#52): «Abrir» en una entrada de lote carga las líneas en el bloque «06 Lote» (se despliega) y restaura el cliente, sin necesidad de pieza 3D. Se guarda lo mínimo para reconstruir cada línea (`surfaceMm2` además de nombre, medidas y ajustes; nunca la geometría) y las líneas se recalculan con `computeQuote`. Con un lote en curso, el botón pide un segundo clic («¿Reemplazar el lote?»). Los lotes guardados con 0.6.0 (sin área) se siguen listando, exportando y borrando, pero no se abren.
 - **El lote sobrevive a recargar** (#51): se guarda en `localStorage` (`printquote:lote:v1`, con versión de esquema) tras cada cambio y se recupera al arrancar. Cada línea se guarda como una pieza del historial (nombre, medidas, ajustes y resultado, **más el área de la superficie**, nunca la geometría) y al leer se valida igual de estrictamente que el historial (una pieza rota, un lote vacío, de más de 50 piezas o de otra versión del esquema se descarta entero) y se recalcula con `computeQuote`. Si el navegador no deja guardar, falla en silencio. `HistoryPart` gana `surfaceMm2` opcional (las entradas antiguas se leen igual).
 
 ### Corregido
@@ -14,6 +15,7 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 - **«Lote lleno» (#50)**: al añadir la pieza 50 el anuncio dice que el lote está lleno y el foco pasa a «Copiar lote» (antes se quedaba en el botón desactivado).
 - **Idioma durante el PDF (#50)**: cambiar de idioma con un PDF en curso ya no pierde «Generando…» en `#batch-pdf` (ni en `#pdf-button`).
 - **Historial (#50)**: el nombre accesible de «Borrar» (y de «Abrir») en un lote dice «lote de N piezas»; comentarios de `history.ts` (tamaño ≈ 1,1 kB por pieza) y de `ui/history.ts` corregidos; README (A4 y lotes, redacción del historial) y USO (el máximo de 100 depende del espacio; el redondeo por línea puede mostrar «Energía 0,00 €»); la especificación v0.6 cita `tests/batch-output.test.ts`.
+- **Revisión de #52 y #51 (tras la revisión de v0.7.0)**: la confirmación «¿Reemplazar el lote?» caduca si el lote cambia o si el foco sale del botón (antes un solo clic reemplazaba un lote ya modificado); tras abrir un lote el foco pasa al bloque 06 (no a BODY); el anuncio dice «Antes: X» si el total recalculado no coincide con el guardado; singular «Lote de 1 pieza» / «1 part»; al leer, volumen, medidas, triángulos y área se acotan (`>= 0` y un tope: `1e308` daba «NaN»); con la cuota llena `saveBatch` borra la copia vieja (no reaparece un lote desfasado); un lote recuperado al recargar se ve desplegado; USO explica las dos pestañas (gana la última).
 
 ## [0.6.0] - 2026-10-01
 

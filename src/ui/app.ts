@@ -739,6 +739,7 @@ export function startApp(demoScale = 1): void {
   history = setupHistory({
     current: () => (part && quote ? { fileName: part.fileName, stats: part.stats, quote, settings } : null),
     batch: () => batch?.parts() ?? [],
+    openBatch: (parts) => batch?.set(parts),
     applySettings,
     announce,
     showNotice: (title, message) => showNotice(() => [title, message]),
