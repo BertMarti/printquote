@@ -1,6 +1,7 @@
 import type { ErrorKey } from '../i18n/es';
 import type { Params } from '../i18n/interpolate';
 import { ModelParseError } from './errors';
+import { MAX_TRIANGLES, MAX_TRIANGLES_MILLIONS } from './limits';
 import type { Mesh } from './types';
 
 /** Un OBJ con un byte nulo en el arranque es un binario cualquiera, no texto. */
@@ -8,6 +9,11 @@ const SNIFF_BYTES = 1024;
 
 const NUMBER = /^[-+]?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?$/;
 const INTEGER = /^[-+]?\d+$/;
+/**
+ * Una línea `v` o `f` más larga que esto no es real (una cara de 100 000 vértices ocupa ~2 MB) y
+ * partirla en palabras reservaría millones de cadenas de golpe: se rechaza antes de hacerlo.
+ */
+export const MAX_LINE_CHARS = 4 * 1024 * 1024;
 
 /** Vector de números que crece por duplicación (evita `push` sobre millones de valores). */
 class Growable<T extends Float32Array | Int32Array> {
@@ -156,6 +162,7 @@ export function parseObj(data: ArrayBuffer | Uint8Array): Mesh {
     const first = line.charCodeAt(0);
     // Solo interesan `v` y `f` (seguidas de espacio): `vt`, `vn`, `vp`, `o`, `g`, `s`, `l`… se saltan.
     if ((first !== 0x76 && first !== 0x66) || !/\s/.test(line.charAt(1))) continue;
+    if (line.length > MAX_LINE_CHARS) fail('err.obj.lineTooLong', { mb: MAX_LINE_CHARS / 1024 / 1024 });
     const tokens = line.split(/\s+/);
 
     if (first === 0x76) {
@@ -186,6 +193,10 @@ export function parseObj(data: ArrayBuffer | Uint8Array): Mesh {
         face.push(absolute);
       }
       if (face.length > MAX_EAR_CLIPPING) largePolygons++;
+      // Una cara de n vértices da n − 2 triángulos: se corta antes de reservar memoria para ellos.
+      if (triangleCount + face.length - 2 > MAX_TRIANGLES) {
+        fail('err.tooManyTriangles', { millions: MAX_TRIANGLES_MILLIONS });
+      }
       triangulate(face, vertices.data, vertexCount, (a, b, c) => {
         faceIndices.push(a);
         faceIndices.push(b);

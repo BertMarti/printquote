@@ -376,6 +376,9 @@ export const es = {
   'err.sample': 'No se ha podido descargar la pieza de ejemplo.',
   'err.cancelled': 'Análisis cancelado.',
   'err.worker': 'El proceso de lectura en segundo plano ha fallado.',
+  'err.fileTooBig': 'El archivo supera los {mb} MB: es demasiado grande para leerlo en el navegador.',
+  'err.tooManyTriangles':
+    'La malla tiene más de {millions} millones de triángulos, que es lo máximo que se puede abrir sin agotar la memoria del navegador. Simplifica la malla en tu programa y vuelve a exportarla.',
   'err.stl.size':
     'No parece un STL válido: el tamaño del archivo no coincide con el número de triángulos que declara y tampoco es un STL de texto.',
   'err.stl.small': 'No parece un STL válido: el archivo es demasiado pequeño.',
@@ -393,6 +396,7 @@ export const es = {
   'err.obj.badIndex': 'Línea {line} del OBJ: «{token}» no es un índice de vértice válido.',
   'err.obj.zeroIndex': 'Línea {line} del OBJ: los índices de vértice empiezan en 1 (o son negativos, relativos al final).',
   'err.obj.beforeFirst': 'Línea {line} del OBJ: el índice {index} apunta antes del primer vértice.',
+  'err.obj.lineTooLong': 'Línea {line} del OBJ: ocupa más de {mb} MB, demasiado para ser un vértice o una cara reales.',
   'err.obj.noVertices': 'El OBJ no contiene vértices.',
   'err.obj.noFaces': 'El OBJ no contiene caras: solo tiene vértices, líneas o puntos, no una superficie.',
   'err.obj.outOfRange': 'Una cara usa el vértice {index}, pero el OBJ solo tiene {count} vértices.',

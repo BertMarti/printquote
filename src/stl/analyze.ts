@@ -2,6 +2,7 @@ import type { ErrorKey } from '../i18n/es';
 import type { Params } from '../i18n/interpolate';
 import { ModelParseError } from './errors';
 import { computeStats } from './geometry';
+import { MAX_FILE_BYTES } from './limits';
 import { parseModel } from './model';
 import { parseStl } from './parse';
 import type { Mesh, MeshStats } from './types';
@@ -23,6 +24,10 @@ export function analyzeStl(data: ArrayBuffer | Uint8Array): AnalyzedStl {
  * geometría. Es lo que hace el worker; también sirve de respaldo sin workers.
  */
 export async function analyzeModel(data: ArrayBuffer | Uint8Array, fileName?: string): Promise<AnalyzedStl> {
+  // La interfaz ya lo comprueba con `File.size`; esto cubre cualquier otro camino (p. ej. el worker).
+  if (data.byteLength > MAX_FILE_BYTES) {
+    throw new ModelParseError('err.fileTooBig', { mb: MAX_FILE_BYTES / 1024 / 1024 });
+  }
   const mesh = await parseModel(data, fileName);
   return { mesh, stats: computeStats(mesh) };
 }

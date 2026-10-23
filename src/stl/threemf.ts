@@ -1,6 +1,7 @@
 import type { ErrorKey } from '../i18n/es';
 import type { Params } from '../i18n/interpolate';
 import { ModelParseError } from './errors';
+import { MAX_TRIANGLES } from './limits';
 import type { Mesh } from './types';
 import { attributes, scanXml } from './xml';
 import { readZipDirectory, readZipEntry, zipKey, type ZipEntry } from './zip';
@@ -11,11 +12,10 @@ const DEFAULT_MODEL = '3D/3dmodel.model';
 const MAX_DEPTH = 32;
 
 /**
- * Tope de triángulos de todo el 3MF (contando cada instancia y cada copia). 6 millones son los que
- * caben en un STL de 300 MB (el límite de archivo de la interfaz) y ocupan 216 MB como `Float32Array`;
- * por encima, unas pocas copias de una pieza detallada agotan la memoria y salía un `RangeError` genérico.
+ * Tope de triángulos de todo el 3MF (contando cada instancia y cada copia): el común `MAX_TRIANGLES`.
+ * Por encima, unas pocas copias de una pieza detallada agotan la memoria y salía un `RangeError` genérico.
  */
-export const MAX_3MF_TRIANGLES = 6_000_000;
+export const MAX_3MF_TRIANGLES = MAX_TRIANGLES;
 
 /** Milímetros que mide cada unidad del 3MF. */
 const UNIT_MM: Readonly<Record<string, number>> = {

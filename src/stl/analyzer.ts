@@ -44,10 +44,23 @@ export class StlAnalyzer {
     });
   }
 
-  dispose(): void {
+  /** ¿Hay algún análisis en marcha en el worker? */
+  get busy(): boolean {
+    return this.pending.size > 0;
+  }
+
+  /**
+   * Cancela lo que esté en marcha: cierra el worker (un archivo enorme podría tenerlo ocupado
+   * mucho rato) y rechaza lo pendiente con `err.cancelled`. El siguiente `analyze` abre otro.
+   */
+  cancel(): void {
     this.worker?.terminate();
     this.worker = null;
     this.rejectAll(new ModelParseError('err.cancelled'));
+  }
+
+  dispose(): void {
+    this.cancel();
   }
 
   private ensureWorker(): WorkerLike | null {
