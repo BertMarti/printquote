@@ -466,7 +466,7 @@ El archivo no es un STL (u OBJ o 3MF) correcto, o está dañado o cortado. Compr
 
 ### El archivo es enorme y no carga
 
-El límite es de 300 MB. Los modelos grandes suelen ser piezas exportadas con una resolución excesiva. Prueba a exportar con menos detalle o a simplificar la malla en tu programa de diseño. Con archivos de cientos de miles de triángulos, la lectura puede tardar unos segundos; mientras, verás «Leyendo…».
+Los límites son 300 MB por archivo y 6 millones de triángulos por pieza (en STL, OBJ y 3MF), para que la pestaña no se quede sin memoria. Los modelos grandes suelen ser piezas exportadas con una resolución excesiva. Prueba a exportar con menos detalle o a simplificar la malla en tu programa de diseño. Con archivos de cientos de miles de triángulos, la lectura puede tardar unos segundos; mientras, verás «Leyendo…». Si te equivocas de archivo, abre otro: el que se estaba leyendo se cancela.
 
 ### La pieza sale diminuta o gigantesca (unidades)
 

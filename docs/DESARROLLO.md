@@ -120,7 +120,13 @@ El modo oscuro responde a `prefers-color-scheme`. Los controles tienen etiqueta,
 
 ## Seguridad
 
-`index.html` incluye una política CSP. El análisis se ejecuta en un Web Worker con límites de 300 MB por archivo y 6 000 000 de triángulos en 3MF. Los datos no se insertan con `innerHTML`; se usan APIs DOM seguras. El CI ejecuta gitleaks y el repositorio usa Dependabot. Las instrucciones para comunicar vulnerabilidades están en [`../SECURITY.md`](../SECURITY.md).
+- **CSP**: `scripts/csp-plugin.ts` añade al compilar un `<meta http-equiv="Content-Security-Policy">` a `index.html` (todo `'self'`, sin `unsafe-inline` ni `unsafe-eval`; `img-src` con `data:` y `blob:`; `worker-src 'self'`). En `npm run dev` no se pone, porque Vite inyecta estilos en línea. Si añades un script, estilo o recurso de otro origen, la CSP lo bloqueará: revísala.
+- **Límites** (`src/stl/limits.ts`): 300 MB por archivo y 6 000 000 de triángulos para STL, OBJ y 3MF; las líneas `v`/`f` de un OBJ no pueden pasar de 4 MB y cada entrada del ZIP de un 3MF, de 400 MB descomprimida. Se comprueban en la interfaz y otra vez en el worker.
+- **Web Worker**: el modelo se lee fuera del hilo principal; si llega otro archivo mientras tanto, el análisis anterior se cancela (`StlAnalyzer.cancel`).
+- **DOM**: los datos de la persona (nombres de archivo, datos del negocio) se escriben con `textContent`, nunca con `innerHTML`.
+- **CI**: gitleaks sobre todo el historial, `npm audit --omit=dev --audit-level=high` y Dependabot semanal.
+
+Las instrucciones para comunicar vulnerabilidades están en [`../SECURITY.md`](../SECURITY.md).
 
 ## Documentación
 
