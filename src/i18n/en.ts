@@ -26,6 +26,8 @@ export const en: Record<Key, string> = {
   'stage.hint.mouse': 'Drag to rotate · wheel or +/− to zoom · right button to pan',
   'stage.hint.touch': 'One finger to rotate · pinch to zoom · two fingers to pan',
   'empty.title': 'Drop a 3D model here',
+  'empty.title.touch': 'Open a 3D model',
+  'empty.open': 'Choose a file',
   'empty.text': 'STL, OBJ or 3MF. You can also use “Open 3D model”. Nothing at hand? Try the sample part or watch the demo.',
   'drop.text': 'Drop the file to calculate',
   'viewer.roledescription': '3D viewer',

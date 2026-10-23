@@ -503,6 +503,7 @@ export function startApp(demoScale = 1): void {
   }
 
   byId('open-button').addEventListener('click', () => fileInput.click());
+  byId('empty-open').addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', () => {
     const file = fileInput.files?.[0];
     if (file) loadFile(file);

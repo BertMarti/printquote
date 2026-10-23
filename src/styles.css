@@ -531,6 +531,12 @@ input {
   padding: 0 8px;
 }
 
+/* Alternativa a arrastrar (teclado, móvil): abre el selector de archivos. */
+.empty-open {
+  margin-top: 10px;
+  pointer-events: auto;
+}
+
 .stage.has-notice .empty-text {
   display: none; /* el aviso ya explica qué ha pasado; el título del estado vacío se queda */
 }

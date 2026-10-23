@@ -28,6 +28,8 @@ export const es = {
   'stage.hint.mouse': 'Arrastra para girar · rueda o +/− para acercar · botón derecho para desplazar',
   'stage.hint.touch': 'Un dedo para girar · pellizca para acercar · dos dedos para desplazar',
   'empty.title': 'Arrastra un modelo 3D aquí',
+  'empty.title.touch': 'Abre un modelo 3D',
+  'empty.open': 'Elegir archivo',
   'empty.text':
     'STL, OBJ o 3MF. También puedes usar «Abrir modelo 3D». ¿No tienes ninguno a mano? Prueba con la pieza de ejemplo o mira la demo.',
   'drop.text': 'Suelta el archivo para calcular',
