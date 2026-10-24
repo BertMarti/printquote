@@ -144,6 +144,8 @@ export function parseObj(data: ArrayBuffer | Uint8Array): Mesh {
       pos = nl + 1;
       lineNumber++;
       const trimmed = part.trimEnd();
+      // Con «\» se pueden encadenar líneas sin fin: se corta antes de seguir juntándolas.
+      if (trimmed.endsWith('\\') && line.length + trimmed.length > MAX_LINE_CHARS) fail('err.obj.lineTooLong', { mb: MAX_LINE_CHARS / 1024 / 1024 });
       if (trimmed.endsWith('\\')) {
         // Un «\» final sin nada detrás (fin del archivo) simplemente se descarta.
         line += trimmed.slice(0, -1) + ' ';

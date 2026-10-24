@@ -131,6 +131,8 @@ function parseModelXml(path: string, text: string): ModelFile {
   let triangles: Growable<Int32Array> | null = null;
   let inBuild = false;
   let vertexCount = 0;
+  /** Triángulos de todo este `.model`: se corta al leerlos, antes de que el `Int32Array` crezca de más. */
+  let fileTriangles = 0;
 
   scanXml(text, (tag) => {
     if (tag.closing) {
@@ -190,10 +192,12 @@ function parseModelXml(path: string, text: string): ModelFile {
       }
       case 'triangle': {
         if (!triangles) fail('err.3mf.triangleOutside', { path });
+        if (++fileTriangles > MAX_3MF_TRIANGLES) fail('err.3mf.tooManyTriangles', { millions: MAX_3MF_TRIANGLES / 1_000_000 });
         const a = attributes(tag.rawAttributes);
         for (const key of ['v1', 'v2', 'v3'] as const) {
           const value = Number(a[key]);
-          if (a[key] === undefined || !Number.isInteger(value) || value < 0) {
+          // Se guardan en un Int32Array: uno mayor se truncaría y apuntaría a otro vértice (o a uno negativo).
+          if (a[key] === undefined || !Number.isInteger(value) || value < 0 || value > 0x7fffffff) {
             fail('err.3mf.badIndex', { path, key });
           }
           triangles?.push(value);

@@ -233,7 +233,8 @@ export class Viewer {
     this.camera.updateProjectionMatrix();
     // Girar el móvil o cambiar el tamaño de la ventana no debe dejar la pieza cortada: si la
     // persona no ha movido la cámara, se vuelve a encuadrar con la nueva proporción.
-    if (!this.cameraMoved) this.resetCamera();
+    // Durante la demo (autoRotate) la cámara la mueve ella: no se le reinicia el giro.
+    if (!this.cameraMoved && !this.controls.autoRotate) this.resetCamera();
     else this.requestRender();
   }
 
