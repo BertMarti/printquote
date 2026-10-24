@@ -251,6 +251,8 @@ export const es = {
   'pdf.infill': 'Relleno · perímetros',
   'pdf.copies': 'Copias',
   'pdf.breakdown': 'Desglose',
+  'pdf.summary': 'Resumen',
+  'pdf.client': 'Cliente',
   'pdf.weight': 'Peso total',
   'pdf.time': 'Tiempo total',
   'pdf.timeEstimate': 'estimación',
@@ -377,7 +379,10 @@ export const es = {
   'err.unexpected': 'Ha ocurrido un error inesperado al leer el archivo. Prueba a exportarlo de nuevo como STL, OBJ o 3MF.',
   'err.sample': 'No se ha podido descargar la pieza de ejemplo.',
   'err.cancelled': 'Análisis cancelado.',
-  'err.worker': 'El proceso de lectura en segundo plano ha fallado.',
+  'err.worker':
+    'El proceso de lectura en segundo plano ha fallado (suele ser falta de memoria con un modelo muy grande). Vuelve a abrirlo o simplifica la malla en tu programa.',
+  'err.tooComplex':
+    'El modelo es demasiado grande para analizarlo con la memoria de este dispositivo. Simplifica la malla (menos triángulos) en tu programa, vuelve a exportarlo o prueba en un ordenador.',
   'err.fileTooBig': 'El archivo supera los {mb} MB: es demasiado grande para leerlo en el navegador.',
   'err.tooManyTriangles':
     'La malla tiene más de {max} triángulos, que es lo máximo que se puede abrir sin agotar la memoria del navegador. Simplifica la malla en tu programa y vuelve a exportarla.',

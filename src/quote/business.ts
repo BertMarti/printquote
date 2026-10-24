@@ -17,6 +17,13 @@ export interface BusinessProfile {
   /** Días de validez del presupuesto. */
   readonly validityDays: number;
   readonly vatPercent: number;
+  /** Notas o condiciones para el cliente (plazo, forma de pago…); salen en el PDF. Admite varias líneas. */
+  readonly notes: string;
+  /**
+   * ¿El PDF muestra el desglose interno (material, energía, subtotal y margen)? Por defecto no: el cliente final ve
+   * peso, tiempo estimado, precio por copia, IVA y total, pero no los costes ni el margen del negocio.
+   */
+  readonly pdfShowCosts: boolean;
 }
 
 /** Longitudes máximas de los textos (el PDF es de una sola página). */
@@ -28,6 +35,7 @@ export const BUSINESS_MAX = {
   email: 80,
   web: 80,
   quoteNumber: 30,
+  notes: 300,
 } as const;
 
 export const BUSINESS_LIMITS = {
@@ -56,6 +64,8 @@ export const DEFAULT_BUSINESS: BusinessProfile = {
   quoteNumber: firstQuoteNumber(),
   validityDays: DEFAULT_VALIDITY_DAYS,
   vatPercent: DEFAULT_VAT_PERCENT,
+  notes: '',
+  pdfShowCosts: false,
 };
 
 const LOGO_DATA_URL = /^data:image\/(png|jpeg);base64,[A-Za-z0-9+/]+=*$/;
@@ -96,6 +106,8 @@ export function normalizeBusiness(input: unknown): BusinessProfile {
     // Dos decimales como mucho: es lo que se puede escribir y rotular sin que el PDF diga otro tipo que el aplicado.
     vatPercent:
       Math.round(cleanNumber(source.vatPercent, DEFAULT_VAT_PERCENT, BUSINESS_LIMITS.vatPercent.min, BUSINESS_LIMITS.vatPercent.max) * 100) / 100,
+    notes: cleanText(source.notes, BUSINESS_MAX.notes, true),
+    pdfShowCosts: source.pdfShowCosts === true,
   };
 }
 

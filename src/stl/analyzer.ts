@@ -28,6 +28,9 @@ export class StlAnalyzer {
   private workerFailed = false;
   private nextId = 1;
   private readonly pending = new Map<number, Pending>();
+  /** Análisis en el hilo principal (sin worker): cuántos hay en marcha y cómo cancelar el último. */
+  private mainRunning = 0;
+  private mainAbort: AbortController | null = null;
 
   constructor(private readonly createWorker: () => WorkerLike = createStlWorker) {}
 
@@ -35,7 +38,16 @@ export class StlAnalyzer {
   analyze(buffer: ArrayBuffer, fileName?: string): Promise<AnalyzedStl> {
     const worker = this.ensureWorker();
     if (!worker) {
-      return analyzeModel(buffer, fileName);
+      // Sin worker se analiza en el hilo principal. Un 3MF se descomprime de forma asíncrona, así que podrían
+      // solaparse dos análisis: el anterior se marca como cancelado y se para en cuanto llega a un punto de control.
+      this.mainAbort?.abort();
+      const controller = new AbortController();
+      this.mainAbort = controller;
+      this.mainRunning++;
+      return analyzeModel(buffer, fileName, controller.signal).finally(() => {
+        this.mainRunning--;
+        if (this.mainAbort === controller) this.mainAbort = null;
+      });
     }
     const id = this.nextId++;
     return new Promise<AnalyzedStl>((resolve, reject) => {
@@ -44,16 +56,19 @@ export class StlAnalyzer {
     });
   }
 
-  /** ¿Hay algún análisis en marcha en el worker? */
+  /** ¿Hay algún análisis en marcha (en el worker o, sin él, en el hilo principal)? */
   get busy(): boolean {
-    return this.pending.size > 0;
+    return this.pending.size > 0 || this.mainRunning > 0;
   }
 
   /**
    * Cancela lo que esté en marcha: cierra el worker (un archivo enorme podría tenerlo ocupado
    * mucho rato) y rechaza lo pendiente con `err.cancelled`. El siguiente `analyze` abre otro.
+   * Sin worker, el análisis del hilo principal se para en su siguiente punto de control (`err.cancelled`).
    */
   cancel(): void {
+    this.mainAbort?.abort();
+    this.mainAbort = null;
     this.worker?.terminate();
     this.worker = null;
     this.rejectAll(new ModelParseError('err.cancelled'));

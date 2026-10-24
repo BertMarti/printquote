@@ -245,6 +245,8 @@ export const en: Record<Key, string> = {
   'pdf.infill': 'Infill · perimeters',
   'pdf.copies': 'Copies',
   'pdf.breakdown': 'Breakdown',
+  'pdf.summary': 'Summary',
+  'pdf.client': 'Client',
   'pdf.weight': 'Total weight',
   'pdf.time': 'Total time',
   'pdf.timeEstimate': 'estimate',
@@ -371,7 +373,10 @@ export const en: Record<Key, string> = {
   'err.unexpected': 'An unexpected error occurred while reading the file. Try exporting it again as STL, OBJ or 3MF.',
   'err.sample': 'The sample part could not be downloaded.',
   'err.cancelled': 'Analysis cancelled.',
-  'err.worker': 'The background reading process failed.',
+  'err.worker':
+    'The background reading process failed (usually out of memory with a very large model). Open it again or simplify the mesh in your software.',
+  'err.tooComplex':
+    'The model is too large to analyse with the memory available on this device. Simplify the mesh (fewer triangles) in your software, export it again or try on a computer.',
   'err.fileTooBig': 'The file is larger than {mb} MB: too large to read in the browser.',
   'err.tooManyTriangles':
     'The mesh has more than {max} triangles, the most that can be opened without running out of browser memory. Simplify the mesh in your software and export it again.',
