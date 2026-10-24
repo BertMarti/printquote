@@ -52,6 +52,8 @@ export class Viewer {
   private bed: Vec3 = { x: 220, y: 220, z: 250 };
   private partSize: Vec3 | null = null;
   private frame = 0;
+  /** ¿Ha movido la persona la cámara desde el último encuadre? Si no, al cambiar el tamaño se reencuadra. */
+  private cameraMoved = false;
 
   constructor(private readonly container: HTMLElement, theme: ViewerTheme) {
     this.renderer = new WebGLRenderer({ antialias: true });
@@ -69,6 +71,11 @@ export class Viewer {
     this.controls.listenToKeyEvents(container);
     container.addEventListener('keydown', this.onKeyDown);
     this.controls.addEventListener('change', () => this.requestRender());
+    this.controls.addEventListener('start', () => (this.cameraMoved = true));
+    // Las flechas (desplazar y girar con el teclado) no lanzan «start» en OrbitControls.
+    container.addEventListener('keydown', (event) => {
+      if (event.key.startsWith('Arrow')) this.cameraMoved = true;
+    });
 
     this.scene.add(new HemisphereLight(0xffffff, 0x8a8580, 1.6));
     this.scene.add(new AmbientLight(0xffffff, 0.35));
@@ -169,6 +176,7 @@ export class Viewer {
     this.controls.minDistance = radius * 0.2;
     this.controls.maxDistance = distance * 8;
     this.controls.update();
+    this.cameraMoved = false;
     this.requestRender();
   }
 
@@ -200,6 +208,7 @@ export class Viewer {
     const factor = keyZoomFactor(event, this.partSize !== null);
     if (factor === null) return;
     event.preventDefault();
+    this.cameraMoved = true;
     const offset = this.camera.position.clone().sub(this.controls.target);
     this.camera.position.copy(this.controls.target).add(offset.multiplyScalar(factor));
     this.controls.update();
@@ -222,7 +231,11 @@ export class Viewer {
     this.renderer.setSize(width, height, false);
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
-    this.requestRender();
+    // Girar el móvil o cambiar el tamaño de la ventana no debe dejar la pieza cortada: si la
+    // persona no ha movido la cámara, se vuelve a encuadrar con la nueva proporción.
+    // Durante la demo (autoRotate) la cámara la mueve ella: no se le reinicia el giro.
+    if (!this.cameraMoved && !this.controls.autoRotate) this.resetCamera();
+    else this.requestRender();
   }
 
   /** Rejilla de la cama: línea fina cada 10 mm, marcada cada 50 mm y contorno. */

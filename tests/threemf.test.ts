@@ -204,19 +204,19 @@ describe('parse3mf: errores en español', () => {
     const zip = await zipWithModel(modelXml(objectXml(1, cubeTriangles(10)), items));
     const error = await parse3mf(zip).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(ModelParseError);
-    expect((error as ModelParseError).message).toMatch(/más de 6 millones de triángulos/);
+    expect((error as ModelParseError).message).toMatch(/más de 6\u00a0300\u00a0000 triángulos/);
     expect((error as ModelParseError).code).toBe('err.3mf.tooManyTriangles');
-    expect(tIn('en', 'err.3mf.tooManyTriangles', (error as ModelParseError).params)).toMatch(/more than 6 million triangles/);
+    expect(tIn('en', 'err.3mf.tooManyTriangles', (error as ModelParseError).params)).toMatch(/more than 6\u00a0300\u00a0000 triangles/);
   });
 
   it('un 3MF con muchas instancias que caben en el tope se abre entero', async () => {
     const items = '<item objectid="1"/>'.repeat(1000); // 12 000 triángulos
     const { mesh } = await analyzeModel(await zipWithModel(modelXml(objectXml(1, cubeTriangles(10)), items)));
     expect(mesh.triangleCount).toBe(12000);
-    expect(MAX_3MF_TRIANGLES).toBe(6_000_000);
+    expect(MAX_3MF_TRIANGLES).toBe(6_300_000);
   });
 
-  it('la frontera es exacta: 6 000 000 triángulos pasan (el caso de 6 000 012 falla arriba)', async () => {
+  it('la frontera es exacta: 6 300 000 triángulos pasan (el caso de 6 300 012 falla arriba)', async () => {
     const items = '<item objectid="1"/>'.repeat(MAX_3MF_TRIANGLES / 12);
     const mesh = await parse3mf(await zipWithModel(modelXml(objectXml(1, cubeTriangles(10)), items)));
     expect(mesh.triangleCount).toBe(MAX_3MF_TRIANGLES);

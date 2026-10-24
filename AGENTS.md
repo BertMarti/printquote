@@ -11,14 +11,19 @@ Web que calcula el presupuesto de una pieza de impresión 3D: arrastras un STL, 
 - Despliegue: **GitHub Pages** con GitHub Actions (`base: '/printquote/'`).
 
 ## Comandos
-- Instalar: `npm ci`
-- Desarrollo: `npm run dev`
+- Instalar: `npm ci` (Node ≥ 22.12, como pide `engines`)
+- Desarrollo: `npm run dev` → <http://localhost:5173/printquote/>
 - Lint: `npm run lint`
-- Tests: `npm test`
-- Build: `npm run build` (salida en `dist/`)
+- Tipos: `npm run typecheck` (src y tests)
+- Tests: `npm test` (Vitest; `testTimeout` 30 s porque la Raspberry Pi va justa)
+- Build: `npm run build` (typecheck + `vite build`; salida en `dist/`, con la CSP en `dist/index.html`)
+- Probar el build como en Pages: `npm run preview` → <http://localhost:4173/printquote/>
+- Despliegue: automático con `.github/workflows/deploy.yml` al entrar en `main` (o `workflow_dispatch`).
+- Capturas del README/Open Graph: `node scripts/captura.mjs` con la web en marcha (Chrome; en Node 20, `node --experimental-websocket`).
 
 ## Estructura
-- `src/stl/` parser STL (binario y ASCII) y geometría (volumen, área, caja).
+- `src/stl/` lectores STL (binario y ASCII), OBJ y 3MF, geometría (volumen, área, caja) y `limits.ts` (topes comunes: 300 MB y 6 300 000 triángulos). Se leen en un Web Worker (`stl.worker.ts` + `analyzer.ts`, cancelable).
+- `scripts/` plugins de Vite (`pwa-plugin.ts`, `csp-plugin.ts`), capturas (`captura.mjs`, `chrome.mjs`) y la pieza de ejemplo.
 - `src/quote/` modelo de coste (material, relleno, tiempo, energía, margen) y lote de piezas (`batch.ts`: suma líneas de `computeQuote`; no tiene fórmula propia).
 - `src/pdf/` presupuesto en PDF: contenido puro en `document.ts` (`buildQuoteDocument`, `buildBatchDocument`) y dibujo con pdf-lib en `render.ts`; un lote lleva `batch` (tabla de piezas a todo el ancho) y el dibujo pasa de página y numera («Página n de N»).
 - `src/viewer/` visor three.js.
@@ -27,6 +32,13 @@ Web que calcula el presupuesto de una pieza de impresión 3D: arrastras un STL, 
 - `src/ui/demo.ts` modo demo: guion `DEMO_STEPS` en datos y su control; no importa `app.ts`, recibe un `DemoHost` (ver «Modo demo»).
 - `public/samples/` pieza de ejemplo original.
 - `tests/` pruebas unitarias.
+
+## Seguridad y privacidad (obligatorio)
+- **Nada sale del navegador**: ni el archivo 3D ni los datos del negocio. Nada de analítica ni orígenes externos.
+- **CSP** (`scripts/csp-plugin.ts`, solo en el build): todo `'self'`, sin `unsafe-inline` ni `unsafe-eval`. Prohibido añadir `<script>` en línea, `style="…"` en el HTML, `on*=` o recursos de otro origen; si de verdad hace falta, cambia la CSP y su test (`tests/csp.test.ts`) y justifícalo en `MEMORY.md`.
+- **Nunca `innerHTML`/`insertAdjacentHTML` con datos**: `textContent` y nodos DOM (nombres de archivo, datos del negocio, historial).
+- **Límites**: todo lector nuevo respeta `MAX_FILE_BYTES` y `MAX_TRIANGLES` (`src/stl/limits.ts`) y corta **antes** de reservar memoria; errores con `ModelParseError` y clave `err.*` traducida.
+- Sin secretos en git (el CI pasa gitleaks por todo el historial). Avisos de vulnerabilidad: `SECURITY.md`.
 
 ## Diseño: «hoja técnica suiza»
 Minimalista, claro y preciso, como una ficha técnica.

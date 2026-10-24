@@ -11,6 +11,7 @@ import { parseHash, settingsToHash } from '../quote/share';
 import { buildBatchText, buildQuoteText } from '../quote/text';
 import { computeBatch } from '../quote/batch';
 import { StlAnalyzer } from '../stl/analyzer';
+import { MAX_FILE_BYTES } from '../stl/limits';
 import { meshWarnings, type MeshWarning } from '../stl/geometry';
 import { ModelParseError } from '../stl/errors';
 import type { Mesh, MeshStats, Vec3 } from '../stl/types';
@@ -35,7 +36,6 @@ import {
 } from './storage';
 
 const SAMPLE_FILE = 'soporte-movil.stl';
-const MAX_FILE_BYTES = 300 * 1024 * 1024;
 
 interface LoadedPart {
   readonly fileName: string;
@@ -464,6 +464,9 @@ export function startApp(demoScale = 1): void {
     announce(t('load.reading.announce', { name: fileName }));
     try {
       const buffer = await getBuffer();
+      if (ticket !== loadTicket) return false; // otro archivo se ha pedido mientras se leía este
+      // Si el worker sigue con un archivo anterior (uno enorme puede tardar), se cancela: manda el último.
+      if (analyzer.busy) analyzer.cancel();
       // El parseo y la geometría van en un Web Worker: la interfaz sigue respondiendo.
       const { mesh, stats } = await analyzer.analyze(buffer, fileName);
       if (ticket !== loadTicket) return false; // ya se ha pedido otro archivo
@@ -500,6 +503,7 @@ export function startApp(demoScale = 1): void {
   }
 
   byId('open-button').addEventListener('click', () => fileInput.click());
+  byId('empty-open').addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', () => {
     const file = fileInput.files?.[0];
     if (file) loadFile(file);

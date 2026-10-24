@@ -26,6 +26,8 @@ export const en: Record<Key, string> = {
   'stage.hint.mouse': 'Drag to rotate · wheel or +/− to zoom · right button to pan',
   'stage.hint.touch': 'One finger to rotate · pinch to zoom · two fingers to pan',
   'empty.title': 'Drop a 3D model here',
+  'empty.title.touch': 'Open a 3D model',
+  'empty.open': 'Choose a file',
   'empty.text': 'STL, OBJ or 3MF. You can also use “Open 3D model”. Nothing at hand? Try the sample part or watch the demo.',
   'drop.text': 'Drop the file to calculate',
   'viewer.roledescription': '3D viewer',
@@ -370,6 +372,9 @@ export const en: Record<Key, string> = {
   'err.sample': 'The sample part could not be downloaded.',
   'err.cancelled': 'Analysis cancelled.',
   'err.worker': 'The background reading process failed.',
+  'err.fileTooBig': 'The file is larger than {mb} MB: too large to read in the browser.',
+  'err.tooManyTriangles':
+    'The mesh has more than {max} triangles, the most that can be opened without running out of browser memory. Simplify the mesh in your software and export it again.',
   'err.stl.size':
     'This does not look like a valid STL: the file size does not match the number of triangles it declares, and it is not a text STL either.',
   'err.stl.small': 'This does not look like a valid STL: the file is too small.',
@@ -387,6 +392,7 @@ export const en: Record<Key, string> = {
   'err.obj.badIndex': 'OBJ line {line}: “{token}” is not a valid vertex index.',
   'err.obj.zeroIndex': 'OBJ line {line}: vertex indices start at 1 (or are negative, relative to the end).',
   'err.obj.beforeFirst': 'OBJ line {line}: index {index} points before the first vertex.',
+  'err.obj.lineTooLong': 'OBJ line {line}: it is longer than {mb} MB, too much for a real vertex or face.',
   'err.obj.noVertices': 'The OBJ contains no vertices.',
   'err.obj.noFaces': 'The OBJ contains no faces: it only has vertices, lines or points, not a surface.',
   'err.obj.outOfRange': 'A face uses vertex {index}, but the OBJ only has {count} vertices.',
@@ -421,7 +427,7 @@ export const en: Record<Key, string> = {
   'err.3mf.circular': 'The 3MF has objects that contain themselves (circular references).',
   'err.3mf.empty': 'The 3MF contains nothing printable: there are no triangles in the build plate.',
   'err.3mf.tooManyTriangles':
-    'The 3MF has more than {millions} million triangles counting all its copies and instances, which is the most that can be opened without running the browser out of memory. Reduce the copies or simplify the mesh in your program and export it again.',
+    'The 3MF has more than {max} triangles counting all its copies and instances, which is the most that can be opened without running the browser out of memory. Reduce the copies or simplify the mesh in your program and export it again.',
   'err.3mf.vertexRange': 'A triangle uses vertex {index}, but the mesh only has {count} vertices.',
 
   // ── Logo ──

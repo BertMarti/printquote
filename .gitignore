@@ -1,7 +1,10 @@
 node_modules/
 dist/
 coverage/
-.env
 *.local
 .DS_Store
 graphify-out/
+
+# Variables de entorno locales (nunca en git), salvo el ejemplo
+.env*
+!.env.example

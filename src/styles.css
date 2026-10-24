@@ -531,6 +531,19 @@ input {
   padding: 0 8px;
 }
 
+/* Alternativa a arrastrar (teclado, móvil): abre el selector de archivos. Fondo del visor, como
+   el título y el texto, para que la rejilla de la cama no se vea a través. */
+.empty-open {
+  margin-top: 10px;
+  pointer-events: auto;
+  background: var(--stage);
+}
+
+/* Sin pieza no hay nada que reencuadrar: el botón desactivado solo estorbaba (en móvil, en mitad del visor). */
+.stage:not(.has-part) .stage-reset {
+  visibility: hidden;
+}
+
 .stage.has-notice .empty-text {
   display: none; /* el aviso ya explica qué ha pasado; el título del estado vacío se queda */
 }

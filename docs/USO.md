@@ -115,7 +115,7 @@ Qué **da error** en un 3MF (se muestra un cuadro en el visor con el motivo y se
 | ZIP cortado o dañado | «…está cortado o dañado…» |
 | Falta el modelo o un archivo al que se hace referencia | «El 3MF no contiene el modelo…» o «…hace referencia a … que no está dentro del archivo» |
 | Sin ninguna pieza imprimible | «El 3MF no contiene ninguna pieza imprimible…» |
-| Más de **6 millones de triángulos** en total (contando cada copia e instancia de la plantilla) | «El 3MF tiene más de 6 millones de triángulos…» (el mismo orden de magnitud que el límite de 300 MB de un STL; reduce las copias o simplifica la malla) |
+| Más de **6 300 000 triángulos** en total (contando cada copia e instancia de la plantilla) | «El 3MF tiene más de 6 300 000 triángulos…» (el mismo orden de magnitud que el límite de 300 MB de un STL; reduce las copias o simplifica la malla) |
 | Un archivo interno que, descomprimido, pesa más de 400 MB | «…es demasiado grande» |
 
 Si te sale algún otro error de lectura, vuelve a exportar el archivo desde tu programa o conviértelo a STL.
@@ -466,7 +466,7 @@ El archivo no es un STL (u OBJ o 3MF) correcto, o está dañado o cortado. Compr
 
 ### El archivo es enorme y no carga
 
-El límite es de 300 MB. Los modelos grandes suelen ser piezas exportadas con una resolución excesiva. Prueba a exportar con menos detalle o a simplificar la malla en tu programa de diseño. Con archivos de cientos de miles de triángulos, la lectura puede tardar unos segundos; mientras, verás «Leyendo…».
+Los límites son 300 MB por archivo y 6,3 millones de triángulos por pieza (en STL, OBJ y 3MF), para que la pestaña no se quede sin memoria. Los modelos grandes suelen ser piezas exportadas con una resolución excesiva. Prueba a exportar con menos detalle o a simplificar la malla en tu programa de diseño. Con archivos de cientos de miles de triángulos, la lectura puede tardar unos segundos; mientras, verás «Leyendo…». Si te equivocas de archivo, abre otro: el que se estaba leyendo se cancela.
 
 ### La pieza sale diminuta o gigantesca (unidades)
 

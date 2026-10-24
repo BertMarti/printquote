@@ -1,6 +1,7 @@
 import type { ErrorKey } from '../i18n/es';
 import type { Params } from '../i18n/interpolate';
 import { ModelParseError } from './errors';
+import { MAX_TRIANGLES, MAX_TRIANGLES_TEXT } from './limits';
 import type { Mesh } from './types';
 import { attributes, scanXml } from './xml';
 import { readZipDirectory, readZipEntry, zipKey, type ZipEntry } from './zip';
@@ -11,11 +12,10 @@ const DEFAULT_MODEL = '3D/3dmodel.model';
 const MAX_DEPTH = 32;
 
 /**
- * Tope de triángulos de todo el 3MF (contando cada instancia y cada copia). 6 millones son los que
- * caben en un STL de 300 MB (el límite de archivo de la interfaz) y ocupan 216 MB como `Float32Array`;
- * por encima, unas pocas copias de una pieza detallada agotan la memoria y salía un `RangeError` genérico.
+ * Tope de triángulos de todo el 3MF (contando cada instancia y cada copia): el común `MAX_TRIANGLES`.
+ * Por encima, unas pocas copias de una pieza detallada agotan la memoria y salía un `RangeError` genérico.
  */
-export const MAX_3MF_TRIANGLES = 6_000_000;
+export const MAX_3MF_TRIANGLES = MAX_TRIANGLES;
 
 /** Milímetros que mide cada unidad del 3MF. */
 const UNIT_MM: Readonly<Record<string, number>> = {
@@ -131,6 +131,8 @@ function parseModelXml(path: string, text: string): ModelFile {
   let triangles: Growable<Int32Array> | null = null;
   let inBuild = false;
   let vertexCount = 0;
+  /** Triángulos de todo este `.model`: se corta al leerlos, antes de que el `Int32Array` crezca de más. */
+  let fileTriangles = 0;
 
   scanXml(text, (tag) => {
     if (tag.closing) {
@@ -190,10 +192,12 @@ function parseModelXml(path: string, text: string): ModelFile {
       }
       case 'triangle': {
         if (!triangles) fail('err.3mf.triangleOutside', { path });
+        if (++fileTriangles > MAX_3MF_TRIANGLES) fail('err.3mf.tooManyTriangles', { max: MAX_TRIANGLES_TEXT });
         const a = attributes(tag.rawAttributes);
         for (const key of ['v1', 'v2', 'v3'] as const) {
           const value = Number(a[key]);
-          if (a[key] === undefined || !Number.isInteger(value) || value < 0) {
+          // Se guardan en un Int32Array: uno mayor se truncaría y apuntaría a otro vértice (o a uno negativo).
+          if (a[key] === undefined || !Number.isInteger(value) || value < 0 || value > 0x7fffffff) {
             fail('err.3mf.badIndex', { path, key });
           }
           triangles?.push(value);
@@ -298,7 +302,7 @@ export async function parse3mf(data: ArrayBuffer | Uint8Array): Promise<Mesh> {
       // Del sistema del archivo de la malla al de la plantilla (unidades), luego la matriz, luego a mm.
       const toRoot = composeMatrix(scale(file.unit / root.unit), matrix);
       triangles += object.mesh.triangles.length / 3;
-      if (triangles > MAX_3MF_TRIANGLES) fail('err.3mf.tooManyTriangles', { millions: MAX_3MF_TRIANGLES / 1_000_000 });
+      if (triangles > MAX_3MF_TRIANGLES) fail('err.3mf.tooManyTriangles', { max: MAX_TRIANGLES_TEXT });
       instances.push({ mesh: object.mesh, matrix: composeMatrix(toRoot, scale(root.unit)) });
     }
     for (const component of object.components) {

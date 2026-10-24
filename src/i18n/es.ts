@@ -28,6 +28,8 @@ export const es = {
   'stage.hint.mouse': 'Arrastra para girar · rueda o +/− para acercar · botón derecho para desplazar',
   'stage.hint.touch': 'Un dedo para girar · pellizca para acercar · dos dedos para desplazar',
   'empty.title': 'Arrastra un modelo 3D aquí',
+  'empty.title.touch': 'Abre un modelo 3D',
+  'empty.open': 'Elegir archivo',
   'empty.text':
     'STL, OBJ o 3MF. También puedes usar «Abrir modelo 3D». ¿No tienes ninguno a mano? Prueba con la pieza de ejemplo o mira la demo.',
   'drop.text': 'Suelta el archivo para calcular',
@@ -376,6 +378,9 @@ export const es = {
   'err.sample': 'No se ha podido descargar la pieza de ejemplo.',
   'err.cancelled': 'Análisis cancelado.',
   'err.worker': 'El proceso de lectura en segundo plano ha fallado.',
+  'err.fileTooBig': 'El archivo supera los {mb} MB: es demasiado grande para leerlo en el navegador.',
+  'err.tooManyTriangles':
+    'La malla tiene más de {max} triángulos, que es lo máximo que se puede abrir sin agotar la memoria del navegador. Simplifica la malla en tu programa y vuelve a exportarla.',
   'err.stl.size':
     'No parece un STL válido: el tamaño del archivo no coincide con el número de triángulos que declara y tampoco es un STL de texto.',
   'err.stl.small': 'No parece un STL válido: el archivo es demasiado pequeño.',
@@ -393,6 +398,7 @@ export const es = {
   'err.obj.badIndex': 'Línea {line} del OBJ: «{token}» no es un índice de vértice válido.',
   'err.obj.zeroIndex': 'Línea {line} del OBJ: los índices de vértice empiezan en 1 (o son negativos, relativos al final).',
   'err.obj.beforeFirst': 'Línea {line} del OBJ: el índice {index} apunta antes del primer vértice.',
+  'err.obj.lineTooLong': 'Línea {line} del OBJ: ocupa más de {mb} MB, demasiado para ser un vértice o una cara reales.',
   'err.obj.noVertices': 'El OBJ no contiene vértices.',
   'err.obj.noFaces': 'El OBJ no contiene caras: solo tiene vértices, líneas o puntos, no una superficie.',
   'err.obj.outOfRange': 'Una cara usa el vértice {index}, pero el OBJ solo tiene {count} vértices.',
@@ -427,7 +433,7 @@ export const es = {
   'err.3mf.circular': 'El 3MF tiene objetos que se contienen a sí mismos (referencias circulares).',
   'err.3mf.empty': 'El 3MF no contiene ninguna pieza imprimible: no tiene triángulos en la plantilla de impresión.',
   'err.3mf.tooManyTriangles':
-    'El 3MF tiene más de {millions} millones de triángulos contando todas sus copias e instancias, que es lo máximo que se puede abrir sin agotar la memoria del navegador. Reduce las copias o simplifica la malla en tu programa y vuelve a exportarlo.',
+    'El 3MF tiene más de {max} triángulos contando todas sus copias e instancias, que es lo máximo que se puede abrir sin agotar la memoria del navegador. Reduce las copias o simplifica la malla en tu programa y vuelve a exportarlo.',
   'err.3mf.vertexRange': 'Un triángulo usa el vértice {index}, pero la malla solo tiene {count} vértices.',
 
   // ── Logotipo ──

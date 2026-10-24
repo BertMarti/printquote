@@ -4,6 +4,27 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 
 ## [Sin publicar]
 
+## [0.8.0] - 2026-10-24
+
+Noche de mejoras «seguridad y portada»: la web aguanta mejor archivos malintencionados o enormes, publica una política de seguridad de contenidos y estrena un README pensado para quien la usa.
+
+### Añadido
+
+- **Política de seguridad de contenidos (CSP)** en `index.html` al compilar (`scripts/csp-plugin.ts`): todo del propio sitio, sin scripts ni estilos en línea ni `eval`. Comprobada en Chromium sin cabeza con la pieza de ejemplo, el visor 3D, el PDF, el logotipo, la hoja de impresión y el modo sin conexión.
+- **Botón «Elegir archivo»** en el visor vacío, para abrir un modelo sin arrastrar (teclado y móvil); en pantallas táctiles el título dice «Abre un modelo 3D».
+- **Seguridad del repositorio**: CI con gitleaks (secretos en todo el historial) y `npm audit` de las dependencias de la web, Dependabot semanal y `SECURITY.md`.
+- **README para personas usuarias** con cabecera propia, capturas en móvil y en modo oscuro y preguntas frecuentes; lo técnico pasa a `docs/DESARROLLO.md`. `PLAN.md` y documentación para agentes en `.claude/`.
+- Tests de límites, cancelación, CSP y valores conocidos de punta a punta (cubo de 20 mm: 8 cm³, 4,13 g y 0,10 € con los ajustes por defecto).
+
+### Cambiado
+
+- **Límites comunes para STL, OBJ y 3MF** (`src/stl/limits.ts`): 300 MB por archivo y 6 300 000 triángulos (todo STL binario de hasta 300 MB cabe; el tope del 3MF sube de 6 000 000 a 6 300 000), comprobados también dentro del worker. Un OBJ que declare más triángulos (una cara enorme se convierte en muchos) o una línea de más de 4 MB se rechaza con un mensaje claro antes de agotar la memoria.
+- **3MF más robusto**: el tope de triángulos se aplica mientras se lee cada objeto y un índice de vértice gigante (que antes se truncaba y apuntaba a otro vértice) da un error claro.
+- **Abrir otro archivo cancela el análisis en curso**: con un archivo enorme ya no hay que esperar a que termine para cargar el siguiente.
+- **El visor se reencuadra al cambiar de tamaño** (girar el móvil, redimensionar la ventana) si no has movido la cámara; «Restablecer vista» no se muestra sin pieza.
+- Despliegue con permisos mínimos por job; dependencias de desarrollo actualizadas (vite 8.3.5, `npm audit` sin avisos).
+
+
 ## [0.7.0] - 2026-10-01
 
 Hito v0.7.0 «Lotes completos»: el lote sobrevive a recargar, se reabre desde el historial, se corrige en la lista y se imprime; más los retoques de la revisión de v0.6. Especificación en `docs/specs/v0.7.md`.
@@ -121,7 +142,8 @@ Primera versión: el MVP.
 - **Revisión de QA** (PR #2): parser ASCII byte a byte, soldado de vértices con tolerancia, lectura en un Web Worker, three.js cargado bajo demanda, regiones vivas accesibles, Open Graph y tests de interfaz (57 → 132 tests).
 - **Documentación** (PR #4): guía de uso (`docs/USO.md`) y guía de contribución (`CONTRIBUTING.md`).
 
-[Sin publicar]: https://github.com/BertMarti/printquote/compare/v0.7.0...HEAD
+[Sin publicar]: https://github.com/BertMarti/printquote/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/BertMarti/printquote/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/BertMarti/printquote/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/BertMarti/printquote/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/BertMarti/printquote/compare/v0.4.0...v0.5.0
