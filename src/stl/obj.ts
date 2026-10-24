@@ -1,7 +1,7 @@
 import type { ErrorKey } from '../i18n/es';
 import type { Params } from '../i18n/interpolate';
 import { ModelParseError } from './errors';
-import { MAX_TRIANGLES, MAX_TRIANGLES_MILLIONS } from './limits';
+import { MAX_TRIANGLES, MAX_TRIANGLES_TEXT } from './limits';
 import type { Mesh } from './types';
 
 /** Un OBJ con un byte nulo en el arranque es un binario cualquiera, no texto. */
@@ -197,7 +197,7 @@ export function parseObj(data: ArrayBuffer | Uint8Array): Mesh {
       if (face.length > MAX_EAR_CLIPPING) largePolygons++;
       // Una cara de n vértices da n − 2 triángulos: se corta antes de reservar memoria para ellos.
       if (triangleCount + face.length - 2 > MAX_TRIANGLES) {
-        fail('err.tooManyTriangles', { millions: MAX_TRIANGLES_MILLIONS });
+        fail('err.tooManyTriangles', { max: MAX_TRIANGLES_TEXT });
       }
       triangulate(face, vertices.data, vertexCount, (a, b, c) => {
         faceIndices.push(a);

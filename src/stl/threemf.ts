@@ -1,7 +1,7 @@
 import type { ErrorKey } from '../i18n/es';
 import type { Params } from '../i18n/interpolate';
 import { ModelParseError } from './errors';
-import { MAX_TRIANGLES } from './limits';
+import { MAX_TRIANGLES, MAX_TRIANGLES_TEXT } from './limits';
 import type { Mesh } from './types';
 import { attributes, scanXml } from './xml';
 import { readZipDirectory, readZipEntry, zipKey, type ZipEntry } from './zip';
@@ -192,7 +192,7 @@ function parseModelXml(path: string, text: string): ModelFile {
       }
       case 'triangle': {
         if (!triangles) fail('err.3mf.triangleOutside', { path });
-        if (++fileTriangles > MAX_3MF_TRIANGLES) fail('err.3mf.tooManyTriangles', { millions: MAX_3MF_TRIANGLES / 1_000_000 });
+        if (++fileTriangles > MAX_3MF_TRIANGLES) fail('err.3mf.tooManyTriangles', { max: MAX_TRIANGLES_TEXT });
         const a = attributes(tag.rawAttributes);
         for (const key of ['v1', 'v2', 'v3'] as const) {
           const value = Number(a[key]);
@@ -302,7 +302,7 @@ export async function parse3mf(data: ArrayBuffer | Uint8Array): Promise<Mesh> {
       // Del sistema del archivo de la malla al de la plantilla (unidades), luego la matriz, luego a mm.
       const toRoot = composeMatrix(scale(file.unit / root.unit), matrix);
       triangles += object.mesh.triangles.length / 3;
-      if (triangles > MAX_3MF_TRIANGLES) fail('err.3mf.tooManyTriangles', { millions: MAX_3MF_TRIANGLES / 1_000_000 });
+      if (triangles > MAX_3MF_TRIANGLES) fail('err.3mf.tooManyTriangles', { max: MAX_TRIANGLES_TEXT });
       instances.push({ mesh: object.mesh, matrix: composeMatrix(toRoot, scale(root.unit)) });
     }
     for (const component of object.components) {

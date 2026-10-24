@@ -2,9 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { analyzeModel } from '../src/stl/analyze';
 import { ModelParseError } from '../src/stl/errors';
 import { asciiStl, binaryStl, cubeTriangles, discObj, encode } from './helpers/mesh';
+import { buildZip, modelXml, objectXml, RELS } from './helpers/zip';
 
 /**
- * Los límites reales (300 MB y 6 millones de triángulos) no se pueden agotar en un test, así
+ * Los límites reales (300 MB y 6 300 000 triángulos) no se pueden agotar en un test, así
  * que aquí se sustituyen por valores diminutos: los topes se prueban con archivos de pocos bytes.
  * El mock afecta solo a este archivo (cada test de Vitest aísla sus módulos); por eso vive en su
  * propio archivo y los demás tests siguen usando los límites de verdad.
@@ -12,7 +13,7 @@ import { asciiStl, binaryStl, cubeTriangles, discObj, encode } from './helpers/m
 vi.mock('../src/stl/limits', () => ({
   MAX_FILE_BYTES: 4096,
   MAX_TRIANGLES: 20,
-  MAX_TRIANGLES_MILLIONS: 0.00002,
+  MAX_TRIANGLES_TEXT: '20',
 }));
 
 /** Dos cubos: 24 triángulos, más de los 20 que permite el mock. */
@@ -36,7 +37,7 @@ f 3 4 8 7
 f 4 1 5 8
 `;
 
-const TOO_MANY = { code: 'err.tooManyTriangles', params: { millions: 0.00002 } };
+const TOO_MANY = { code: 'err.tooManyTriangles', params: { max: '20' } };
 
 describe('tope de triángulos (mock: MAX_TRIANGLES = 20)', () => {
   it('un STL binario de 24 triángulos se rechaza y uno de 12 se lee entero', async () => {
@@ -82,5 +83,26 @@ describe('tope de tamaño de archivo (mock: MAX_FILE_BYTES = 4096)', () => {
   it('justo en el límite el archivo pasa el control y el fallo viene de la lectura', async () => {
     await expect(analyzeModel(new Uint8Array(4096), 'casi.stl')).rejects.toMatchObject({ code: 'err.stl.size' });
     await expect(analyzeModel(new Uint8Array(4097), 'grande.stl')).rejects.toMatchObject({ code: 'err.fileTooBig' });
+  });
+});
+
+describe('tope de triángulos del 3MF (mock: MAX_TRIANGLES = 20)', () => {
+  const threeMf = (triangles: number): Promise<Uint8Array> =>
+    buildZip([
+      { name: '_rels/.rels', data: RELS },
+      { name: '3D/3dmodel.model', data: modelXml(objectXml(1, TWO_CUBES.slice(0, triangles)), '<item objectid="1"/>') },
+    ]);
+
+  it('un .model de 21 triángulos se rechaza al leerlo', async () => {
+    await expect(analyzeModel(await threeMf(21), '21.3mf')).rejects.toMatchObject({
+      code: 'err.3mf.tooManyTriangles',
+      params: { max: '20' },
+    });
+  });
+
+  it('uno de 20 triángulos se abre entero', async () => {
+    const { mesh } = await analyzeModel(await threeMf(20), '20.3mf');
+    expect(mesh.triangleCount).toBe(20);
+    expect(mesh.format).toBe('3mf');
   });
 });

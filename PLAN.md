@@ -5,7 +5,7 @@
 Trabajo de la rama `mejoras-2026-10-24` comprobado contra el código actual:
 
 - Dependencias actualizadas con `npm audit fix`; Vite queda en 8.3.5 en el lockfile.
-- Límites comunes para STL, OBJ y 3MF en `src/stl/limits.ts`: 300 MB por archivo y 6 000 000 de triángulos. OBJ añade un máximo de 4 MB por línea `v` o `f`.
+- Límites comunes para STL, OBJ y 3MF en `src/stl/limits.ts`: 300 MB por archivo y 6 300 000 triángulos. OBJ añade un máximo de 4 MB por línea `v` o `f`.
 - Si llega otro archivo durante un análisis, `StlAnalyzer.cancel` termina el análisis anterior y se procesa el último archivo.
 - `scripts/csp-plugin.ts` añade la CSP al `<meta>` solo en el build. Se verificó en Chromium sin violaciones.
 - CI incorpora gitleaks y `npm audit`; Dependabot está configurado; el despliegue separa los permisos de lectura, Pages e identidad.

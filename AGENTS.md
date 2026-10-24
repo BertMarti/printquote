@@ -22,7 +22,7 @@ Web que calcula el presupuesto de una pieza de impresión 3D: arrastras un STL, 
 - Capturas del README/Open Graph: `node scripts/captura.mjs` con la web en marcha (Chrome; en Node 20, `node --experimental-websocket`).
 
 ## Estructura
-- `src/stl/` lectores STL (binario y ASCII), OBJ y 3MF, geometría (volumen, área, caja) y `limits.ts` (topes comunes: 300 MB y 6 000 000 de triángulos). Se leen en un Web Worker (`stl.worker.ts` + `analyzer.ts`, cancelable).
+- `src/stl/` lectores STL (binario y ASCII), OBJ y 3MF, geometría (volumen, área, caja) y `limits.ts` (topes comunes: 300 MB y 6 300 000 triángulos). Se leen en un Web Worker (`stl.worker.ts` + `analyzer.ts`, cancelable).
 - `scripts/` plugins de Vite (`pwa-plugin.ts`, `csp-plugin.ts`), capturas (`captura.mjs`, `chrome.mjs`) y la pieza de ejemplo.
 - `src/quote/` modelo de coste (material, relleno, tiempo, energía, margen) y lote de piezas (`batch.ts`: suma líneas de `computeQuote`; no tiene fórmula propia).
 - `src/pdf/` presupuesto en PDF: contenido puro en `document.ts` (`buildQuoteDocument`, `buildBatchDocument`) y dibujo con pdf-lib en `render.ts`; un lote lleva `batch` (tabla de piezas a todo el ancho) y el dibujo pasa de página y numera («Página n de N»).

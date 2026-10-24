@@ -380,7 +380,7 @@ export const es = {
   'err.worker': 'El proceso de lectura en segundo plano ha fallado.',
   'err.fileTooBig': 'El archivo supera los {mb} MB: es demasiado grande para leerlo en el navegador.',
   'err.tooManyTriangles':
-    'La malla tiene más de {millions} millones de triángulos, que es lo máximo que se puede abrir sin agotar la memoria del navegador. Simplifica la malla en tu programa y vuelve a exportarla.',
+    'La malla tiene más de {max} triángulos, que es lo máximo que se puede abrir sin agotar la memoria del navegador. Simplifica la malla en tu programa y vuelve a exportarla.',
   'err.stl.size':
     'No parece un STL válido: el tamaño del archivo no coincide con el número de triángulos que declara y tampoco es un STL de texto.',
   'err.stl.small': 'No parece un STL válido: el archivo es demasiado pequeño.',
@@ -433,7 +433,7 @@ export const es = {
   'err.3mf.circular': 'El 3MF tiene objetos que se contienen a sí mismos (referencias circulares).',
   'err.3mf.empty': 'El 3MF no contiene ninguna pieza imprimible: no tiene triángulos en la plantilla de impresión.',
   'err.3mf.tooManyTriangles':
-    'El 3MF tiene más de {millions} millones de triángulos contando todas sus copias e instancias, que es lo máximo que se puede abrir sin agotar la memoria del navegador. Reduce las copias o simplifica la malla en tu programa y vuelve a exportarlo.',
+    'El 3MF tiene más de {max} triángulos contando todas sus copias e instancias, que es lo máximo que se puede abrir sin agotar la memoria del navegador. Reduce las copias o simplifica la malla en tu programa y vuelve a exportarlo.',
   'err.3mf.vertexRange': 'Un triángulo usa el vértice {index}, pero la malla solo tiene {count} vértices.',
 
   // ── Logotipo ──

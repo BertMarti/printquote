@@ -19,7 +19,7 @@ Intentaré responder en una semana. Es un proyecto personal: no hay recompensas.
 ## Qué se considera vulnerabilidad
 
 - Ejecutar código o inyectar HTML a partir de un archivo 3D, del nombre del archivo, del enlace para compartir (`#v=1&…`) o del historial guardado.
-- Un archivo que congele o cuelgue la pestaña saltándose los límites (300 MB, 6 000 000 de triángulos, ZIP de 3MF de más de 400 MB descomprimido).
+- Un archivo que congele o cuelgue la pestaña saltándose los límites (300 MB, 6 300 000 triángulos, ZIP de 3MF de más de 400 MB descomprimido).
 - Que algún dato salga del navegador.
 
 ## Medidas actuales

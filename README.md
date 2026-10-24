@@ -43,7 +43,7 @@ printquote calcula un presupuesto aproximado para imprimir una pieza 3D: peso, t
 
 ## Tu archivo no sale de tu navegador
 
-El archivo 3D se lee y se procesa en tu propio dispositivo: no se sube a ningún servidor y no hay cuentas, cookies ni analítica. Los ajustes, los datos del negocio y el historial se guardan solo en este navegador. Los límites son 300 MB por archivo y 6 millones de triángulos por pieza, para que la pestaña no se bloquee.
+El archivo 3D se lee y se procesa en tu propio dispositivo: no se sube a ningún servidor y no hay cuentas, cookies ni analítica. Los ajustes, los datos del negocio y el historial se guardan solo en este navegador. Los límites son 300 MB por archivo y 6,3 millones de triángulos por pieza, para que la pestaña no se bloquee.
 
 ## Cómo calcula (en sencillo)
 

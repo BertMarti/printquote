@@ -1,7 +1,7 @@
 import type { ErrorKey } from '../i18n/es';
 import type { Params } from '../i18n/interpolate';
 import { ModelParseError } from './errors';
-import { MAX_TRIANGLES, MAX_TRIANGLES_MILLIONS } from './limits';
+import { MAX_TRIANGLES, MAX_TRIANGLES_TEXT } from './limits';
 import type { Mesh } from './types';
 
 /** Error de lectura de un STL (mensajes en `i18n/es.ts`, claves `err.stl.*`). */
@@ -76,7 +76,7 @@ function parseBinary(view: DataView, count: number): Mesh {
     throw new StlParseError('err.stl.noTriangles');
   }
   if (count > MAX_TRIANGLES) {
-    throw new StlParseError('err.tooManyTriangles', { millions: MAX_TRIANGLES_MILLIONS });
+    throw new StlParseError('err.tooManyTriangles', { max: MAX_TRIANGLES_TEXT });
   }
   const positions = new Float32Array(count * 9);
   for (let t = 0; t < count; t++) {
@@ -194,7 +194,7 @@ function parseAscii(bytes: Uint8Array): Mesh {
       insideFacet = true;
       facet++;
       if (facet > MAX_TRIANGLES) {
-        throw new StlParseError('err.tooManyTriangles', { millions: MAX_TRIANGLES_MILLIONS });
+        throw new StlParseError('err.tooManyTriangles', { max: MAX_TRIANGLES_TEXT });
       }
       verticesInFacet = 0;
     } else if (tokens.is('endfacet')) {

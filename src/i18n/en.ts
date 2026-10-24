@@ -374,7 +374,7 @@ export const en: Record<Key, string> = {
   'err.worker': 'The background reading process failed.',
   'err.fileTooBig': 'The file is larger than {mb} MB: too large to read in the browser.',
   'err.tooManyTriangles':
-    'The mesh has more than {millions} million triangles, the most that can be opened without running out of browser memory. Simplify the mesh in your software and export it again.',
+    'The mesh has more than {max} triangles, the most that can be opened without running out of browser memory. Simplify the mesh in your software and export it again.',
   'err.stl.size':
     'This does not look like a valid STL: the file size does not match the number of triangles it declares, and it is not a text STL either.',
   'err.stl.small': 'This does not look like a valid STL: the file is too small.',
@@ -427,7 +427,7 @@ export const en: Record<Key, string> = {
   'err.3mf.circular': 'The 3MF has objects that contain themselves (circular references).',
   'err.3mf.empty': 'The 3MF contains nothing printable: there are no triangles in the build plate.',
   'err.3mf.tooManyTriangles':
-    'The 3MF has more than {millions} million triangles counting all its copies and instances, which is the most that can be opened without running the browser out of memory. Reduce the copies or simplify the mesh in your program and export it again.',
+    'The 3MF has more than {max} triangles counting all its copies and instances, which is the most that can be opened without running the browser out of memory. Reduce the copies or simplify the mesh in your program and export it again.',
   'err.3mf.vertexRange': 'A triangle uses vertex {index}, but the mesh only has {count} vertices.',
 
   // ── Logo ──
