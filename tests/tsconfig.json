@@ -1,7 +1,9 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "types": ["node", "vite/client"]
+    "types": ["node", "vite/client"],
+    // vite.config.ts importa los plugins con «.ts» (lo pide el cargador nativo de configuración de Vite).
+    "allowImportingTsExtensions": true
   },
   "include": ["../src", ".", "../vite.config.ts"]
 }

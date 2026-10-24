@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config';
-import { csp } from './scripts/csp-plugin';
-import { pwa } from './scripts/pwa-plugin';
+import { csp } from './scripts/csp-plugin.ts';
+import { pwa } from './scripts/pwa-plugin.ts';
 
 // La web se publica en GitHub Pages bajo /printquote/. Se usa la misma base en
 // desarrollo, build y preview para que las rutas se comporten igual en todas partes.
