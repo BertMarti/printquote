@@ -19,6 +19,7 @@ Noche de mejoras «seguridad y portada»: la web aguanta mejor archivos malinten
 ### Cambiado
 
 - **Límites comunes para STL, OBJ y 3MF** (`src/stl/limits.ts`): 300 MB por archivo y 6 000 000 de triángulos, comprobados también dentro del worker. Un OBJ que declare más triángulos (una cara enorme se convierte en muchos) o una línea de más de 4 MB se rechaza con un mensaje claro antes de agotar la memoria.
+- **3MF más robusto**: el tope de triángulos se aplica mientras se lee cada objeto y un índice de vértice gigante (que antes se truncaba y apuntaba a otro vértice) da un error claro.
 - **Abrir otro archivo cancela el análisis en curso**: con un archivo enorme ya no hay que esperar a que termine para cargar el siguiente.
 - **El visor se reencuadra al cambiar de tamaño** (girar el móvil, redimensionar la ventana) si no has movido la cámara; «Restablecer vista» no se muestra sin pieza.
 - Despliegue con permisos mínimos por job; dependencias de desarrollo actualizadas (vite 8.3.5, `npm audit` sin avisos).
