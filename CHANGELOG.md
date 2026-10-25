@@ -15,7 +15,7 @@ Fase 2 «fácil de usar y seguro»: primera visita guiada, ayuda en cada ajuste,
 - **Mis impresoras y Mis materiales**: guarda con nombre tu impresora (caudal, potencia, cama, ancho de línea, perímetros) y tus materiales (tipo y precio) y aplícalos con un clic (hasta 20 de cada).
 - **Bloque «09 Tus datos»**: exportar e importar ajustes, perfiles y datos del negocio en JSON (1 MiB como máximo, validado) y «Borrar mis datos», que quita solo lo de printquote.
 - **Datos del negocio**: notas para el cliente (plazo, forma de pago…) y casilla para mostrar o no el desglose de costes en el PDF.
-- Comprobación de la versión de Node antes de `npm run dev` y `npm run build`, con instrucciones en español, y `.nvmrc`.
+- Comprobación de la versión de Node antes de `npm run dev` y `npm run build`, con instrucciones en español, y `.nvmrc`. El mínimo es Node 20.19 (`engines`); se recomienda 22.12, que es con el que se prueba.
 
 ### Cambiado
 
@@ -28,6 +28,7 @@ Fase 2 «fácil de usar y seguro»: primera visita guiada, ayuda en cada ajuste,
 
 - Mallas muy grandes sin vértices compartidos (p. ej. 6 M triángulos sueltos) daban «error inesperado»: la soldadura de vértices y el recuento de aristas abiertas ya no usan `Map` (V8 no admite más de 2^24 entradas).
 - Sin Web Worker, abrir otro archivo durante un análisis no lo cancelaba: ahora el anterior se para en su siguiente punto de control.
+- Tras importar un archivo de ajustes, «Mis impresoras/materiales» seguía mostrando los perfiles anteriores y el siguiente «Guardar actual» machacaba los importados.
 
 ## [0.8.0] - 2026-10-24
 

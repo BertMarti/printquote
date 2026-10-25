@@ -5,14 +5,14 @@ const at = (a, b) => major > a || (major === a && minor >= b);
 
 if (!at(20, 19)) {
   console.error(
-    `\n✖ printquote necesita Node 22.12 o superior y tienes Node ${process.versions.node}.\n` +
+    `\n✖ printquote necesita Node 20.19 o superior (tienes Node ${process.versions.node}); se recomienda 22.12, que es con el que se prueba.\n` +
       '  Instálalo desde https://nodejs.org (versión LTS) o, con nvm, ejecuta en esta carpeta: nvm install && nvm use\n',
   );
   process.exit(1);
 }
 if (!at(22, 12)) {
   console.warn(
-    `\n⚠ Tienes Node ${process.versions.node}. Funciona, pero el proyecto se prueba con Node 22.12 o superior.\n` +
+    `\n⚠ Tienes Node ${process.versions.node}: funciona (el mínimo es 20.19), pero se recomienda 22.12, que es con el que se prueba.\n` +
       '  Si algo falla, actualiza Node (https://nodejs.org) o usa nvm: nvm install && nvm use\n',
   );
 }

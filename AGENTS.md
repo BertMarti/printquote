@@ -11,7 +11,7 @@ Web que calcula el presupuesto de una pieza de impresión 3D: arrastras un STL, 
 - Despliegue: **GitHub Pages** con GitHub Actions (`base: '/printquote/'`).
 
 ## Comandos
-- Instalar: `npm ci` (Node ≥ 22.12, como pide `engines`)
+- Instalar: `npm ci` (Node ≥ 20.19, como pide `engines`; el CI y `.nvmrc` usan 22, la versión recomendada)
 - Desarrollo: `npm run dev` → <http://localhost:5173/printquote/>
 - Lint: `npm run lint`
 - Tipos: `npm run typecheck` (src y tests)

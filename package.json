@@ -6,7 +6,7 @@
   "type": "module",
   "license": "MIT",
   "engines": {
-    "node": ">=22.12"
+    "node": ">=20.19"
   },
   "scripts": {
     "predev": "node scripts/comprobar-node.mjs",

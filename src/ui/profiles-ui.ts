@@ -22,7 +22,12 @@ interface Host {
 
 const byId = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 
-export function setupProfiles(host: Host, initial: SavedProfiles): { render(): void } {
+/**
+ * Bloques «Mis materiales» y «Mis impresoras». `render(next)` vuelve a dibujar las listas y, si se le pasan perfiles
+ * (p. ej. tras importar un archivo de ajustes), sustituye la copia interna: si no, el siguiente «Guardar actual»
+ * partiría de la lista vieja y machacaría lo importado.
+ */
+export function setupProfiles(host: Host, initial: SavedProfiles): { render(next?: SavedProfiles): void } {
   let profiles = initial;
   const renderList = <T extends PrinterPreset | MaterialPreset>(kind: 'printer' | 'material', list: readonly T[]): void => {
     const root = byId<HTMLUListElement>(kind === 'printer' ? 'printer-presets' : 'material-presets');
@@ -72,7 +77,11 @@ export function setupProfiles(host: Host, initial: SavedProfiles): { render(): v
   };
   byId('printer-preset-save').addEventListener('click', () => save('printer'));
   byId('material-preset-save').addEventListener('click', () => save('material'));
-  const render = (): void => { renderList('printer', profiles.printers); renderList('material', profiles.materials); };
+  const render = (next?: SavedProfiles): void => {
+    if (next) profiles = next;
+    renderList('printer', profiles.printers);
+    renderList('material', profiles.materials);
+  };
   render();
   return { render };
 }

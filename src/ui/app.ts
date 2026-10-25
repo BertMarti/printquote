@@ -824,7 +824,10 @@ export function startApp(demoScale = 1): void {
     profiles: () => profiles,
     applySettings,
     applyBusiness: (next) => { business = next; syncBusiness(); },
-    applyProfiles: (next) => { profiles = next; profilesUi.render(); },
+    applyProfiles: (next) => {
+      profiles = next;
+      profilesUi.render(next);
+    },
     download,
     announce,
   });

@@ -206,6 +206,29 @@ describe('fase 2 en la interfaz completa', () => {
     expect($<HTMLInputElement>('in-infill').value).toBe('55');
   });
 
+  it('tras importar perfiles, la lista y el siguiente «Guardar actual» parten de los importados', async () => {
+    start();
+    const printer = (name: string): Record<string, unknown> => ({
+      name, flowRate: 12, powerWatts: 100, bedX: 200, bedY: 200, bedZ: 200, lineWidth: 0.4, perimeters: 3, overheadMinutes: 5,
+    });
+    const names = (): (string | null)[] => Array.from(document.querySelectorAll('#printer-presets li > span')).map((e) => e.textContent);
+    const stored = (): string[] =>
+      (JSON.parse(localStorage.getItem('printquote:perfiles:v1') ?? '{"printers":[]}') as { printers: { name: string }[] }).printers.map((p) => p.name);
+
+    $<HTMLInputElement>('printer-preset-name').value = 'Vieja';
+    $('printer-preset-save').click();
+    expect(names()).toEqual(['Vieja']);
+
+    chooseFile(backupFile(JSON.stringify({ app: 'printquote', v: 1, printers: [printer('Importada')] })));
+    await until(() => ($('data-status').textContent ?? '') !== '');
+    expect(stored()).toEqual(['Importada']);
+    expect(names()).toEqual(['Importada']);
+
+    $<HTMLInputElement>('printer-preset-name').value = 'Nueva';
+    $('printer-preset-save').click();
+    expect(stored()).toEqual(['Nueva', 'Importada']);
+  });
+
   it('un archivo de otra aplicación no se importa', async () => {
     start();
     chooseFile(backupFile(JSON.stringify({ app: 'otra', v: 1 })));
