@@ -48,7 +48,7 @@ describe('aristas abiertas sin Map (tope de 2^24 entradas de V8)', () => {
   it('coincide con el recuento a lo bruto en mallas cerradas, abiertas y con aristas triples', () => {
     const cube = cubeTriangles(20);
     const open = cube.slice(1); // falta un triángulo: 3 aristas abiertas
-    const triple = [...cube, cube[0]!]; // un triángulo repetido: sus aristas las comparten 3
+    const triple = [...cube, ...cube.slice(0, 1)]; // un triángulo repetido: sus aristas las comparten 3
     for (const tris of [cube, open, triple]) {
       const positions = toPositions(tris);
       expect(countOpenEdges(positions)).toBe(naiveOpenEdges(positions));

@@ -315,6 +315,81 @@ input {
   cursor: pointer;
 }
 
+.help-toggle {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.field-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.field-help {
+  grid-column: 1 / -1;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.welcome {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  text-align: left;
+}
+
+.welcome-steps {
+  margin: 6px 0 8px 20px;
+  padding: 0;
+}
+
+.preset-details {
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.preset-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.preset-list {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.preset-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+  padding: 5px 0;
+}
+
+.preset-list li span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.preset-save { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.preset-save label { flex-basis: 100%; }
+.preset-save input { min-width: 0; flex: 1 1 120px; }
+.check-field { display: flex; gap: 8px; align-items: flex-start; margin-top: 14px; }
+.check-field input { margin-top: 4px; }
+.link-button--danger { color: var(--ink); text-decoration-color: var(--accent); text-decoration-thickness: 2px; }
+
 .link-button:hover {
   color: var(--ink);
 }
@@ -1551,7 +1626,10 @@ input {
 @media (pointer: coarse), (max-width: 900px) {
   .button,
   .button--small,
-  .lang-button {
+  .lang-button,
+  .help-toggle,
+  .preset-list .link-button,
+  .welcome .link-button {
     height: 44px;
     min-height: 44px;
   }
@@ -1559,6 +1637,8 @@ input {
   .lang-button {
     min-width: 44px;
   }
+
+  .help-toggle { width: 44px; }
 
   .batch-copies-input,
   .field input[type='text'],

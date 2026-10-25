@@ -28,6 +28,12 @@ import {
 } from '../src/ui/storage';
 import { cubeTriangles, toPositions } from './helpers/mesh';
 
+/** Valor que el test sabe que existe (sin `!`, que el lint prohíbe). */
+function must<T>(value: T | null | undefined): T {
+  if (value === null || value === undefined) throw new Error('falta un valor');
+  return value;
+}
+
 beforeEach(() => {
   localStorage.clear();
   takeStorageIssues();
@@ -87,7 +93,7 @@ describe('lo leído de localStorage se valida (el origen bertmarti.github.io es 
 
   it('notas del negocio: sin caracteres de control y con longitud máxima', () => {
     const business = normalizeBusiness({ notes: `Pago\u0000 por transferencia\n${'x'.repeat(400)}`, pdfShowCosts: 'true' });
-    expect(business.notes).not.toMatch(/\u0000/);
+    expect(business.notes.includes('\u0000')).toBe(false);
     expect(business.notes.length).toBe(300);
     expect(business.pdfShowCosts).toBe(false); // solo `true` de verdad lo activa
   });
@@ -112,10 +118,10 @@ describe('lo leído de localStorage se valida (el origen bertmarti.github.io es 
     const printer = printerPresetFrom(settings, '  Mi\tVoron  ');
     const material = materialPresetFrom({ ...settings, pricePerKg: { ...settings.pricePerKg, PETG: 18.5 } }, 'PETG barato');
     expect(printer?.name).toBe('Mi Voron');
-    expect(saveProfiles({ printers: [printer!], materials: [material!] })).toBe(true);
+    expect(saveProfiles({ printers: [must(printer)], materials: [must(material)] })).toBe(true);
     expect(loadProfiles()).toEqual({ printers: [printer], materials: [material] });
 
-    const applied = applyMaterialPreset(applyPrinterPreset(DEFAULT_SETTINGS, printer!), material!);
+    const applied = applyMaterialPreset(applyPrinterPreset(DEFAULT_SETTINGS, must(printer)), must(material));
     expect(applied.flowRate).toBe(14);
     expect(applied.bedX).toBe(300);
     expect(applied.printerId).toBe('custom');
@@ -123,9 +129,9 @@ describe('lo leído de localStorage se valida (el origen bertmarti.github.io es 
     expect(applied.pricePerKg.PETG).toBe(18.5);
     expect(applied.pricePerKg.PLA).toBe(DEFAULT_SETTINGS.pricePerKg.PLA);
 
-    const full = Array.from({ length: PRESETS_MAX }, (_, i) => ({ ...printer!, name: `P${i}` }));
-    expect(upsertPreset(full, { ...printer!, name: 'Nueva' })).toBeNull();
-    expect(upsertPreset(full, { ...printer!, name: 'p3', flowRate: 1 })?.[0]?.flowRate).toBe(1); // reemplaza
+    const full = Array.from({ length: PRESETS_MAX }, (_, i) => ({ ...must(printer), name: `P${i}` }));
+    expect(upsertPreset(full, { ...must(printer), name: 'Nueva' })).toBeNull();
+    expect(upsertPreset(full, { ...must(printer), name: 'p3', flowRate: 1 })?.[0]?.flowRate).toBe(1); // reemplaza
   });
 
   it('«Borrar mis datos» solo quita las claves de printquote, no las de otras webs del mismo origen', () => {
@@ -142,7 +148,7 @@ describe('lo leído de localStorage se valida (el origen bertmarti.github.io es 
 });
 
 describe('exportar e importar ajustes', () => {
-  const printer = printerPresetFrom(DEFAULT_SETTINGS, 'Mía')!;
+  const printer = must(printerPresetFrom(DEFAULT_SETTINGS, 'Mía'));
 
   it('ida y vuelta conserva ajustes, perfiles y negocio', () => {
     const business = { ...DEFAULT_BUSINESS, name: 'Taller', notes: 'Pago a 30 días' };
@@ -203,7 +209,7 @@ describe('PDF pensado para el cliente final', () => {
       settings,
       quote,
       image: null,
-      client,
+      ...(client === undefined ? {} : { client }),
       date: new Date(2026, 9, 24),
     });
 

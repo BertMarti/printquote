@@ -86,7 +86,17 @@
         <div class="empty" id="empty-state">
           <p class="empty-title"><span class="hint-mouse" data-i18n="empty.title">Arrastra un modelo 3D aquí</span><span class="hint-touch" data-i18n="empty.title.touch">Abre un modelo 3D</span></p>
           <p class="empty-text" data-i18n="empty.text">STL, OBJ o 3MF. También puedes usar «Abrir modelo 3D». ¿No tienes ninguno a mano? Prueba con la pieza de ejemplo o mira la demo.</p>
-          <button type="button" class="button empty-open" id="empty-open" data-i18n="empty.open">Elegir archivo</button>
+            <button type="button" class="button empty-open" id="empty-open" data-i18n="empty.open">Elegir archivo</button>
+            <button type="button" class="button button--ghost" id="empty-sample" data-i18n="action.sample">Probar con pieza de ejemplo</button>
+          <div class="welcome" id="welcome" hidden>
+            <p class="caption" data-i18n="welcome.title">Primeros pasos</p>
+            <ol class="welcome-steps">
+              <li data-i18n="welcome.step1">Abre una pieza o prueba con la pieza de ejemplo.</li>
+              <li data-i18n="welcome.step2">Elige material, impresora y relleno.</li>
+              <li data-i18n="welcome.step3">Descarga el PDF o imprime.</li>
+            </ol>
+            <button type="button" class="link-button" id="welcome-done" data-i18n="welcome.done">Entendido</button>
+          </div>
         </div>
 
         <p class="stage-loading" id="stage-loading" aria-hidden="true" hidden></p>
@@ -122,12 +132,19 @@
               <label class="segment"><input type="radio" name="material" value="ABS" /><span><b>ABS</b><small class="num" data-density="ABS">1,04</small></span></label>
               <label class="segment"><input type="radio" name="material" value="TPU" /><span><b>TPU</b><small class="num" data-density="TPU">1,21</small></span></label>
             </fieldset>
-            <p class="caption" data-i18n="material.density">Densidad en g/cm³</p>
+            <p class="caption"><span data-i18n="material.density">Densidad en g/cm³</span> <button type="button" class="help-toggle" aria-expanded="false" aria-controls="help-density" data-help="density" aria-label="Ayuda: Densidad" data-i18n-attr="aria-label:help.button.density">?</button></p>
+            <p class="field-help" id="help-density" data-i18n="help.density" hidden>Gramos que pesa cada cm³ de material. Con ella se pasa el volumen impreso a peso, y el peso a coste.</p>
             <div class="field">
               <label for="in-price"><span data-i18n="material.price">Precio del material</span> <span class="sr-only" data-i18n="material.price.sr">en euros por kilo</span></label>
               <div class="input-unit"><input id="in-price" data-key="price" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-price" /><span class="unit" aria-hidden="true">€/kg</span></div>
               <p class="field-error" id="err-price" aria-live="polite"></p>
             </div>
+            <details class="details preset-details" id="material-presets-details">
+              <summary data-i18n="profiles.materials">Mis materiales</summary>
+              <ul class="preset-list" id="material-presets"></ul>
+              <div class="preset-save"><label for="material-preset-name" data-i18n="profiles.name">Nombre</label><input id="material-preset-name" type="text" maxlength="40" autocomplete="off" /><button type="button" class="button" id="material-preset-save" data-i18n="profiles.save">Guardar actual</button></div>
+              <p class="field-note" id="material-preset-status" role="status"></p>
+            </details>
           </section>
 
           <section class="block" aria-labelledby="h-print">
@@ -138,28 +155,32 @@
               <p class="caption field-note" id="printer-note"></p>
             </div>
             <div class="field field--range">
-              <label for="in-infill"><span data-i18n="infill.label">Relleno</span> <span class="sr-only" data-i18n="infill.sr">en porcentaje</span></label>
+              <div class="field-head"><label for="in-infill"><span data-i18n="infill.label">Relleno</span> <span class="sr-only" data-i18n="infill.sr">en porcentaje</span></label><button type="button" class="help-toggle" aria-expanded="false" aria-controls="help-infill" data-help="infill" aria-label="Ayuda: Relleno" data-i18n-attr="aria-label:help.button.infill">?</button></div>
               <div class="input-unit"><input id="in-infill" data-key="infillPercent" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-infill" /><span class="unit" aria-hidden="true">%</span></div>
               <input class="range" id="in-infill-range" type="range" min="0" max="100" step="1" aria-label="Relleno, deslizador" data-i18n-attr="aria-label:infill.range" />
               <p class="field-error" id="err-infill" aria-live="polite"></p>
+              <p class="field-help" id="help-infill" data-i18n="help.infill" hidden>Porcentaje del interior que se rellena. Un 20 % suele bastar para decoración y un 40–60 % para piezas con esfuerzo; más relleno aumenta peso y tiempo.</p>
             </div>
             <div class="field">
-              <label for="in-perimeters" data-i18n="perimeters.label">Perímetros</label>
+              <div class="field-head"><label for="in-perimeters"><span data-i18n="perimeters.label">Perímetros</span></label><button type="button" class="help-toggle" aria-expanded="false" aria-controls="help-perimeters" data-help="perimeters" aria-label="Ayuda: Perímetros" data-i18n-attr="aria-label:help.button.perimeters">?</button></div>
               <div class="input-unit"><input id="in-perimeters" data-key="perimeters" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" aria-describedby="err-perimeters" /><span class="unit" aria-hidden="true" data-i18n="unit.pcs">uds.</span></div>
               <p class="field-error" id="err-perimeters" aria-live="polite"></p>
+              <p class="field-help" id="help-perimeters" data-i18n="help.perimeters" hidden>Paredes (contornos) que rodean la pieza. Más perímetros dan una pieza más resistente, pero gastan más material y tiempo. Lo habitual son 2 o 3.</p>
             </div>
             <div class="field">
-              <label for="in-linewidth"><span data-i18n="linewidth.label">Ancho de línea</span> <span class="sr-only" data-i18n="linewidth.sr">en milímetros</span></label>
+              <div class="field-head"><label for="in-linewidth"><span data-i18n="linewidth.label">Ancho de línea</span> <span class="sr-only" data-i18n="linewidth.sr">en milímetros</span></label><button type="button" class="help-toggle" aria-expanded="false" aria-controls="help-linewidth" data-help="linewidth" aria-label="Ayuda: Ancho de línea" data-i18n-attr="aria-label:help.button.linewidth">?</button></div>
               <div class="input-unit"><input id="in-linewidth" data-key="lineWidth" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-linewidth" /><span class="unit" aria-hidden="true">mm</span></div>
               <p class="field-error" id="err-linewidth" aria-live="polite"></p>
+              <p class="field-help" id="help-linewidth" data-i18n="help.linewidth" hidden>Anchura de cada hilo de plástico. Suele ser el diámetro de la boquilla más un 10 %: 0,45 mm con una boquilla de 0,4 mm.</p>
             </div>
             <div class="field">
-              <label for="in-flow"><span data-i18n="flow.label">Caudal volumétrico</span> <span class="sr-only" data-i18n="flow.sr">en milímetros cúbicos por segundo</span></label>
+              <div class="field-head"><label for="in-flow"><span data-i18n="flow.label">Caudal volumétrico</span> <span class="sr-only" data-i18n="flow.sr">en milímetros cúbicos por segundo</span></label><button type="button" class="help-toggle" aria-expanded="false" aria-controls="help-flow" data-help="flow" aria-label="Ayuda: Caudal volumétrico" data-i18n-attr="aria-label:help.button.flow">?</button></div>
               <div class="input-unit"><input id="in-flow" data-key="flowRate" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-flow" /><span class="unit" aria-hidden="true">mm³/s</span></div>
               <p class="field-error" id="err-flow" aria-live="polite"></p>
+              <p class="field-help" id="help-flow" data-i18n="help.flow" hidden>Es el plástico que funde la impresora por segundo en uso normal, no su máximo. Lo habitual son 8–15 mm³/s y marca el tiempo estimado.</p>
             </div>
             <fieldset class="field field--bed">
-              <legend><span data-i18n="bed.label">Cama</span> <span class="sr-only" data-i18n="bed.sr">en milímetros</span></legend>
+              <legend><span data-i18n="bed.label">Cama</span> <button type="button" class="help-toggle" aria-expanded="false" aria-controls="help-bed" data-help="bed" aria-label="Ayuda: Cama" data-i18n-attr="aria-label:help.button.bed">?</button> <span class="sr-only" data-i18n="bed.sr">en milímetros</span></legend>
               <div class="bed-inputs">
                 <label class="bed-axis" for="in-bedx"><span aria-hidden="true">X</span><span class="sr-only" data-i18n="bed.x">Ancho de la cama (X)</span></label>
                 <input id="in-bedx" data-key="bedX" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-bed" />
@@ -170,25 +191,35 @@
                 <span class="unit" aria-hidden="true">mm</span>
               </div>
               <p class="field-error" id="err-bed" aria-live="polite"></p>
+              <p class="field-help" id="help-bed" data-i18n="help.bed" hidden>Volumen máximo que imprime tu impresora (ancho, fondo y alto). Si la pieza no cabe, printquote te avisa.</p>
             </fieldset>
+            <details class="details preset-details" id="printer-presets-details">
+              <summary data-i18n="profiles.printers">Mis impresoras</summary>
+              <ul class="preset-list" id="printer-presets"></ul>
+              <div class="preset-save"><label for="printer-preset-name" data-i18n="profiles.name">Nombre</label><input id="printer-preset-name" type="text" maxlength="40" autocomplete="off" /><button type="button" class="button" id="printer-preset-save" data-i18n="profiles.save">Guardar actual</button></div>
+              <p class="field-note" id="printer-preset-status" role="status"></p>
+            </details>
           </section>
 
           <section class="block" aria-labelledby="h-costs">
             <h2 class="block-title" id="h-costs"><span class="block-num">04</span><span data-i18n="costs.title">Costes</span></h2>
             <div class="field">
-              <label for="in-power"><span data-i18n="power.label">Potencia media</span> <span class="sr-only" data-i18n="power.sr">en vatios</span></label>
+              <div class="field-head"><label for="in-power"><span data-i18n="power.label">Potencia media</span> <span class="sr-only" data-i18n="power.sr">en vatios</span></label><button type="button" class="help-toggle" aria-expanded="false" aria-controls="help-power" data-help="power" aria-label="Ayuda: Potencia media" data-i18n-attr="aria-label:help.button.power">?</button></div>
               <div class="input-unit"><input id="in-power" data-key="powerWatts" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-power" /><span class="unit" aria-hidden="true">W</span></div>
               <p class="field-error" id="err-power" aria-live="polite"></p>
+              <p class="field-help" id="help-power" data-i18n="help.power" hidden>Consumo medio de la impresora mientras imprime (no el pico al calentar la cama). Una impresora de escritorio suele gastar entre 80 y 150 W.</p>
             </div>
             <div class="field">
-              <label for="in-energy"><span data-i18n="energy.label">Electricidad</span> <span class="sr-only" data-i18n="energy.sr">en euros por kilovatio hora</span></label>
+              <div class="field-head"><label for="in-energy"><span data-i18n="energy.label">Electricidad</span> <span class="sr-only" data-i18n="energy.sr">en euros por kilovatio hora</span></label><button type="button" class="help-toggle" aria-expanded="false" aria-controls="help-energy" data-help="energy" aria-label="Ayuda: Electricidad" data-i18n-attr="aria-label:help.button.energy">?</button></div>
               <div class="input-unit"><input id="in-energy" data-key="energyPrice" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-energy" /><span class="unit" aria-hidden="true">€/kWh</span></div>
               <p class="field-error" id="err-energy" aria-live="polite"></p>
+              <p class="field-help" id="help-energy" data-i18n="help.energy" hidden>Lo que pagas por cada kWh de electricidad. Lo encontrarás en tu factura de la luz.</p>
             </div>
             <div class="field">
-              <label for="in-margin"><span data-i18n="margin.label">Margen</span> <span class="sr-only" data-i18n="margin.sr">en porcentaje</span></label>
+              <div class="field-head"><label for="in-margin"><span data-i18n="margin.label">Margen</span> <span class="sr-only" data-i18n="margin.sr">en porcentaje</span></label><button type="button" class="help-toggle" aria-expanded="false" aria-controls="help-margin" data-help="margin" aria-label="Ayuda: Margen" data-i18n-attr="aria-label:help.button.margin">?</button></div>
               <div class="input-unit"><input id="in-margin" data-key="marginPercent" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-margin" /><span class="unit" aria-hidden="true">%</span></div>
               <p class="field-error" id="err-margin" aria-live="polite"></p>
+              <p class="field-help" id="help-margin" data-i18n="help.margin" hidden>Lo que añades sobre el coste (material y energía) para cubrir tu trabajo, el desgaste de la máquina y el beneficio. Un 30 % significa coste × 1,3.</p>
             </div>
             <div class="field">
               <label for="in-copies" data-i18n="copies.label">Copias</label>
@@ -245,7 +276,7 @@
           <section class="block" aria-labelledby="h-business">
             <details class="details" id="business-details">
               <summary><span class="block-title" id="h-business"><span class="block-num">07</span><span data-i18n="biz.title">Datos del negocio</span></span></summary>
-              <p class="caption caption--plain" data-i18n="biz.intro">Salen en el PDF del presupuesto. Se guardan solo en este navegador: no se envían a ningún servidor.</p>
+              <p class="caption caption--plain" data-i18n="biz.intro">Salen en el PDF del presupuesto. Se guardan solo en este navegador (no se envían a ningún servidor). Para borrarlos usa «Borrar los datos del negocio» o «09 Tus datos».</p>
               <div class="field field--text">
                 <label for="in-biz-name" data-i18n="biz.name">Nombre del negocio</label>
                 <input id="in-biz-name" type="text" maxlength="80" autocomplete="organization" spellcheck="false" />
@@ -289,12 +320,26 @@
                 <div class="input-unit"><input id="in-biz-validity" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" aria-describedby="err-validity" /><span class="unit" aria-hidden="true" data-i18n="unit.days">días</span></div>
                 <p class="field-error" id="err-validity" aria-live="polite"></p>
               </div>
+              <div class="field field--text"><label for="in-biz-notes" data-i18n="biz.notes">Notas para el cliente</label><textarea id="in-biz-notes" rows="3" maxlength="300" placeholder="Plazo de entrega: 3 días laborables. Pago por transferencia." data-i18n-attr="placeholder:biz.notes.placeholder"></textarea></div>
+              <label class="check-field"><input id="in-biz-costs" type="checkbox" /><span data-i18n="biz.showCosts">Mostrar el desglose de costes en el PDF (material, energía y margen)</span></label>
+              <p class="field-note" data-i18n="biz.showCosts.note">Por defecto el cliente solo ve peso, tiempo, precio, IVA y total.</p>
               <div class="field">
                 <label for="in-biz-vat"><span data-i18n="biz.vat">IVA</span> <span class="sr-only" data-i18n="biz.vat.sr">en porcentaje</span></label>
                 <div class="input-unit"><input id="in-biz-vat" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="err-vat" /><span class="unit" aria-hidden="true">%</span></div>
                 <p class="field-error" id="err-vat" aria-live="polite"></p>
               </div>
               <button type="button" class="link-button" id="reset-business" data-i18n="biz.reset">Borrar los datos del negocio</button>
+            </details>
+          </section>
+          <section class="block" aria-labelledby="h-data">
+            <details class="details" id="data-details">
+              <summary><span class="block-title" id="h-data"><span class="block-num">09</span><span data-i18n="data.title">Tus datos</span></span></summary>
+              <p class="caption caption--plain" data-i18n="data.intro">Todo lo que guardas (ajustes, perfiles, datos del negocio, presupuestos y lote) se queda solo en este navegador. No se envía a ningún servidor. Otras personas que usen este navegador podrían verlo.</p>
+              <p class="field-note" data-i18n="data.replace">Importar reemplaza los ajustes, perfiles y datos del negocio actuales.</p>
+              <div class="history-actions"><button type="button" class="button" id="data-export" data-i18n="data.export">Exportar ajustes</button><button type="button" class="button" id="data-import" data-i18n="data.import">Importar ajustes</button><input id="data-file" type="file" accept=".json,application/json" hidden /></div>
+              <p class="field-note" data-i18n="data.export.note">Incluye ajustes, perfiles y datos del negocio; no incluye presupuestos guardados, lote ni archivos 3D.</p>
+              <p class="field-note" id="data-status" role="status"></p>
+              <div class="history-footer"><button type="button" class="link-button link-button--danger" id="data-clear" data-i18n="data.clear">Borrar mis datos</button><button type="button" class="link-button" id="data-cancel" data-i18n="hist.clear.cancel" hidden>Cancelar</button></div>
             </details>
           </section>
 
