@@ -15,6 +15,14 @@ Trabajo de la rama `mejoras-2026-10-24` comprobado contra el código actual:
 - `README.md` está orientado a usuarios e incluye `docs/img/banner.svg`; la información técnica está en `docs/DESARROLLO.md`.
 - Vitest usa `testTimeout: 30_000` en `vite.config.ts`.
 
+## Hecho el 25/10/2026 (fase 2, v0.9.0)
+
+- Dependabot revisado: #61, #62 y #63 fusionadas; #64 (TypeScript 7) y #65 (@types/node 26) cerradas con `ignore`.
+- Primera visita guiada, ayuda contextual, perfiles propios, copia de ajustes en JSON y «Borrar mis datos».
+- PDF para el cliente final (cliente, notas, sin costes internos por defecto).
+- Validación con aviso de todo lo leído de `localStorage` (origen compartido).
+- `countOpenEdges`/`weldVertices` sin `Map` y cancelación sin Worker.
+
 ## Siguiente
 
 1. Añadir una prueba de integración en Chromium sin cabeza que cargue `#ejemplo` desde `dist/` bajo `/printquote/` y compruebe que la CSP no registra violaciones.
@@ -24,6 +32,10 @@ Trabajo de la rama `mejoras-2026-10-24` comprobado contra el código actual:
 5. Probar OBJ y 3MF reales procedentes de laminadores, además de los modelos construidos en `tests/`, y documentar cualquier diferencia reproducible.
 6. Probar con lector de pantalla real el campo de copias, los anuncios y las hojas de impresión en Firefox y Safari.
 7. Revisar la descarga del PDF y la hoja de impresión en distintos visores y en una impresora real.
+
+8. Volver a probar TypeScript 7 cuando `typescript-eslint` lo admita (quitar el `ignore` de `.github/dependabot.yml`).
+9. Subir `@types/node` a la vez que el mínimo de `engines` cuando se deje Node 22.
+10. Regenerar `docs/captura.png` y `public/og.png` con la interfaz de 0.9.0 (estado vacío con primeros pasos).
 
 ## Ideas
 

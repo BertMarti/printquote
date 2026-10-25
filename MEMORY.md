@@ -1,7 +1,18 @@
 # MEMORY.md · printquote
-Última actualización: 2026-10-24 por Claude (jefe del repo en la noche de mejoras, rama `mejoras-2026-10-24`)
+Última actualización: 2026-10-25 por Claude (jefe del repo en la fase 2, rama `fase2-2026-10-24`)
 
 ## Estado actual
+
+### v0.9.0 «Fácil de usar y seguro» (fase 2, 24–25/10/2026, rama `fase2-2026-10-24`, PR abierta sin fusionar)
+- **Dependabot**: fusionadas #61 (acciones v7/v5), #62 (eslint, globals, typescript-eslint) y #63 (happy-dom 21.0.4, cierra la alerta alta GHSA del compilador ESM). Cerradas con comentario #64 (TypeScript 7: `typescript-eslint@8` exige `<6.1`, `npm ci` falla con ERESOLVE) y #65 (`@types/node` 26: los tipos siguen el Node mínimo de `engines`, 22.12). `ignore` de semver-major para `typescript` y `@types/node` en `.github/dependabot.yml`.
+- **Origen compartido** (`https://bertmarti.github.io` lo comparten todas las webs de Pages de Alberto): todo lo de `localStorage` lleva `printquote:` y se trata como dato no fiable. `storage.ts` apunta en `takeStorageIssues()` lo que no se pudo leer (JSON roto, tipo equivocado, logotipo no válido, entradas descartadas del historial, lote o perfiles); `app.ts` lo muestra en `#notice` al arrancar («Datos guardados descartados»). Ajustes manipulados que solo se salen de rango se acotan sin avisar (un esquema viejo daría falsos avisos). `clearAllData()` borra solo las claves `printquote:`; **nunca** `localStorage.clear()`.
+- **Perfiles propios** (`src/quote/profiles.ts`, `src/ui/profiles-ui.ts`): `printquote:perfiles:v1` = `{ v: 1, printers, materials }`, 20 de cada, nombre ≤ 40 sin caracteres de control y único sin distinguir mayúsculas. Aplicar una impresora deja `printerId` en «Personalizada».
+- **Copia de ajustes** (`src/quote/backup.ts`, `src/ui/data-ui.ts`): `{ app: 'printquote', v: 1, exportedAt, settings, printers, materials, business? }`; al importar se mira `File.size` antes de leer (1 MiB), se exige marca y versión y cada parte pasa por su normalizador; lo que no venga se queda como estaba.
+- **PDF para el cliente**: `BusinessProfile.notes` (≤ 300, multilínea) y `pdfShowCosts` (por defecto `false`: sin material, energía, subtotal, margen ni €/kg; título «Resumen»). `client` opcional en `buildQuoteDocument`/`buildBatchDocument` (fila «Cliente» en la cabecera). Comprobado renderizando el PDF real a PNG.
+- **Primera visita y ayuda**: `#welcome` (clave `printquote:bienvenida:v1`), `#empty-sample`, botones `.help-toggle` (fuera del `<label>`, `aria-controls` → `.field-help`, Esc cierra y devuelve el foco).
+- **Geometría**: `weldVertices` usa un `Int32Array` de cubetas (2^4–2^24) y `countOpenEdges` ordena un `Float64Array` de claves de arista; `analyzeModel` convierte `RangeError` en `err.tooComplex`. Sin worker, `StlAnalyzer` cancela el análisis anterior con `AbortController` (punto de control tras el parseo).
+- Tests: `tests/fase2-datos.test.ts`, `tests/fase2-geometria.test.ts` y `tests/ui-fase2.test.ts`.
+- Recursos: la Pi se reinició dos veces por memoria con muchos agentes; usar `nice`, `NODE_OPTIONS=--max-old-space-size=1024` y `vitest --maxWorkers=2`. La suite entera tarda ~15 min en la Pi cargada.
 
 ### v0.8.0 «Seguridad y portada» (24/10/2026, rama `mejoras-2026-10-24`, PR abierto contra `main`, sin fusionar)
 Noche de mejoras de todos los repos de Alberto. Lo hecho (detalle en `CHANGELOG.md [0.8.0]` y `PLAN.md`):
@@ -221,7 +232,7 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 
 ## Problemas conocidos
 - OBJ: polígonos cóncavos de más de 200 vértices siguen en abanico (recorte de orejas es O(n³)); desde #19 se avisa, pero no se corrigen.
-- PDF: chino, japonés, árabe y emojis siguen saliendo como «?» (las fuentes cubren latino, griego y cirílico). Tope de 6 300 000 triángulos en todos los formatos (`src/stl/limits.ts`, desde 0.8.0; antes solo 3MF, #20); una malla justo por debajo aún puede ser pesada en equipos modestos y `countOpenEdges` usa un `Map` (máx. ~16,7 M aristas en V8): 6 M triángulos sueltos sin vértices compartidos darían «error inesperado».
+- PDF: chino, japonés, árabe y emojis siguen saliendo como «?» (las fuentes cubren latino, griego y cirílico). Tope de 6 300 000 triángulos en todos los formatos (`src/stl/limits.ts`, desde 0.8.0; antes solo 3MF, #20); una malla justo por debajo aún puede ser pesada en equipos modestos (si se agota la memoria se avisa con `err.tooComplex` o `err.worker`; el tope del `Map` de V8 se quitó en 0.9.0).
 - Sin revisar por falta de tiempo: descarga del PDF y hoja de impresión con lector real, foco de teclado del resumen de «Datos del negocio» a ojo, anuncio al pasar a «Personalizada» al editar un campo.
 - El chunk del visor pesa ~560 kB (139 kB gzip) por three.js y el del PDF ~1,1 MB (507 kB gzip, pdf-lib + fontkit); ambos se cargan aparte con `import()` y `chunkSizeWarningLimit` está en 1200 kB.
 - Modelo de coste simplificado: no incluye soportes, balsa ni purga; la cáscara (área × grosor) sobreestima en piezas muy detalladas.
@@ -230,7 +241,7 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - Las notas de impresora y demás textos están traducidos, pero `docs/USO.md` y el README siguen solo en español (documentación); los meta Open Graph del HTML servido también (en el navegador sí cambian). `docs/captura.png` y `public/og.png` se regeneraron con la interfaz de v0.2 (#22).
 - El bloque del emisor del PDF se recorta a 10 líneas por el final: una dirección muy larga puede tapar teléfono, correo y web (está documentado en `docs/USO.md`).
 - Mallas muy grandes (> 400 000 triángulos) no dibujan las aristas marcadas, por rendimiento. Con mallas grandes (< 400 000) el `EdgesGeometry` y las normales del visor se calculan aún en el hilo principal (unos cientos de ms de bloqueo tras la lectura).
-- Sin Web Worker (navegador que no puede crearlo) el análisis va en el hilo principal: `StlAnalyzer.cancel()` no lo puede parar y dos 3MF (asíncronos) podrían analizarse a la vez; el ticket de `loadBuffer` descarta el resultado viejo, pero la memoria se gasta. Hallazgo de la revisión de 0.8.0, sin arreglar (caso raro).
+- Sin Web Worker el análisis va en el hilo principal: desde 0.9.0 se cancela en el punto de control tras el parseo, pero la soldadura y las medidas, que son síncronas, no se pueden interrumpir a mitad.
 - Si falla la lectura de un archivo, se mantiene la pieza anterior en pantalla junto al aviso de error (intencionado, pero puede confundir).
 - El enlace `#ejemplo` solo se atiende al cargar la página (no escucha `hashchange`).
 - El visor con teclado: flechas desplazan y Mayús + flechas giran (OrbitControls), `+`/`-` acercan y alejan (#21).

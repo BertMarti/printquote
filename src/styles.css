@@ -345,9 +345,15 @@ input {
 
 .welcome {
   margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  /* Pastilla del color del visor: se lee sobre la rejilla, como los demás rótulos del visor. */
+  background: var(--stage);
   text-align: left;
+}
+
+.empty .button--ghost {
+  background: var(--stage);
 }
 
 .welcome-steps {
