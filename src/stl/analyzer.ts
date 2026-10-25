@@ -1,5 +1,9 @@
 import { analyzeModel, type AnalyzedStl, type AnalyzeRequest, type AnalyzeResponse } from './analyze';
 import { ModelParseError } from './errors';
+import { scriptUrl } from '../trusted-types';
+// `?worker&url`: Vite compila el worker aparte y da solo su URL, que pasa por la política de Trusted Types
+// (con `new Worker(new URL(…))` Vite crearía el worker con una cadena y la CSP lo bloquearía).
+import stlWorkerUrl from './stl.worker.ts?worker&url';
 
 /** Lo mínimo que se usa de un Worker (permite probarlo con un doble en Node). */
 export interface WorkerLike {
@@ -10,8 +14,7 @@ export interface WorkerLike {
 }
 
 function createStlWorker(): WorkerLike {
-  // Vite detecta esta forma exacta y empaqueta el worker como un archivo aparte.
-  return new Worker(new URL('./stl.worker.ts', import.meta.url), { type: 'module' });
+  return new Worker(scriptUrl(stlWorkerUrl), { type: 'module' });
 }
 
 interface Pending {

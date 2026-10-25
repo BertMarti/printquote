@@ -12,6 +12,11 @@ import type { Plugin } from 'vite';
  *   (`toDataURL`) y la previsualización del logotipo (`createObjectURL`).
  * - `worker-src 'self'`: el worker que lee el modelo y el service worker de la PWA.
  * - `connect-src 'self'`: la pieza de ejemplo y las fuentes del PDF.
+ * - `require-trusted-types-for 'script'` + `trusted-types printquote`: Trusted Types. Ninguna cadena llega a
+ *   `innerHTML`, `eval`, `new Worker()` ni `serviceWorker.register()` sin pasar por la única política
+ *   (`src/trusted-types.ts`), que solo admite URL de script de la carpeta de la app. Protege también al
+ *   resto de webs del origen compartido `bertmarti.github.io`. Sin `'allow-duplicates'`: nadie más puede
+ *   crear otra política con ese nombre después.
  * - `frame-ancestors` no vale en un <meta> (los navegadores lo ignoran), por eso no está.
  */
 export const CSP_DIRECTIVES: readonly string[] = [
@@ -26,6 +31,8 @@ export const CSP_DIRECTIVES: readonly string[] = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'none'",
+  "require-trusted-types-for 'script'",
+  "trusted-types printquote",
 ];
 
 export const CSP = CSP_DIRECTIVES.join('; ');

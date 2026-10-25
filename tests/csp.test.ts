@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { CSP, csp, injectCsp } from '../scripts/csp-plugin';
+import { TRUSTED_TYPES_POLICY } from '../src/trusted-types';
 
 const HTML = `<!doctype html>
 <html lang="es">
@@ -64,6 +65,19 @@ describe('la política', () => {
     expect(directive('object-src')).toBe("object-src 'none'");
     expect(directive('img-src')).toContain('data:');
     expect(directive('img-src')).toContain('blob:');
+  });
+});
+
+describe('Trusted Types', () => {
+  const directive = (name: string): string =>
+    CSP.split(';').map((part) => part.trim()).find((part) => part.startsWith(`${name} `)) ?? '';
+
+  it('exige Trusted Types para los scripts y solo permite la política de la app, sin duplicados', () => {
+    expect(directive('require-trusted-types-for')).toBe("require-trusted-types-for 'script'");
+    expect(directive('trusted-types')).toBe(`trusted-types ${TRUSTED_TYPES_POLICY}`);
+    expect(CSP).not.toContain('allow-duplicates');
+    expect(directive('trusted-types')).not.toContain("'none'");
+    expect(directive('trusted-types')).not.toContain('default');
   });
 });
 
