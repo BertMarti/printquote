@@ -331,18 +331,6 @@
               <button type="button" class="link-button" id="reset-business" data-i18n="biz.reset">Borrar los datos del negocio</button>
             </details>
           </section>
-          <section class="block" aria-labelledby="h-data">
-            <details class="details" id="data-details">
-              <summary><span class="block-title" id="h-data"><span class="block-num">09</span><span data-i18n="data.title">Tus datos</span></span></summary>
-              <p class="caption caption--plain" data-i18n="data.intro">Todo lo que guardas (ajustes, perfiles, datos del negocio, presupuestos y lote) se queda solo en este navegador. No se envía a ningún servidor. Otras personas que usen este navegador podrían verlo.</p>
-              <p class="field-note" data-i18n="data.replace">Importar reemplaza los ajustes, perfiles y datos del negocio actuales.</p>
-              <div class="history-actions"><button type="button" class="button" id="data-export" data-i18n="data.export">Exportar ajustes</button><button type="button" class="button" id="data-import" data-i18n="data.import">Importar ajustes</button><input id="data-file" type="file" accept=".json,application/json" hidden /></div>
-              <p class="field-note" data-i18n="data.export.note">Incluye ajustes, perfiles y datos del negocio; no incluye presupuestos guardados, lote ni archivos 3D.</p>
-              <p class="field-note" id="data-status" role="status"></p>
-              <div class="history-footer"><button type="button" class="link-button link-button--danger" id="data-clear" data-i18n="data.clear">Borrar mis datos</button><button type="button" class="link-button" id="data-cancel" data-i18n="hist.clear.cancel" hidden>Cancelar</button></div>
-            </details>
-          </section>
-
           <section class="block" aria-labelledby="h-history">
             <details class="details" id="history-details">
               <summary><span class="block-title" id="h-history"><span class="block-num">08</span><span data-i18n="hist.title">Presupuestos</span> <span class="history-count num" id="history-count"></span></span></summary>
@@ -366,6 +354,18 @@
               </div>
             </details>
           </section>
+          <section class="block" aria-labelledby="h-data">
+            <details class="details" id="data-details">
+              <summary><span class="block-title" id="h-data"><span class="block-num">09</span><span data-i18n="data.title">Tus datos</span></span></summary>
+              <p class="caption caption--plain" data-i18n="data.intro">Todo lo que guardas (ajustes, perfiles, datos del negocio, presupuestos y lote) se queda solo en este navegador. No se envía a ningún servidor. Otras personas que usen este navegador podrían verlo.</p>
+              <p class="field-note" data-i18n="data.replace">Importar reemplaza los ajustes, perfiles y datos del negocio actuales.</p>
+              <div class="history-actions"><button type="button" class="button" id="data-export" data-i18n="data.export">Exportar ajustes</button><button type="button" class="button" id="data-import" data-i18n="data.import">Importar ajustes</button><input id="data-file" type="file" accept=".json,application/json" hidden /></div>
+              <p class="field-note" data-i18n="data.export.note">Incluye ajustes, perfiles y datos del negocio; no incluye presupuestos guardados, lote ni archivos 3D.</p>
+              <p class="field-note" id="data-status" role="status"></p>
+              <div class="history-footer"><button type="button" class="link-button link-button--danger" id="data-clear" data-i18n="data.clear">Borrar mis datos</button><button type="button" class="link-button" id="data-cancel" data-i18n="hist.clear.cancel" hidden>Cancelar</button></div>
+            </details>
+          </section>
+
         </form>
 
         <section class="summary" aria-labelledby="total-label">

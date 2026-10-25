@@ -356,6 +356,23 @@ input {
   background: var(--stage);
 }
 
+/* Con los primeros pasos a la vista sobra el párrafo del estado vacío (dicen lo mismo): así cabe en un móvil. */
+.empty:has(.welcome:not([hidden])) .empty-text {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .welcome {
+    margin-top: 10px;
+    padding: 8px 12px;
+  }
+
+  /* En el móvil la cabecera ya muestra «Probar con pieza de ejemplo» justo encima: no se repite en el visor. */
+  #empty-sample {
+    display: none;
+  }
+}
+
 .welcome-steps {
   margin: 6px 0 8px 20px;
   padding: 0;
@@ -625,7 +642,8 @@ input {
   visibility: hidden;
 }
 
-.stage.has-notice .empty-text {
+.stage.has-notice .empty-text,
+.stage.has-notice .welcome {
   display: none; /* el aviso ya explica qué ha pasado; el título del estado vacío se queda */
 }
 
