@@ -3,7 +3,6 @@ import { normalizeBusiness, type BusinessProfile } from '../quote/business';
 import type { BatchPart } from '../quote/batch';
 import {
   batchFromParts,
-  HISTORY_MAX,
   normalizeBatchParts,
   normalizeHistory,
   partToHistory,
@@ -13,7 +12,6 @@ import {
   normalizeMaterialPresets,
   normalizePrinterPresets,
   type MaterialPreset,
-  PRESETS_MAX,
   type PrinterPreset,
 } from '../quote/profiles';
 import { DEFAULT_SETTINGS, normalizeSettings, type QuoteSettings } from '../quote/settings';
@@ -148,8 +146,9 @@ export function loadHistory(): HistoryEntry[] {
       return [];
     }
     const entries = normalizeHistory(data);
-    // Entradas rotas o repetidas descartadas (no cuenta el tope de HISTORY_MAX: eso no es un error).
-    if (entries.length < data.length && entries.length < HISTORY_MAX) issues.add('history');
+    // Entradas rotas o repetidas descartadas. La app nunca guarda más de HISTORY_MAX, así que pasarse también es
+    // señal de manipulación.
+    if (entries.length < data.length) issues.add('history');
     return entries;
   } catch {
     return [];
@@ -222,8 +221,9 @@ export function loadProfiles(): SavedProfiles {
     if (
       (record.printers !== undefined && !Array.isArray(record.printers)) ||
       (record.materials !== undefined && !Array.isArray(record.materials)) ||
-      printers.length < Math.min(rawLength(record.printers), PRESETS_MAX) ||
-      materials.length < Math.min(rawLength(record.materials), PRESETS_MAX)
+      // La app nunca guarda más de PRESETS_MAX: si hay más, o se descartó alguno, algo se ha tocado.
+      printers.length < rawLength(record.printers) ||
+      materials.length < rawLength(record.materials)
     ) {
       issues.add('profiles');
     }

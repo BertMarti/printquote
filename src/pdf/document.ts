@@ -127,9 +127,17 @@ function cleanClient(value: string | undefined): string {
   return (value ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
 }
 
+/** Líneas de notas del negocio que caben en el PDF sin pisar el pie. */
+export const NOTES_MAX_LINES = 6;
+
 /** Notas del negocio (una por línea) y, detrás, las fijas de estimación y validez. */
 function notesOf(business: BusinessProfile, labels: PdfLabels): string[] {
-  const own = business.notes.split('\n').map((line) => line.trim()).filter((line) => line !== '');
+  // Como mucho NOTES_MAX_LINES líneas propias: el PDF de una pieza es de una sola página y las notas van al pie.
+  const own = business.notes
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line !== '')
+    .slice(0, NOTES_MAX_LINES);
   return [...own, labels.noteEstimate, labels.noteValidity];
 }
 

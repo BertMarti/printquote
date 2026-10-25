@@ -110,6 +110,9 @@ describe('lo leído de localStorage se valida (el origen bertmarti.github.io es 
     const many = Array.from({ length: PRESETS_MAX + 5 }, (_, i) => ({ ...good, name: `P${i}` }));
     expect(normalizePrinterPresets(many)).toHaveLength(PRESETS_MAX);
     expect(normalizePrinterPresets([good, { ...good, name: 'ender 3' }])).toHaveLength(1); // repetido sin mayúsculas
+    localStorage.setItem('printquote:perfiles:v1', JSON.stringify({ v: 1, printers: many }));
+    expect(loadProfiles().printers).toHaveLength(PRESETS_MAX);
+    expect(takeStorageIssues()).toEqual(['profiles']); // la app nunca guarda más del máximo
     expect(normalizeMaterialPresets([{ name: 'X', material: 'NYLON', pricePerKg: 20 }])).toEqual([]);
   });
 
@@ -174,6 +177,8 @@ describe('exportar e importar ajustes', () => {
     expect(parseBackup('{"app":"printquote","v":2,"settings":{}}')).toEqual({ ok: false, error: 'backup.err.version' });
     expect(parseBackup('{"app":"printquote","v":1}')).toEqual({ ok: false, error: 'backup.err.empty' });
     expect(parseBackup(' '.repeat(BACKUP_MAX_BYTES + 1))).toEqual({ ok: false, error: 'backup.err.tooBig' });
+    // Menos caracteres que el máximo, pero más bytes en UTF-8 («€» ocupa 3).
+    expect(parseBackup('€'.repeat(BACKUP_MAX_BYTES / 2))).toEqual({ ok: false, error: 'backup.err.tooBig' });
   });
 
   it('acepta el BOM de UTF-8 y normaliza valores manipulados', () => {
@@ -237,5 +242,10 @@ describe('PDF pensado para el cliente final', () => {
     expect(doc.meta.at(-1)).toEqual(['Cliente', 'Ana López']);
     expect(doc.notes.slice(0, 2)).toEqual(['Entrega en 3 días', 'Pago por transferencia']);
     expect(make().meta.map(([label]) => label)).not.toContain('Cliente');
+  });
+
+  it('como mucho 6 líneas de notas propias (no pisan el pie del PDF)', () => {
+    const doc = make({ notes: Array.from({ length: 20 }, (_, i) => `n${i}`).join('\n') });
+    expect(doc.notes.filter((note) => /^n\d+$/.test(note))).toHaveLength(6);
   });
 });

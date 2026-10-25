@@ -63,8 +63,11 @@ const asRecord = (value: unknown): Record<string, unknown> | null =>
 
 /** Lee y valida un archivo de ajustes. Nunca lanza: devuelve el error con su clave de texto. */
 export function parseBackup(text: string): BackupResult {
-  // Longitud en caracteres ≤ bytes en UTF-8: si ya se pasa en caracteres, se pasa en bytes.
+  // Bytes en UTF-8 (un carácter puede ocupar hasta 3 por unidad UTF-16): solo se codifica si hace falta.
   if (text.length > BACKUP_MAX_BYTES) return { ok: false, error: 'backup.err.tooBig' };
+  if (text.length * 3 > BACKUP_MAX_BYTES && new TextEncoder().encode(text).byteLength > BACKUP_MAX_BYTES) {
+    return { ok: false, error: 'backup.err.tooBig' };
+  }
   let raw: unknown;
   try {
     raw = JSON.parse(text.replace(/^\uFEFF/, ''));
