@@ -11,6 +11,15 @@ updates:
       dependencias:
         patterns: ['*']
         update-types: [minor, patch]
+    ignore:
+      # @types/node sigue la línea de Node con la que se prueba (22; engines admite >=20.19). Los tipos de un
+      # Node más nuevo dejarían usar APIs que no existen en 22 sin que tsc avise. Se sube a la vez que el CI.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+      # TypeScript 7: typescript-eslint 8 exige typescript <6.1 y npm ci falla (PR #64 cerrada el 24/10/2026).
+      # Quitar esta regla cuando typescript-eslint admita TS 7.
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
     commit-message:
       prefix: 'chore(deps)'
 

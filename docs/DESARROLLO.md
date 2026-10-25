@@ -66,7 +66,7 @@ El cálculo completo, con el ejemplo del soporte de móvil, está en [la secció
 
 ## Uso en local
 
-Requiere Node 22.12 o superior y npm.
+Requiere Node 20.19 o superior y npm; se recomienda Node 22.12, que es con el que se prueba en el CI (con [nvm](https://github.com/nvm-sh/nvm), `nvm install && nvm use` en la carpeta del proyecto lee `.nvmrc`). `npm run dev` y `npm run build` comprueban antes la versión y, si no vale, dicen qué instalar.
 
 ```bash
 git clone https://github.com/BertMarti/printquote.git
@@ -78,7 +78,7 @@ npm run dev        # http://localhost:5173/printquote/
 | Comando | Qué hace |
 |---|---|
 | `npm run dev` | Servidor de desarrollo con recarga en caliente. |
-| `npm test` | Tests unitarios y de interfaz con Vitest. |
+| `npm test` | Tests unitarios y de interfaz con Vitest (en una Raspberry Pi tarda varios minutos: añade `-- --maxWorkers=2` si va justa de memoria). |
 | `npm run lint` | Ejecuta ESLint. |
 | `npm run typecheck` | Comprueba TypeScript estricto. |
 | `npm run build` | Comprueba tipos y genera `dist/`. |

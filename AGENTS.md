@@ -11,7 +11,7 @@ Web que calcula el presupuesto de una pieza de impresión 3D: arrastras un STL, 
 - Despliegue: **GitHub Pages** con GitHub Actions (`base: '/printquote/'`).
 
 ## Comandos
-- Instalar: `npm ci` (Node ≥ 22.12, como pide `engines`)
+- Instalar: `npm ci` (Node ≥ 20.19, como pide `engines`; el CI y `.nvmrc` usan 22, la versión recomendada)
 - Desarrollo: `npm run dev` → <http://localhost:5173/printquote/>
 - Lint: `npm run lint`
 - Tipos: `npm run typecheck` (src y tests)
@@ -28,7 +28,7 @@ Web que calcula el presupuesto de una pieza de impresión 3D: arrastras un STL, 
 - `src/pdf/` presupuesto en PDF: contenido puro en `document.ts` (`buildQuoteDocument`, `buildBatchDocument`) y dibujo con pdf-lib en `render.ts`; un lote lleva `batch` (tabla de piezas a todo el ancho) y el dibujo pasa de página y numera («Página n de N»).
 - `src/viewer/` visor three.js.
 - `src/ui/` panel y controles.
-- `src/ui/batch.ts` bloque «06 Lote» (instantáneas por pieza, persistidas; recibe un `BatchHost`, no importa `app.ts`). El bloque 07 es «Datos del negocio» y el 08, «Presupuestos».
+- `src/ui/batch.ts` bloque «06 Lote» (instantáneas por pieza, persistidas; recibe un `BatchHost`, no importa `app.ts`). El bloque 07 es «Datos del negocio», el 08 «Presupuestos» y el 09 «Tus datos» (`src/ui/data-ui.ts`: exportar/importar y «Borrar mis datos»). Perfiles propios en `src/ui/profiles-ui.ts` (bloques 02 y 03).
 - `src/ui/demo.ts` modo demo: guion `DEMO_STEPS` en datos y su control; no importa `app.ts`, recibe un `DemoHost` (ver «Modo demo»).
 - `public/samples/` pieza de ejemplo original.
 - `tests/` pruebas unitarias.
@@ -36,6 +36,8 @@ Web que calcula el presupuesto de una pieza de impresión 3D: arrastras un STL, 
 ## Seguridad y privacidad (obligatorio)
 - **Nada sale del navegador**: ni el archivo 3D ni los datos del negocio. Nada de analítica ni orígenes externos.
 - **CSP** (`scripts/csp-plugin.ts`, solo en el build): todo `'self'`, sin `unsafe-inline` ni `unsafe-eval`. Prohibido añadir `<script>` en línea, `style="…"` en el HTML, `on*=` o recursos de otro origen; si de verdad hace falta, cambia la CSP y su test (`tests/csp.test.ts`) y justifícalo en `MEMORY.md`.
+- **Origen compartido**: `https://bertmarti.github.io` lo comparten todas las webs de Pages de Alberto. Claves de `localStorage` solo con prefijo `printquote:` y solo a través de `src/ui/storage.ts`; todo lo leído se valida (normalizadores) y lo que no se pueda leer se apunta en `takeStorageIssues()` para avisar. «Borrar mis datos» (`clearAllData`) quita solo `printquote:*`; **nunca** `localStorage.clear()`. Nada sensible persistido (ni claves ni tokens).
+- **Importar ajustes** (`src/quote/backup.ts`): archivo no fiable; tamaño antes de leer (1 MiB), marca `app: 'printquote'` y `v: 1`, y los mismos normalizadores.
 - **Nunca `innerHTML`/`insertAdjacentHTML` con datos**: `textContent` y nodos DOM (nombres de archivo, datos del negocio, historial).
 - **Límites**: todo lector nuevo respeta `MAX_FILE_BYTES` y `MAX_TRIANGLES` (`src/stl/limits.ts`) y corta **antes** de reservar memoria; errores con `ModelParseError` y clave `err.*` traducida.
 - Sin secretos en git (el CI pasa gitleaks por todo el historial). Avisos de vulnerabilidad: `SECURITY.md`.

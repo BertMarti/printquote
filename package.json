@@ -1,15 +1,17 @@
 {
   "name": "printquote",
   "private": true,
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Presupuesta una impresión 3D en el navegador a partir de un STL.",
   "type": "module",
   "license": "MIT",
   "engines": {
-    "node": ">=22.12"
+    "node": ">=20.19"
   },
   "scripts": {
+    "predev": "node scripts/comprobar-node.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/comprobar-node.mjs",
     "build": "npm run typecheck && vite build",
     "preview": "vite preview",
     "lint": "eslint .",

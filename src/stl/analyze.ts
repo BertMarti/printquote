@@ -23,13 +23,23 @@ export function analyzeStl(data: ArrayBuffer | Uint8Array): AnalyzedStl {
  * Lee un STL, OBJ o 3MF (el formato se deduce del contenido y del nombre) y calcula su
  * geometría. Es lo que hace el worker; también sirve de respaldo sin workers.
  */
-export async function analyzeModel(data: ArrayBuffer | Uint8Array, fileName?: string): Promise<AnalyzedStl> {
+export async function analyzeModel(data: ArrayBuffer | Uint8Array, fileName?: string, signal?: AbortSignal): Promise<AnalyzedStl> {
   // La interfaz ya lo comprueba con `File.size`; esto cubre cualquier otro camino (p. ej. el worker).
   if (data.byteLength > MAX_FILE_BYTES) {
     throw new ModelParseError('err.fileTooBig', { mb: MAX_FILE_BYTES / 1024 / 1024 });
   }
-  const mesh = await parseModel(data, fileName);
-  return { mesh, stats: computeStats(mesh) };
+  try {
+    const mesh = await parseModel(data, fileName);
+    // Sin worker esto corre en el hilo principal: si mientras tanto se pidió otro archivo, se para aquí
+    // (antes de la soldadura de vértices, que es lo más caro) y se libera la memoria cuanto antes.
+    if (signal?.aborted) throw new ModelParseError('err.cancelled');
+    return { mesh, stats: computeStats(mesh) };
+  } catch (error) {
+    // Sin memoria para los arrays de trabajo (o un tope interno del motor de JavaScript): en vez del
+    // mensaje genérico, se explica qué hacer.
+    if (error instanceof RangeError) throw new ModelParseError('err.tooComplex');
+    throw error;
+  }
 }
 
 export interface AnalyzeRequest {

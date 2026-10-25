@@ -33,7 +33,14 @@ import {
   saveBusiness,
   saveLang,
   saveSettings,
+  saveProfiles,
+  loadProfiles,
+  loadWelcomeDone,
+  saveWelcomeDone,
+  takeStorageIssues,
 } from './storage';
+import { setupProfiles } from './profiles-ui';
+import { setupData } from './data-ui';
 
 const SAMPLE_FILE = 'soporte-movil.stl';
 
@@ -142,6 +149,7 @@ export function startApp(demoScale = 1): void {
 
   let settings = loadSettings();
   let business = loadBusiness();
+  let profiles = loadProfiles();
   let pdfBusy = false;
   /** Botón que lanzó el PDF en curso: conserva «Generando…» si cambia el idioma. */
   let pdfTrigger: HTMLButtonElement | null = null;
@@ -272,6 +280,7 @@ export function startApp(demoScale = 1): void {
     syncForm();
     render();
   };
+  const profilesUi = setupProfiles({ settings: () => settings, apply: applySettings, save: (next) => { profiles = next; return saveProfiles(next); }, announce }, profiles);
   printerSelect.addEventListener('change', () => {
     applySettings(applyPrinter(settings, printerSelect.value));
     const printer = getPrinter(settings.printerId);
@@ -517,6 +526,32 @@ export function startApp(demoScale = 1): void {
       return response.arrayBuffer();
     });
   byId('sample-button').addEventListener('click', () => void loadSample());
+  byId('empty-sample')?.addEventListener('click', () => void loadSample());
+
+  const welcome = byId('welcome');
+  if (!loadWelcomeDone()) welcome.hidden = false;
+  byId('welcome-done').addEventListener('click', () => { saveWelcomeDone(); welcome.hidden = true; });
+
+  const helpButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('.help-toggle'));
+  let openHelp: HTMLButtonElement | null = null;
+  const closeHelp = (): void => {
+    if (!openHelp) return;
+    const target = byId(openHelp.getAttribute('aria-controls') ?? '');
+    target.hidden = true;
+    openHelp.setAttribute('aria-expanded', 'false');
+    const button = openHelp;
+    openHelp = null;
+    button.focus();
+  };
+  for (const button of helpButtons) button.addEventListener('click', () => {
+    if (openHelp && openHelp !== button) closeHelp();
+    const target = byId(button.getAttribute('aria-controls') ?? '');
+    const show = target.hidden;
+    target.hidden = !show;
+    button.setAttribute('aria-expanded', String(show));
+    openHelp = show ? button : null;
+  });
+  document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && openHelp) closeHelp(); });
 
   // ── Arrastrar y soltar en toda la ventana ──
   const overlay = byId('drop-overlay');
@@ -613,6 +648,8 @@ export function startApp(demoScale = 1): void {
     ['in-biz-number', 'quoteNumber'],
   ] as const;
   const bizInputs = bizText.map(([id, key]) => [byId<HTMLInputElement | HTMLTextAreaElement>(id), key] as const);
+  const notesInput = byId<HTMLTextAreaElement>('in-biz-notes');
+  const costsInput = byId<HTMLInputElement>('in-biz-costs');
   const logoInput = byId<HTMLInputElement>('in-biz-logo');
   const logoPreview = byId('logo-preview');
   const logoImg = byId<HTMLImageElement>('logo-img');
@@ -633,6 +670,8 @@ export function startApp(demoScale = 1): void {
     for (const [input, key] of bizInputs) input.value = business[key];
     validityField.set(business.validityDays);
     vatField.set(business.vatPercent);
+    notesInput.value = business.notes;
+    costsInput.checked = business.pdfShowCosts;
     logoPreview.hidden = business.logo === null;
     if (business.logo) logoImg.src = business.logo;
     else logoImg.removeAttribute('src');
@@ -643,6 +682,8 @@ export function startApp(demoScale = 1): void {
     // Al salir del campo se muestra lo que de verdad se ha guardado (recortado, o el número por defecto si se vació).
     input.addEventListener('change', () => (input.value = business[key]));
   }
+  notesInput.addEventListener('input', () => updateBusiness({ notes: notesInput.value }));
+  costsInput.addEventListener('change', () => updateBusiness({ pdfShowCosts: costsInput.checked }));
 
   const validityField = new NumberField({
     input: byId<HTMLInputElement>('in-biz-validity'),
@@ -740,6 +781,7 @@ export function startApp(demoScale = 1): void {
         settings: current.settings,
         quote: current.quote,
         image: viewer ? viewer.snapshot() : null,
+        client: byId<HTMLInputElement>('in-client').value,
       }),
     );
   });
@@ -747,7 +789,8 @@ export function startApp(demoScale = 1): void {
     const parts = batch?.parts() ?? [];
     if (parts.length === 0 || pdfBusy) return;
     const issuer = business;
-    runPdf(batchPdfButton, 'batch.pdf', issuer, () => buildBatchDocument({ business: issuer, parts }));
+    const client = byId<HTMLInputElement>('in-client').value;
+    runPdf(batchPdfButton, 'batch.pdf', issuer, () => buildBatchDocument({ business: issuer, parts, client }));
   });
 
   // ── Historial de presupuestos ──
@@ -775,6 +818,21 @@ export function startApp(demoScale = 1): void {
     changed: syncBatchButtons,
   });
   syncBatchButtons(); // el lote recuperado al arrancar ya trae piezas
+  setupData({
+    settings: () => settings,
+    business: () => business,
+    profiles: () => profiles,
+    applySettings,
+    applyBusiness: (next) => { business = next; syncBusiness(); },
+    applyProfiles: (next) => {
+      profiles = next;
+      profilesUi.render(next);
+    },
+    download,
+    announce,
+  });
+  const storageIssues = takeStorageIssues();
+  if (storageIssues.length > 0) showNotice(() => [t('storage.issue.title'), t('storage.issue.text', { areas: storageIssues.map((area) => t(`storage.area.${area}` as Key)).join(', ') })]);
 
   // ── Demo («Ver demo») ──
   // Va antes que el bloque de enlaces: su `hashchange` se registra primero y para la demo antes de que la aplicación aplique el enlace.
@@ -879,6 +937,7 @@ export function startApp(demoScale = 1): void {
     syncBusiness();
     history?.render();
     batch?.render();
+    profilesUi.render();
     shareButton.textContent = t('share.copy');
     if (noticeBuilder) showNotice(noticeBuilder);
     if (pdfTrigger) pdfTrigger.textContent = t('pdf.generating');

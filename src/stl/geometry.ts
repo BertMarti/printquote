@@ -101,12 +101,20 @@ export function weldVertices(positions: Float32Array, tolerance = WELD_TOLERANCE
   const cell = tol * WELD_CELL_FACTOR;
 
   const ids = new Uint32Array(vertexCount);
-  // Coordenadas de cada vértice soldado y lista enlazada de los que comparten celda.
+  // Coordenadas de cada vértice soldado y lista enlazada de los que comparten cubeta.
   const rep = new Float32Array(vertexCount * 3);
   const nextInCell = new Int32Array(vertexCount);
-  const firstInCell = new Map<number, number>();
-  const hash = (cx: number, cy: number, cz: number): number =>
-    Math.imul(cx, 73856093) ^ Math.imul(cy, 19349663) ^ Math.imul(cz, 83492791);
+  // Tabla de cubetas en un Int32Array (antes un Map, que en V8 no admite más de 2^24 ≈ 16,7 M entradas y
+  // reventaba con mallas grandes sin vértices compartidos). Varias celdas pueden caer en la misma cubeta:
+  // da igual, porque siempre se comparan las coordenadas. Tope de 2^24 cubetas (64 MB).
+  const bucketBits = Math.min(24, Math.max(4, Math.ceil(Math.log2(Math.max(vertexCount, 1)))));
+  const bucketMask = (1 << bucketBits) - 1;
+  const firstInCell = new Int32Array(bucketMask + 1).fill(-1);
+  const hash = (cx: number, cy: number, cz: number): number => {
+    const h = Math.imul(cx, 73856093) ^ Math.imul(cy, 19349663) ^ Math.imul(cz, 83492791);
+    const m = Math.imul(h ^ (h >>> 16), 0x45d9f3b);
+    return (m ^ (m >>> 16)) & bucketMask;
+  };
 
   let count = 0;
   for (let v = 0; v < vertexCount; v++) {
@@ -122,7 +130,7 @@ export function weldVertices(positions: Float32Array, tolerance = WELD_TOLERANCE
       for (let dy = y0; dy <= y1; dy++) {
         for (let dz = z0; dz <= z1; dz++) {
           // El hash puede colisionar: siempre se comprueban las coordenadas.
-          let id = firstInCell.get(hash(cx + dx, cy + dy, cz + dz)) ?? -1;
+          let id = firstInCell[hash(cx + dx, cy + dy, cz + dz)] ?? -1;
           while (id >= 0) {
             if (
               Math.abs((rep[id * 3] ?? 0) - x) <= tol &&
@@ -144,8 +152,8 @@ export function weldVertices(positions: Float32Array, tolerance = WELD_TOLERANCE
       rep[found * 3 + 1] = y;
       rep[found * 3 + 2] = z;
       const key = hash(cx, cy, cz);
-      nextInCell[found] = firstInCell.get(key) ?? -1;
-      firstInCell.set(key, found);
+      nextInCell[found] = firstInCell[key] ?? -1;
+      firstInCell[key] = found;
     }
     ids[v] = found;
   }
@@ -160,14 +168,16 @@ export function weldVertices(positions: Float32Array, tolerance = WELD_TOLERANCE
 export function countOpenEdges(positions: Float32Array, tolerance = WELD_TOLERANCE): number {
   const { ids, count } = weldVertices(positions, tolerance);
 
-  const edges = new Map<number, number>();
+  // Cada arista es un número exacto (`lo * count + hi`; count² < 2^53 en cualquier malla que quepa en memoria).
+  // Se guardan en un Float64Array y se ordenan: las repetidas quedan juntas. Antes era un Map, limitado en V8
+  // a 2^24 ≈ 16,7 M entradas: una malla de 6,3 M triángulos sin aristas compartidas lo desbordaba y daba un
+  // error genérico. Así ocupa 8 bytes por arista y no tiene tope propio.
+  const keys = new Float64Array(ids.length);
+  let n = 0;
   const addEdge = (a: number, b: number): void => {
     if (a === b) return; // arista degenerada (dos vértices soldados en uno)
-    const lo = Math.min(a, b), hi = Math.max(a, b);
-    const key = lo * count + hi; // exacto: count² < 2^53 en cualquier STL que quepa en memoria
-    edges.set(key, (edges.get(key) ?? 0) + 1);
+    keys[n++] = a < b ? a * count + b : b * count + a;
   };
-
   for (let t = 0; t + 2 < ids.length; t += 3) {
     const a = ids[t] ?? 0, b = ids[t + 1] ?? 0, c = ids[t + 2] ?? 0;
     addEdge(a, b);
@@ -175,9 +185,14 @@ export function countOpenEdges(positions: Float32Array, tolerance = WELD_TOLERAN
     addEdge(c, a);
   }
 
+  const sorted = keys.subarray(0, n).sort();
   let open = 0;
-  for (const count of edges.values()) {
-    if (count !== 2) open++;
+  for (let i = 0; i < n; ) {
+    const key = sorted[i];
+    let j = i + 1;
+    while (j < n && sorted[j] === key) j++;
+    if (j - i !== 2) open++;
+    i = j;
   }
   return open;
 }

@@ -19,6 +19,8 @@ export function pdfLabels(lang: Lang): PdfLabels {
     infill: t('pdf.infill'),
     copies: t('pdf.copies'),
     breakdown: t('pdf.breakdown'),
+    summary: t('pdf.summary'),
+    client: t('pdf.client'),
     weight: t('pdf.weight'),
     time: t('pdf.time'),
     timeEstimate: t('pdf.timeEstimate'),

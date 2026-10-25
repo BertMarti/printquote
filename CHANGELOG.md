@@ -4,6 +4,32 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 
 ## [Sin publicar]
 
+## [0.9.0] - 2026-10-25
+
+Fase 2 «fácil de usar y seguro»: primera visita guiada, ayuda en cada ajuste, perfiles propios, copia de los ajustes, un PDF pensado para el cliente final y todo lo leído del navegador validado.
+
+### Añadido
+
+- **Primera visita guiada**: el visor vacío ofrece «Probar con pieza de ejemplo» y tres primeros pasos que se cierran con «Entendido».
+- **Ayuda contextual** (botón «?») en densidad, relleno, perímetros, ancho de línea, caudal, cama, potencia, electricidad y margen: qué es y qué valor se suele usar.
+- **Mis impresoras y Mis materiales**: guarda con nombre tu impresora (caudal, potencia, cama, ancho de línea, perímetros) y tus materiales (tipo y precio) y aplícalos con un clic (hasta 20 de cada).
+- **Bloque «09 Tus datos»**: exportar e importar ajustes, perfiles y datos del negocio en JSON (1 MiB como máximo, validado) y «Borrar mis datos», que quita solo lo de printquote.
+- **Datos del negocio**: notas para el cliente (plazo, forma de pago…) y casilla para mostrar o no el desglose de costes en el PDF.
+- Comprobación de la versión de Node antes de `npm run dev` y `npm run build`, con instrucciones en español, y `.nvmrc`. El mínimo es Node 20.19 (`engines`); se recomienda 22.12, que es con el que se prueba.
+
+### Cambiado
+
+- **PDF para el cliente final**: lleva el nombre del cliente y tus notas, y por defecto ya **no** muestra el coste de material, la energía, el subtotal, el margen ni el precio por kilo (solo peso, tiempo estimado, precio por copia, IVA y total). La casilla nueva recupera el desglose completo.
+- **Lo guardado en el navegador se valida y se avisa**: si algo está dañado o manipulado (JSON roto, tipos equivocados, logotipo que no es imagen, entradas descartadas), la app arranca con los valores por defecto para esa parte y muestra «Datos guardados descartados».
+- Mensajes más útiles cuando un modelo agota la memoria (`err.tooComplex`, `err.worker`).
+- Dependencias: happy-dom 21.0.4 (alerta alta de Dependabot), eslint 10.13, typescript-eslint 8.72, globals 17.13 y acciones de GitHub a su última versión mayor.
+
+### Corregido
+
+- Mallas muy grandes sin vértices compartidos (p. ej. 6 M triángulos sueltos) daban «error inesperado»: la soldadura de vértices y el recuento de aristas abiertas ya no usan `Map` (V8 no admite más de 2^24 entradas).
+- Sin Web Worker, abrir otro archivo durante un análisis no lo cancelaba: ahora el anterior se para en su siguiente punto de control.
+- Tras importar un archivo de ajustes, «Mis impresoras/materiales» seguía mostrando los perfiles anteriores y el siguiente «Guardar actual» machacaba los importados.
+
 ## [0.8.0] - 2026-10-24
 
 Noche de mejoras «seguridad y portada»: la web aguanta mejor archivos malintencionados o enormes, publica una política de seguridad de contenidos y estrena un README pensado para quien la usa.
@@ -142,7 +168,8 @@ Primera versión: el MVP.
 - **Revisión de QA** (PR #2): parser ASCII byte a byte, soldado de vértices con tolerancia, lectura en un Web Worker, three.js cargado bajo demanda, regiones vivas accesibles, Open Graph y tests de interfaz (57 → 132 tests).
 - **Documentación** (PR #4): guía de uso (`docs/USO.md`) y guía de contribución (`CONTRIBUTING.md`).
 
-[Sin publicar]: https://github.com/BertMarti/printquote/compare/v0.8.0...HEAD
+[Sin publicar]: https://github.com/BertMarti/printquote/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/BertMarti/printquote/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/BertMarti/printquote/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/BertMarti/printquote/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/BertMarti/printquote/compare/v0.5.0...v0.6.0

@@ -29,6 +29,9 @@ export interface PdfLabels {
   readonly infill: string;
   readonly copies: string;
   readonly breakdown: string;
+  /** Título de la tabla cuando no se muestran los costes internos («Resumen»). */
+  readonly summary: string;
+  readonly client: string;
   readonly weight: string;
   readonly time: string;
   readonly timeEstimate: string;
@@ -99,8 +102,43 @@ export interface QuoteDocumentInput {
   readonly quote: Quote;
   /** Vista 3D como «data URL» PNG, o null. */
   readonly image: string | null;
+  /** Nombre del cliente (opcional; el del bloque «Presupuestos»). */
+  readonly client?: string;
   readonly date?: Date;
   readonly labels?: PdfLabels;
+}
+
+/** Nº, fecha, validez y, si lo hay, el cliente. */
+function metaRows(business: BusinessProfile, labels: PdfLabels, date: Date, client: string | undefined): PdfRow[] {
+  const dateFormat = new Intl.DateTimeFormat(labels.dateLocale, { dateStyle: 'long' });
+  const rows: PdfRow[] = [
+    [labels.number, business.quoteNumber],
+    [labels.date, dateFormat.format(date)],
+    [labels.validUntil, dateFormat.format(validUntil(date, business.validityDays))],
+  ];
+  const name = cleanClient(client);
+  if (name) rows.push([labels.client, name]);
+  return rows;
+}
+
+/** El cliente viene de un campo de texto: una línea, sin caracteres de control y como mucho 80 caracteres. */
+function cleanClient(value: string | undefined): string {
+  // eslint-disable-next-line no-control-regex
+  return (value ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+}
+
+/** Líneas de notas del negocio que caben en el PDF sin pisar el pie. */
+export const NOTES_MAX_LINES = 6;
+
+/** Notas del negocio (una por línea) y, detrás, las fijas de estimación y validez. */
+function notesOf(business: BusinessProfile, labels: PdfLabels): string[] {
+  // Como mucho NOTES_MAX_LINES líneas propias: el PDF de una pieza es de una sola página y las notas van al pie.
+  const own = business.notes
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line !== '')
+    .slice(0, NOTES_MAX_LINES);
+  return [...own, labels.noteEstimate, labels.noteValidity];
 }
 
 /** Líneas del emisor (NIF, dirección, teléfono, correo, web). */
@@ -130,28 +168,30 @@ export function buildQuoteDocument(input: QuoteDocumentInput): QuoteDocument {
   const material = MATERIALS[settings.material];
   const { size } = stats.bounds;
   const tax = computeTax(quote.total, business.vatPercent);
-  const dateFormat = new Intl.DateTimeFormat(labels.dateLocale, { dateStyle: 'long' });
+  const showCosts = business.pdfShowCosts;
 
+  // Para el cliente final: cantidades, tiempo y precio. El desglose interno (material, energía, subtotal y
+  // margen) solo sale si el negocio lo pide (`pdfShowCosts`).
   const breakdownRows: PdfRow[] = [
     [labels.copies, formatNumber(quote.copies, 0)],
     [labels.weight, `${formatNumber(quote.totalWeightGrams, 1)} g`],
     [`${labels.time} (${labels.timeEstimate})`, formatDuration(quote.totalHours)],
-    [labels.materialCost, formatEuro(quote.materialCost)],
-    [`${labels.energyCost} (${formatNumber(quote.energyKwh, 2)} kWh)`, formatEuro(quote.energyCost)],
-    [labels.subtotal, formatEuro(quote.subtotal)],
-    [`${labels.margin} (${formatNumber(settings.marginPercent, 0)} %)`, formatEuro(quote.marginAmount)],
   ];
+  if (showCosts) {
+    breakdownRows.push(
+      [labels.materialCost, formatEuro(quote.materialCost)],
+      [`${labels.energyCost} (${formatNumber(quote.energyKwh, 2)} kWh)`, formatEuro(quote.energyCost)],
+      [labels.subtotal, formatEuro(quote.subtotal)],
+      [`${labels.margin} (${formatNumber(settings.marginPercent, 0)} %)`, formatEuro(quote.marginAmount)],
+    );
+  }
   if (quote.copies > 1) breakdownRows.push([labels.perCopy, formatEuro(quote.totalPerCopy)]);
 
   return {
     title: labels.title,
     businessName: business.name || labels.noBusinessName,
     logo: business.logo,
-    meta: [
-      [labels.number, business.quoteNumber],
-      [labels.date, dateFormat.format(date)],
-      [labels.validUntil, dateFormat.format(validUntil(date, business.validityDays))],
-    ],
+    meta: metaRows(business, labels, date, input.client),
     issuerTitle: labels.issuer,
     issuerLines: issuerLinesOf(business, labels),
     pieceTitle: labels.piece,
@@ -159,15 +199,15 @@ export function buildQuoteDocument(input: QuoteDocumentInput): QuoteDocument {
       [labels.file, fileName],
       [labels.dimensions, `${formatNumber(size.x, 1)} × ${formatNumber(size.y, 1)} × ${formatNumber(size.z, 1)} mm`],
       [labels.volume, `${formatNumber(stats.volume / 1000, 2)} cm³`],
-      [labels.material, `${material.name} · ${formatEuro(settings.pricePerKg[settings.material])}/kg`],
+      [labels.material, showCosts ? `${material.name} · ${formatEuro(settings.pricePerKg[settings.material])}/kg` : material.name],
       [labels.infill, `${formatNumber(settings.infillPercent, 0)} % · ${formatNumber(settings.perimeters, 0)} × ${formatNumber(settings.lineWidth, 2)} mm`],
     ],
     image,
-    breakdownTitle: labels.breakdown,
+    breakdownTitle: showCosts ? labels.breakdown : labels.summary,
     breakdownRows,
     totalRows: taxRows(tax, labels),
     tax,
-    notes: [labels.noteEstimate, labels.noteValidity],
+    notes: notesOf(business, labels),
     footer: labels.footer,
     pageOf: labels.pageOf,
     metadata: { title: `${labels.pdfTitle} ${business.quoteNumber}`, author: business.name, language: labels.language },
@@ -178,6 +218,7 @@ export function buildQuoteDocument(input: QuoteDocumentInput): QuoteDocument {
 export interface BatchDocumentInput {
   readonly business: BusinessProfile;
   readonly parts: readonly BatchPart[];
+  readonly client?: string;
   readonly date?: Date;
   readonly labels?: PdfLabels;
 }
@@ -192,17 +233,13 @@ export function buildBatchDocument(input: BatchDocumentInput): QuoteDocument {
   const labels = input.labels ?? pdfLabels(getLang());
   const totals = computeBatch(parts);
   const tax = computeTax(totals.total, business.vatPercent);
-  const dateFormat = new Intl.DateTimeFormat(labels.dateLocale, { dateStyle: 'long' });
+  const showCosts = business.pdfShowCosts;
 
   return {
     title: labels.title,
     businessName: business.name || labels.noBusinessName,
     logo: business.logo,
-    meta: [
-      [labels.number, business.quoteNumber],
-      [labels.date, dateFormat.format(date)],
-      [labels.validUntil, dateFormat.format(validUntil(date, business.validityDays))],
-    ],
+    meta: metaRows(business, labels, date, input.client),
     issuerTitle: labels.issuer,
     issuerLines: issuerLinesOf(business, labels),
     pieceTitle: labels.parts,
@@ -222,18 +259,22 @@ export function buildBatchDocument(input: BatchDocumentInput): QuoteDocument {
         formatEuro(quote.total),
       ]),
     },
-    breakdownTitle: labels.breakdown,
+    breakdownTitle: showCosts ? labels.breakdown : labels.summary,
     breakdownRows: [
       [labels.weight, `${formatNumber(totals.weightGrams, 1)} g`],
       [`${labels.time} (${labels.timeEstimate})`, formatDuration(totals.hours)],
-      [labels.materialCost, formatEuro(totals.materialCost)],
-      [`${labels.energyCost} (${formatNumber(totals.energyKwh, 2)} kWh)`, formatEuro(totals.energyCost)],
-      [labels.subtotal, formatEuro(totals.subtotal)],
-      [labels.margin, formatEuro(totals.marginAmount)],
+      ...(showCosts
+        ? ([
+            [labels.materialCost, formatEuro(totals.materialCost)],
+            [`${labels.energyCost} (${formatNumber(totals.energyKwh, 2)} kWh)`, formatEuro(totals.energyCost)],
+            [labels.subtotal, formatEuro(totals.subtotal)],
+            [labels.margin, formatEuro(totals.marginAmount)],
+          ] satisfies PdfRow[])
+        : []),
     ],
     totalRows: taxRows(tax, labels),
     tax,
-    notes: [labels.noteEstimate, labels.noteValidity],
+    notes: notesOf(business, labels),
     footer: labels.footer,
     pageOf: labels.pageOf,
     metadata: { title: `${labels.pdfTitle} ${business.quoteNumber}`, author: business.name, language: labels.language },
