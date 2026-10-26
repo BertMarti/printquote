@@ -43,6 +43,7 @@ import { setupProfiles } from './profiles-ui';
 import { setupData } from './data-ui';
 
 const SAMPLE_FILE = 'soporte-movil.stl';
+export const LOAD_PROGRESS_DELAY_MS = 400;
 
 interface LoadedPart {
   readonly fileName: string;
@@ -131,6 +132,10 @@ export function startApp(demoScale = 1): void {
   const notice = byId('notice');
   const live = byId('live-status');
   const loading = byId('stage-loading');
+  const loadingText = byId('stage-loading-text');
+  const loadProgress = byId('load-progress');
+  const loadProgressBar = byId('load-progress-bar');
+  const loadCancel = byId<HTMLButtonElement>('load-cancel');
   const fileInput = byId<HTMLInputElement>('file-input');
   const resetCameraButton = byId<HTMLButtonElement>('reset-camera');
   const copyButton = byId<HTMLButtonElement>('copy-button');
@@ -169,6 +174,21 @@ export function startApp(demoScale = 1): void {
   let loadTicket = 0;
   /** Archivo que se está leyendo (para volver a rotular el indicador si cambia el idioma). */
   let loadingName: string | null = null;
+  let loadingTimer = 0;
+  let loadingProgress = 0;
+
+  const setLoadingProgress = (percent: number): void => {
+    loadingProgress = Math.max(0, Math.min(100, Math.floor(percent)));
+    loadProgress.setAttribute('aria-valuenow', String(loadingProgress));
+    loadProgress.setAttribute('aria-valuetext', t('load.progress.value', { percent: loadingProgress }));
+    loadProgressBar.style.transform = `scaleX(${loadingProgress / 100})`;
+  };
+  const hideLoadingControls = (): void => {
+    window.clearTimeout(loadingTimer);
+    loadProgress.hidden = true;
+    loadCancel.hidden = true;
+    setLoadingProgress(0);
+  };
 
   // ── Visor ──
   // three.js (~500 kB) se descarga aparte, después de pintar la interfaz: el panel
@@ -468,8 +488,14 @@ export function startApp(demoScale = 1): void {
     stage.classList.add('is-loading');
     stage.setAttribute('aria-busy', 'true');
     loadingName = fileName;
-    loading.textContent = t('load.reading', { name: fileName });
+    loadingText.textContent = t('load.reading', { name: fileName });
+    hideLoadingControls();
     loading.hidden = false;
+    loadingTimer = window.setTimeout(() => {
+      if (ticket !== loadTicket) return;
+      loadProgress.hidden = false;
+      loadCancel.hidden = false;
+    }, LOAD_PROGRESS_DELAY_MS);
     announce(t('load.reading.announce', { name: fileName }));
     try {
       const buffer = await getBuffer();
@@ -477,7 +503,7 @@ export function startApp(demoScale = 1): void {
       // Si el worker sigue con un archivo anterior (uno enorme puede tardar), se cancela: manda el último.
       if (analyzer.busy) analyzer.cancel();
       // El parseo y la geometría van en un Web Worker: la interfaz sigue respondiendo.
-      const { mesh, stats } = await analyzer.analyze(buffer, fileName);
+      const { mesh, stats } = await analyzer.analyze(buffer, fileName, setLoadingProgress);
       if (ticket !== loadTicket) return false; // ya se ha pedido otro archivo
       part = { fileName, mesh, stats };
       viewer?.setPart(mesh.positions);
@@ -498,10 +524,25 @@ export function startApp(demoScale = 1): void {
         stage.classList.remove('is-loading');
         stage.removeAttribute('aria-busy');
         loading.hidden = true;
+        hideLoadingControls();
         loadingName = null;
       }
     }
   }
+
+  loadCancel.addEventListener('click', () => {
+    if (loadingName === null) return;
+    const name = loadingName;
+    loadTicket++;
+    analyzer.cancel();
+    stage.classList.remove('is-loading');
+    stage.removeAttribute('aria-busy');
+    loading.hidden = true;
+    loadingName = null;
+    hideLoadingControls();
+    announce(t('load.cancelled', { name }));
+    byId('open-button').focus();
+  });
 
   function loadFile(file: File): void {
     if (file.size > MAX_FILE_BYTES) {
@@ -928,7 +969,8 @@ export function startApp(demoScale = 1): void {
     for (const button of langButtons) button.setAttribute('aria-pressed', String(button.dataset['lang'] === lang));
     fillPrinterOptions();
     logoStatus.textContent = t(logoStatusKey);
-    if (loadingName !== null) loading.textContent = t('load.reading', { name: loadingName });
+    if (loadingName !== null) loadingText.textContent = t('load.reading', { name: loadingName });
+    if (loadingName !== null) loadProgress.setAttribute('aria-valuetext', t('load.progress.value', { percent: loadingProgress }));
     // El último anuncio para lectores de pantalla quedaría en el idioma anterior.
     window.clearTimeout(announceTimer);
     live.textContent = '';

@@ -20,6 +20,7 @@ function createStlWorker(): WorkerLike {
 interface Pending {
   resolve: (result: AnalyzedStl) => void;
   reject: (error: Error) => void;
+  onProgress?: (percent: number) => void;
 }
 
 /**
@@ -38,7 +39,7 @@ export class StlAnalyzer {
   constructor(private readonly createWorker: () => WorkerLike = createStlWorker) {}
 
   /** Lee y mide el modelo. El buffer se transfiere al worker: no se debe reutilizar después. */
-  analyze(buffer: ArrayBuffer, fileName?: string): Promise<AnalyzedStl> {
+  analyze(buffer: ArrayBuffer, fileName?: string, onProgress?: (percent: number) => void): Promise<AnalyzedStl> {
     const worker = this.ensureWorker();
     if (!worker) {
       // Sin worker se analiza en el hilo principal. Un 3MF se descomprime de forma asíncrona, así que podrían
@@ -47,14 +48,14 @@ export class StlAnalyzer {
       const controller = new AbortController();
       this.mainAbort = controller;
       this.mainRunning++;
-      return analyzeModel(buffer, fileName, controller.signal).finally(() => {
+      return analyzeModel(buffer, fileName, controller.signal, (fraction) => onProgress?.(Math.floor(fraction * 100))).finally(() => {
         this.mainRunning--;
         if (this.mainAbort === controller) this.mainAbort = null;
       });
     }
     const id = this.nextId++;
     return new Promise<AnalyzedStl>((resolve, reject) => {
-      this.pending.set(id, { resolve, reject });
+      this.pending.set(id, onProgress ? { resolve, reject, onProgress } : { resolve, reject });
       worker.postMessage(fileName === undefined ? { id, buffer } : { id, buffer, fileName }, [buffer]);
     });
   }
@@ -104,6 +105,10 @@ export class StlAnalyzer {
   private onMessage(response: AnalyzeResponse): void {
     const pending = this.pending.get(response.id);
     if (!pending) return;
+    if ('progress' in response) {
+      pending.onProgress?.(response.progress);
+      return;
+    }
     this.pending.delete(response.id);
     if (response.ok) {
       pending.resolve(response.result);

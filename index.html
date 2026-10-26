@@ -99,7 +99,11 @@
           </div>
         </div>
 
-        <p class="stage-loading" id="stage-loading" aria-hidden="true" hidden></p>
+        <div class="stage-loading" id="stage-loading" hidden>
+          <p class="stage-loading-text" id="stage-loading-text" aria-hidden="true"></p>
+          <div class="load-progress" id="load-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-i18n-attr="aria-label:load.progress" aria-label="Progreso del análisis" hidden><span class="load-progress-bar" id="load-progress-bar"></span></div>
+          <button type="button" class="button button--small button--inverse" id="load-cancel" data-i18n="load.cancel" hidden>Cancelar</button>
+        </div>
 
         <div class="demo-bar" id="demo-bar" data-demo-ui hidden>
           <p class="demo-caption" id="demo-caption" aria-hidden="true"></p>
