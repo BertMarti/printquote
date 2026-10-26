@@ -75,3 +75,9 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      # El build tal como se publica (dist/ bajo /printquote/) en el Chrome del ejecutor: CSP y Trusted Types sin
+      # violaciones, sin errores de consola, pieza de ejemplo analizada en el worker, visor 3D, PDF y service worker.
+      - name: Integración en Chrome
+        if: matrix.os == 'ubuntu-latest'
+        run: npm run test:integracion
