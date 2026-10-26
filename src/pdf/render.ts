@@ -4,6 +4,7 @@ import fontkit from '@pdf-lib/fontkit';
 import { PDFDocument, rgb, type PDFFont, type PDFImage, type PDFPage } from 'pdf-lib';
 import type { BatchTable, PdfRow, QuoteDocument } from './document';
 import { loadFonts, type FontBytes } from './fonts';
+import { isSafePng } from '../quote/png';
 
 /** A4 en puntos. */
 const PAGE_W = 595.28;
@@ -90,7 +91,8 @@ export async function renderQuotePdf(doc: QuoteDocument, fontBytes?: FontBytes):
 
   // Imágenes: si una no se puede leer, el PDF sale igualmente sin ella.
   const embedImage = async (dataUrl: string | null): Promise<PDFImage | null> => {
-    if (!dataUrl) return null;
+    // Un PNG con medidas enormes se descomprimiría entero en memoria: se deja fuera, como uno roto.
+    if (!dataUrl || !isSafePng(dataUrl)) return null;
     try {
       return dataUrl.startsWith('data:image/jpeg') ? await pdf.embedJpg(dataUrl) : await pdf.embedPng(dataUrl);
     } catch {

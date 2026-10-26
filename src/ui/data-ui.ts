@@ -45,22 +45,25 @@ export function setupData(host: Host): void {
           return;
         }
         const { data } = result;
+        // Si el navegador no deja guardar (sin espacio, modo privado), se aplica igual pero se avisa.
+        let saved = true;
         if (data.settings) {
-          saveSettings(data.settings);
+          saved = saveSettings(data.settings) && saved;
           host.applySettings(data.settings);
         }
         if (data.business) {
-          saveBusiness(data.business);
+          saved = saveBusiness(data.business) && saved;
           host.applyBusiness(data.business);
         }
         if (data.printers || data.materials) {
           // Lo que no venga en el archivo se queda como estaba.
           const current = host.profiles();
           const profiles = { printers: data.printers ?? current.printers, materials: data.materials ?? current.materials };
-          saveProfiles(profiles);
+          saved = saveProfiles(profiles) && saved;
           host.applyProfiles(profiles);
         }
-        status.textContent = result.dropped > 0 ? t('data.imported.dropped', { dropped: result.dropped }) : t('data.imported');
+        const done = result.dropped > 0 ? t('data.imported.dropped', { dropped: result.dropped }) : t('data.imported');
+        status.textContent = saved ? done : `${done} ${t('data.imported.unsaved')}`;
         host.announce(status.textContent);
       })
       .catch(() => {

@@ -237,7 +237,8 @@ function normalizePart(raw: unknown): HistoryPart | null {
   const { x, y, z } = raw['size'];
   const result = raw['result'];
   if (!inRange(x, SIZE_MAX) || !inRange(y, SIZE_MAX) || !inRange(z, SIZE_MAX)) return null;
-  if (!RESULT_FIELDS.every((key) => isFiniteNumber(result[key]))) return null;
+  // Ningún importe, peso ni tiempo de `computeQuote` es negativo: uno negativo es un dato manipulado.
+  if (!RESULT_FIELDS.every((key) => isFiniteNumber(result[key]) && result[key] >= 0)) return null;
   const surface = raw['surfaceMm2'];
   if (surface !== undefined && !inRange(surface, AREA_MAX)) return null;
 
