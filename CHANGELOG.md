@@ -25,7 +25,7 @@ Fase 3: más protección para todas las webs del origen compartido, una prueba d
 
 ### Corregido
 
-- `scripts/chrome.mjs` cierra Chrome con todos sus procesos y borra el perfil temporal (antes quedaban carpetas en `/tmp`); encuentra también Chromium (`/usr/bin/chromium`).
+- `scripts/chrome.mjs` cierra Chrome con todos sus procesos y borra el perfil temporal, también con Ctrl+C o SIGTERM (antes quedaban procesos huérfanos y carpetas en `/tmp`); el puerto de depuración lo elige Chrome (ya no hay `CHROME_PORT` ni 9333 fijo); encuentra también Chromium (`/usr/bin/chromium`).
 
 ## [0.9.0] - 2026-10-25
 
