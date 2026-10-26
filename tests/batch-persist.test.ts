@@ -32,10 +32,27 @@ describe('línea ↔ pieza guardada', () => {
     expect(back[0]?.stats.bounds.size).toEqual(list[0]?.stats.bounds.size);
   });
 
-  it('una pieza guardada sin área (v0.6) no se puede reconstruir', () => {
+  it('una pieza guardada sin área (v0.6) se reconstruye deduciendo el área de su resultado', () => {
+    const original = part('a.stl', 20);
+    const { surfaceMm2, ...old } = partToHistory(original);
+    expect(surfaceMm2).toBeGreaterThan(0);
+    const quote = batchFromParts([old])?.[0]?.quote;
+    if (!quote) throw new Error('debía reconstruirse');
+    // Importes idénticos; pesos y volúmenes, iguales salvo el último decimal de la coma flotante.
+    for (const key of ['materialCost', 'energyCost', 'subtotal', 'marginAmount', 'total', 'totalPerCopy', 'copies'] as const) {
+      expect(quote[key]).toBe(original.quote[key]);
+    }
+    for (const key of ['shellVolume', 'printedVolume', 'totalWeightGrams', 'totalHours'] as const) {
+      expect(quote[key]).toBeCloseTo(original.quote[key], 6);
+    }
+    const back = batchFromParts([old]);
+    expect(back?.[0]?.stats.surfaceArea).toBeCloseTo(6 * 20 * 20, 3);
+  });
+
+  it('una pieza sin área cuyo resultado no cuadra (manipulada) no se reconstruye', () => {
     const { surfaceMm2, ...old } = partToHistory(part('a.stl', 20));
     expect(surfaceMm2).toBeGreaterThan(0);
-    expect(batchFromParts([old])).toBeNull();
+    expect(batchFromParts([{ ...old, result: { ...old.result, total: old.result.total + 1 } }])).toBeNull();
   });
 });
 

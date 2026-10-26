@@ -4,6 +4,7 @@ import { formatEuro } from '../quote/format';
 import {
   addEntry,
   batchFromParts,
+  partSurface,
   createBatchEntry,
   createEntry,
   HISTORY_MAX,
@@ -118,8 +119,9 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
     };
     const buttons = document.createElement('div');
     buttons.className = 'history-buttons';
-    // Un lote se abre si todas sus piezas traen el área (las guardadas con v0.6 no): se lista, se exporta y se borra.
-    const canOpen = !entry.parts || entry.parts.every((piece) => piece.surfaceMm2 !== undefined);
+    // Un lote se abre si se sabe el área de todas sus piezas: guardada o, en los de v0.6, deducida del resultado
+    // (`recoverSurface`). Si no cuadra, se lista, se exporta y se borra, pero no se abre.
+    const canOpen = !entry.parts || entry.parts.every((piece) => partSurface(piece) !== null);
     buttons.append(...(canOpen ? [action('open')] : []), action('delete'));
     item.append(head, meta, buttons);
     return item;

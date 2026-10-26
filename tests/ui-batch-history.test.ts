@@ -255,12 +255,27 @@ describe('lote en el historial (interfaz)', () => {
     await until(() => /Lote de 1 pieza abierto/.test($('live-status').textContent ?? ''));
   });
 
-  it('un lote guardado con v0.6 (sin área) se sigue listando y borrando, pero no se abre', () => {
+  it('un lote guardado con v0.6 (sin área) se abre: el área se deduce del resultado guardado', async () => {
     saveTwoPartBatch();
     const entries = loadHistory().map((entry) => ({
       ...entry,
       surfaceMm2: undefined,
       parts: entry.parts?.map((piece) => ({ ...piece, surfaceMm2: undefined })),
+    }));
+    window.localStorage.setItem('printquote:historial:v1', JSON.stringify(entries));
+    reload();
+    expect(rows()).toHaveLength(1);
+    emptyBatch();
+    rows()[0]?.querySelector<HTMLButtonElement>('button[data-action="open"]')?.click();
+    await until(() => /Lote de 2 piezas abierto/.test($('live-status').textContent ?? ''));
+  });
+
+  it('un lote sin área cuyo resultado no cuadra se sigue listando y borrando, pero no se abre', () => {
+    saveTwoPartBatch();
+    const entries = loadHistory().map((entry) => ({
+      ...entry,
+      surfaceMm2: undefined,
+      parts: entry.parts?.map((piece) => ({ ...piece, surfaceMm2: undefined, result: { ...piece.result, total: piece.result.total + 5 } })),
     }));
     window.localStorage.setItem('printquote:historial:v1', JSON.stringify(entries));
     reload();
