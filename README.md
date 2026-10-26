@@ -21,7 +21,7 @@ printquote calcula un presupuesto aproximado para imprimir una pieza 3D: peso, t
 
 ## Cómo se usa
 
-1. Arrastra un modelo STL, OBJ o 3MF a la ventana, ábrelo desde tu dispositivo o pulsa **«Probar con pieza de ejemplo»** (en la primera visita verás tres pasos de ayuda).
+1. Arrastra un modelo STL, OBJ o 3MF a la ventana, ábrelo desde tu dispositivo o pulsa **«Probar con pieza de ejemplo»** (en la primera visita verás tres pasos de ayuda). ¿Prefieres que te lo enseñen? Pulsa **«Ver demo»** en la cabecera: en unos 13 segundos carga la pieza de ejemplo y recorre los ajustes por ti; la paras con el mismo botón o con **Esc**.
 2. Mira la pieza en 3D, sus medidas y los avisos que puedan afectar al cálculo.
 3. Elige el material y, si quieres, un perfil de impresora.
 4. Ajusta relleno, perímetros, caudal, copias, electricidad y margen. ¿No sabes qué poner? Pulsa el botón **?** junto a cada ajuste: explica qué es y qué valor suele usarse.
@@ -30,7 +30,7 @@ printquote calcula un presupuesto aproximado para imprimir una pieza 3D: peso, t
 
 ## Qué puedes hacer
 
-- 📦 Cargar modelos STL, OBJ y 3MF.
+- 📦 Cargar modelos STL, OBJ y 3MF. Con archivos grandes ves el porcentaje y puedes pararlo con **«Cancelar»**.
 - 🔭 Ver y medir la pieza en un visor 3D con ratón, pantalla táctil o teclado.
 - Elegir perfiles de impresora con valores de partida orientativos.
 - Guardar **tus impresoras y tus materiales** con nombre («Mis impresoras», «Mis materiales») y aplicarlos con un clic.
