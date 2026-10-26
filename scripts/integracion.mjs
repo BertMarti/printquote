@@ -57,7 +57,14 @@ const server = createServer((request, response) => {
     response.end();
     return;
   }
-  let file = resolve(dist, `.${decodeURIComponent(url.pathname.slice(BASE.length - 1))}`);
+  let path;
+  try {
+    path = decodeURIComponent(url.pathname.slice(BASE.length - 1));
+  } catch {
+    response.writeHead(400).end(); // %-secuencia mal formada
+    return;
+  }
+  let file = resolve(dist, `.${path}`);
   if (file !== dist && !file.startsWith(dist + sep)) {
     response.writeHead(403).end();
     return;

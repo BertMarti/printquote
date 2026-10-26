@@ -43,7 +43,7 @@ async function until(check: () => boolean): Promise<void> {
  */
 function analyzeSuspendida(): {
   llamadas: () => number;
-  progreso: (percent: number) => void;
+  progreso: (percent: number, n?: number) => void;
   terminar: (result: AnalyzedStl) => void;
 } {
   const pendientes: Array<{
@@ -56,7 +56,7 @@ function analyzeSuspendida(): {
   );
   return {
     llamadas: () => pendientes.length,
-    progreso: (percent) => pendientes[0]?.onProgress?.(percent),
+    progreso: (percent, n = 0) => pendientes[n]?.onProgress?.(percent),
     terminar: (result) => pendientes[0]?.resolve(result),
   };
 }
@@ -124,6 +124,20 @@ describe('barra de progreso y «Cancelar»', () => {
     expect($('out-total').textContent).toBe('—');
     expect($('notice').hidden).toBe(true);
     expect($('stage-loading').hidden).toBe(true);
+  });
+
+  it('el progreso de una carga anterior no mueve la barra de la nueva (revisión cruzada)', async () => {
+    const analysis = analyzeSuspendida();
+    $('empty-sample').click();
+    await until(() => analysis.llamadas() > 0);
+    $('empty-sample').click();
+    await until(() => analysis.llamadas() > 1);
+    await until(() => !$('load-progress').hidden);
+
+    analysis.progreso(80, 0); // la primera carga ya no es la última
+    expect($('load-progress').getAttribute('aria-valuenow')).toBe('0');
+    analysis.progreso(30, 1);
+    expect($('load-progress').getAttribute('aria-valuenow')).toBe('30');
   });
 
   it('una carga rápida no enseña nunca la barra ni el botón y el progreso vuelve a 0', async () => {

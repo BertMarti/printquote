@@ -503,7 +503,10 @@ export function startApp(demoScale = 1): void {
       // Si el worker sigue con un archivo anterior (uno enorme puede tardar), se cancela: manda el último.
       if (analyzer.busy) analyzer.cancel();
       // El parseo y la geometría van en un Web Worker: la interfaz sigue respondiendo.
-      const { mesh, stats } = await analyzer.analyze(buffer, fileName, setLoadingProgress);
+      // El progreso de una carga que ya no es la última no debe mover la barra de la nueva.
+      const { mesh, stats } = await analyzer.analyze(buffer, fileName, (percent) => {
+        if (ticket === loadTicket) setLoadingProgress(percent);
+      });
       if (ticket !== loadTicket) return false; // ya se ha pedido otro archivo
       part = { fileName, mesh, stats };
       viewer?.setPart(mesh.positions);
