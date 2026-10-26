@@ -55,7 +55,7 @@ describe('versión de la aplicación', () => {
   it('el colofón del panel muestra la versión, la licencia y el enlace al código (noopener)', () => {
     document.body.innerHTML = body;
     startApp();
-    const colophon = document.querySelector<HTMLElement>('footer.colophon');
+    const colophon = document.querySelector<HTMLElement>('.colophon');
     expect(colophon).not.toBeNull();
     expect(document.getElementById('app-version')?.textContent).toBe(pkg.version);
     expect(colophon?.textContent).toContain('licencia MIT');

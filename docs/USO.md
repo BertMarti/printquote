@@ -343,10 +343,6 @@ Todos son opcionales: puedes descargar el PDF aunque no hayas rellenado nada. El
 
 **Numeración.** Al descargar cada PDF, el número del siguiente presupuesto **sube solo** y conserva los ceros: `2026-009` pasa a `2026-010` y `PQ7`, a `PQ8`. Si el número no lleva ninguna cifra, se le añade `-2`. Puedes cambiarlo a mano cuando quieras. printquote no comprueba duplicados ni guarda un historial.
 
-### Tus datos
-
-El bloque **09 Tus datos** permite **Exportar ajustes** a un archivo JSON e **Importar ajustes** desde otro navegador u ordenador. El archivo exportado por printquote incluye los ajustes, tus impresoras, tus materiales y los datos del negocio, incluido el logotipo si lo tienes. Importar reemplaza las partes que sí vengan en el archivo; si falta alguna, esa parte se queda como estaba. Los presupuestos guardados y el lote en curso no forman parte de este archivo: el historial se exporta aparte en CSV.
-
 ### Descargar el PDF
 
 Pulsa **«Descargar PDF»** (en su propia fila, debajo de «Copiar presupuesto» e «Imprimir»). El archivo se llama `presupuesto-2026-001.pdf` (con el número del presupuesto; en inglés, `quote-2026-001.pdf`) y se genera en tu navegador. La primera vez tarda un instante porque se descarga el generador de PDF.
@@ -442,6 +438,10 @@ Y una vez imprimida la pieza, compara el peso real en una báscula con el de pri
 - No hay analítica, ni cookies, ni cuentas.
 - Se guarda en el almacenamiento local de tu navegador (`localStorage`), siempre en este navegador: los ajustes (material, precios, impresora, relleno, etc.), el idioma, los **datos del negocio** (incluido el logotipo ya reducido y el número del próximo presupuesto), tus perfiles de **«Mis impresoras» y «Mis materiales»**, el historial de presupuestos del bloque **08 Presupuestos**, el lote en curso y la marca de que ya has visto la bienvenida. El archivo 3D no se guarda; los presupuestos guardados sí (pieza, cliente, parámetros y resultado, nunca la geometría). Los **enlaces** para compartir solo llevan parámetros de cálculo (ver [Compartir los parámetros con un enlace](#compartir-los-parámetros-con-un-enlace)). Puedes borrar partes desde sus propios bloques, o abrir **«09 Tus datos»** y pulsar **«Borrar mis datos»**: elimina solo lo que printquote guarda con su prefijo y no los datos de otras webs.
 - Al pulsar «Copiar presupuesto», «Imprimir» o «Descargar PDF», el texto, la hoja o el PDF se quedan en tu equipo; printquote no envía nada (el PDF se genera en tu navegador).
+
+### Tus datos: llevar, importar y borrar lo guardado
+
+El bloque **09 Tus datos** permite **Exportar ajustes** a un archivo JSON e **Importar ajustes** desde otro navegador u ordenador. El archivo exportado por printquote incluye los ajustes, tus impresoras, tus materiales y los datos del negocio, incluido el logotipo si lo tienes. Importar reemplaza las partes que sí vengan en el archivo; si falta alguna, esa parte se queda como estaba. Los presupuestos guardados y el lote en curso no forman parte de este archivo: el historial se exporta aparte en CSV. Para borrarlo todo, pulsa **«Borrar mis datos»** (dos veces, para confirmar): solo quita lo que guarda printquote.
 
 **¿Qué versión uso?** Al final de la ficha, debajo de **«09 Tus datos»**, está el colofón: «printquote» con el número de versión (por ejemplo, 1.0.0), «Software libre con licencia MIT» y el enlace **«Código fuente, novedades y avisos»** al repositorio de GitHub, donde están las novedades de cada versión y cómo avisar de un problema de seguridad.
 

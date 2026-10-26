@@ -36,10 +36,10 @@ describe('medidas de un PNG sin descodificarlo (bomba de descompresión en el lo
   it('acepta logotipos normales y rechaza medidas enormes o nulas', () => {
     expect(isSafePng(PNG_1X1)).toBe(true);
     expect(isSafePng(pngHeader(400, 400))).toBe(true);
-    expect(isSafePng(pngHeader(4096, 4096))).toBe(true);
-    expect(isSafePng(pngHeader(4097, 4096))).toBe(false);
-    expect(isSafePng(pngHeader(8192, 1))).toBe(true);
-    expect(isSafePng(pngHeader(8193, 1))).toBe(false);
+    expect(isSafePng(pngHeader(2048, 2048))).toBe(true);
+    expect(isSafePng(pngHeader(2049, 2048))).toBe(false);
+    expect(isSafePng(pngHeader(4096, 1))).toBe(true);
+    expect(isSafePng(pngHeader(4097, 1))).toBe(false);
     expect(isSafePng(pngHeader(60_000, 60_000))).toBe(false);
     expect(isSafePng(pngHeader(0, 10))).toBe(false);
     expect(isSafePng('data:image/png;base64,AAAA')).toBe(false);

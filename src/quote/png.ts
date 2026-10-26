@@ -5,10 +5,10 @@
  * ajustes importado o de `localStorage` (origen compartido): no es fiable.
  */
 
-/** Máximo de píxeles de un PNG que se acepta (4096 × 4096). El logotipo se guarda a 400 px como mucho. */
-export const PNG_MAX_PIXELS = 4096 * 4096;
+/** Máximo de píxeles de un PNG que se acepta (2048 × 2048). La app guarda el logotipo a 400 px como mucho. */
+export const PNG_MAX_PIXELS = 2048 * 2048;
 /** Máximo de un lado, por si el otro es de 1 px. */
-export const PNG_MAX_SIDE = 8192;
+export const PNG_MAX_SIDE = 4096;
 
 const PNG_PREFIX = 'data:image/png;base64,';
 
