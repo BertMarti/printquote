@@ -60,7 +60,8 @@ export async function withChrome(callback) {
       ...(process.env.CI ? ['--no-sandbox'] : []),
       'about:blank',
     ],
-    { stdio: 'ignore' },
+    // En su propio grupo de procesos (fuera de Windows) para cerrar también sus procesos hijos.
+    { stdio: 'ignore', detached: process.platform !== 'win32' },
   );
   try {
     const socket = await connect();
@@ -90,8 +91,21 @@ export async function withChrome(callback) {
   } finally {
     // Se espera a que Chrome se cierre del todo (en la Raspberry Pi no conviene dejar uno vivo) y se borra el perfil.
     const closed = browser.exitCode !== null ? Promise.resolve() : new Promise((done) => browser.once('exit', done));
-    browser.kill();
+    try {
+      if (process.platform === 'win32') browser.kill();
+      else process.kill(-browser.pid, 'SIGTERM');
+    } catch {
+      browser.kill();
+    }
     await Promise.race([closed, sleep(5000)]);
-    rmSync(profile, { recursive: true, force: true, maxRetries: 3 });
+    // Algún proceso hijo puede seguir escribiendo en el perfil un instante: borrarlo es un extra, nunca un fallo.
+    for (let i = 0; i < 5; i++) {
+      try {
+        rmSync(profile, { recursive: true, force: true });
+        break;
+      } catch {
+        await sleep(500);
+      }
+    }
   }
 }
