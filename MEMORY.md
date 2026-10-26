@@ -1,7 +1,14 @@
 # MEMORY.md · printquote
-Última actualización: 2026-10-25 por Claude (jefe del repo en la fase 2, rama `fase2-2026-10-24`)
+Última actualización: 2026-10-26 por Claude (jefe del repo en la fase 3, rama `fase3-2026-10-25`)
 
 ## Estado actual
+
+### v0.10.0 (fase 3, 25–26/10/2026, rama `fase3-2026-10-25`, PR #68 abierta sin fusionar)
+- **Trusted Types**: la CSP lleva `require-trusted-types-for 'script'` y `trusted-types printquote`. `trusted-types 'none'` no vale: en Chromium `new Worker(url)` y `navigator.serviceWorker.register(url)` son sumideros de `TrustedScriptURL` y fallan con una cadena (comprobado: «This document requires 'TrustedScriptURL' assignment»). La única política (`src/trusted-types.ts`, `scriptUrl()`) solo crea URL de script del mismo origen bajo `BASE_URL`; sin la API (Firefox, Node) se comprueba igual y se usa la cadena. Sin `'allow-duplicates'`: la política se crea una sola vez (en caché del módulo). El worker se importa con `?worker&url`: con `new Worker(new URL(…, import.meta.url))` Vite pasaría una cadena y no se puede envolver sin que Vite deje de detectarlo. three.js, pdf-lib y Vite no usan sumideros de HTML (`grep` del bundle: 0 `innerHTML`).
+- **Prueba de integración** (`scripts/integracion.mjs`, `npm run test:integracion`, paso del CI en ubuntu): sin dependencias, sobre `scripts/chrome.mjs` (ahora con eventos `on()`, sesiones de worker con `Target.setAutoAttach` en `flatten`, `--no-sandbox` solo si `CI`, grupo de procesos y perfil temporal borrado). Trampa: con `waitForDebuggerOnStart` el service worker no contesta a `Runtime.enable` hasta reanudarlo, así que las órdenes se envían sin esperar. Comprobado al revés: un build con script en línea, imagen externa y worker sin política da 10 problemas; y detectó el cajetín de carga visible pese a `hidden`.
+- **Progreso** (`src/stl/progress.ts`): `createProgress` monótono por porcentaje entero; lectura 0–50 %, soldadura 50–85 %, aristas 85–95 % (la ordenación no informa); el worker envía `AnalyzeProgress { id, progress }` antes del `AnalyzeResult`. UI: `LOAD_PROGRESS_DELAY_MS` 400 ms, `#load-progress` (`role="progressbar"`, `aria-valuenow`/`aria-valuetext`, barra con `style.transform` por CSSOM, que la CSP permite) y `#load-cancel` (sube `loadTicket`, `analyzer.cancel()`, anuncia `load.cancelled`, foco a `#open-button`). Ojo: `.stage-loading` es `display: flex` y necesita `.stage-loading[hidden] { display: none }`.
+- **Lotes de v0.6**: `recoverSurface`/`partSurface` en `src/quote/history.ts` despejan el área del peso total (`impreso = cáscara + r·(V − cáscara)`) y la validan con `computeQuote` (peso y horas con 1e-6 relativo; importes exactos). La fórmula y los ajustes no han cambiado desde v0.6.0 (`git diff v0.6.0 -- src/quote/model.ts settings.ts materials.ts` vacío).
+- Dependabot #67 (`@types/node` 22.20.5) fusionada con el CI en verde; 0 alertas abiertas.
 
 ### v0.9.0 «Fácil de usar y seguro» (fase 2, 24–25/10/2026, rama `fase2-2026-10-24`, PR abierta sin fusionar)
 - **Dependabot**: fusionadas #61 (acciones v7/v5), #62 (eslint, globals, typescript-eslint) y #63 (happy-dom 21.0.4, cierra la alerta alta GHSA del compilador ESM). Cerradas con comentario #64 (TypeScript 7: `typescript-eslint@8` exige `<6.1`, `npm ci` falla con ERESOLVE) y #65 (`@types/node` 26: los tipos siguen la línea de Node soportada; `engines` es `>=20.19` desde la revisión de Fable, porque la Pi de Alberto tiene 20.19, y se prueba con 22). `ignore` de semver-major para `typescript` y `@types/node` en `.github/dependabot.yml`.
@@ -228,7 +235,7 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 1. Alberto: revisar y fusionar el PR de `mejoras-2026-10-24` (v0.8.0); el despliegue a Pages es automático al entrar en `main`. Después, etiqueta `v0.8.0`. La hoja de ruta priorizada está en `PLAN.md`.
 2. Pendiente de una persona (no automatizable aquí): probar con lector de pantalla real (NVDA/VoiceOver) el campo de copias del lote y los anuncios, y la hoja de impresión (de una pieza y de un lote) en Firefox y Safari y en una impresora real.
 3. Pendiente de una persona: releer `docs/USO.md` con calma y probar la calibración con su laminador real; los valores de partida (caudal, potencia) son orientativos.
-4. Ideas sin hacer: recuperar el área de los lotes guardados con v0.6 (hoy no se abren); migración de esquema del lote persistido (si cambia se descarta).
+4. Ideas sin hacer: migración de esquema del lote persistido (si cambia se descarta). (Los lotes de v0.6 se abren desde 0.10.0.)
 
 ## Problemas conocidos
 - OBJ: polígonos cóncavos de más de 200 vértices siguen en abanico (recorte de orejas es O(n³)); desde #19 se avisa, pero no se corrigen.
@@ -280,3 +287,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-10-01 builder · Claude Code Sonnet (agent/builder/53-lote-copias): #53 copias editables por línea (`withCopies`, campo accesible, actualización en su sitio, tests).
 - 2026-10-01 builder · Claude Code Sonnet (agent/builder/54-lote-imprimir): #54 imprimir el lote (`renderBatchSheet`, `syncPrint`), versión 0.7.0, CHANGELOG, MEMORY limpia de pendientes cerrados.
 - 2026-10-24 Claude Opus 5.5 (jefe) con GPT-5.6 Luna y Zen (mejoras-2026-10-24): noche de mejoras: seguridad (límites, cancelación, CSP, gitleaks, audit, Dependabot, SECURITY.md), UI del estado vacío y reencuadre, README de usuario + DESARROLLO.md, PLAN.md, `.claude/`, tests, versión 0.8.0. PR abierto sin fusionar.
+- 2026-10-26 Claude Opus 5.5 (jefe) con GPT-5.6 Luna y Zen (fase3-2026-10-25): Trusted Types, prueba de integración en Chrome (local y CI), progreso del análisis con «Cancelar», lotes de v0.6 con «Abrir», capturas regeneradas, versión 0.10.0. PR #68 sin fusionar.

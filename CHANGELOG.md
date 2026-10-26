@@ -4,6 +4,29 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 
 ## [Sin publicar]
 
+## [0.10.0] - 2026-10-26
+
+Fase 3: más protección para todas las webs del origen compartido, una prueba del build en un navegador de verdad en cada PR y una carga de archivos grandes que se ve y se puede parar.
+
+### Añadido
+
+- **Progreso del análisis**: con archivos grandes, a los 400 ms aparece una barra con el porcentaje real (lectura, soldadura de vértices y aristas), accesible para lectores de pantalla (`role="progressbar"` con `aria-valuenow` y «45 %»), y un botón **«Cancelar»** que para el análisis, deja la pieza anterior y devuelve el foco a «Abrir modelo 3D». Abrir otro archivo sigue cancelando el anterior.
+- **Prueba de integración en Chrome** (`npm run test:integracion`, también en el CI): sirve `dist/` bajo `/printquote/`, abre `#ejemplo` y falla si la CSP o Trusted Types registran alguna violación, si hay errores de consola, si la pieza no se analiza en el Web Worker, si no aparece el visor 3D, si el PDF no se descarga, si el service worker no queda activo o si algún elemento oculto con `hidden` se ve.
+- Los **lotes guardados con la versión 0.6** (sin el área de las piezas) vuelven a tener «Abrir»: el área se deduce del peso, el volumen y los ajustes guardados, y solo se acepta si reproduce exactamente los importes guardados.
+
+### Seguridad
+
+- **Trusted Types** en la CSP (`require-trusted-types-for 'script'` y `trusted-types printquote`): el navegador rechaza cualquier cadena que llegue a `innerHTML`, `eval`, `new Worker()` o `serviceWorker.register()` si no la ha creado la única política de la app, que solo admite scripts del propio sitio dentro de `/printquote/`. Protege también al resto de webs del origen `bertmarti.github.io`.
+
+### Cambiado
+
+- `docs/captura.png` y `public/og.png` regeneradas con la interfaz actual.
+- `@types/node` 22.20.5 (Dependabot #67).
+
+### Corregido
+
+- `scripts/chrome.mjs` cierra Chrome con todos sus procesos y borra el perfil temporal (antes quedaban carpetas en `/tmp`); encuentra también Chromium (`/usr/bin/chromium`).
+
 ## [0.9.0] - 2026-10-25
 
 Fase 2 «fácil de usar y seguro»: primera visita guiada, ayuda en cada ajuste, perfiles propios, copia de los ajustes, un PDF pensado para el cliente final y todo lo leído del navegador validado.
@@ -168,7 +191,8 @@ Primera versión: el MVP.
 - **Revisión de QA** (PR #2): parser ASCII byte a byte, soldado de vértices con tolerancia, lectura en un Web Worker, three.js cargado bajo demanda, regiones vivas accesibles, Open Graph y tests de interfaz (57 → 132 tests).
 - **Documentación** (PR #4): guía de uso (`docs/USO.md`) y guía de contribución (`CONTRIBUTING.md`).
 
-[Sin publicar]: https://github.com/BertMarti/printquote/compare/v0.9.0...HEAD
+[Sin publicar]: https://github.com/BertMarti/printquote/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/BertMarti/printquote/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/BertMarti/printquote/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/BertMarti/printquote/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/BertMarti/printquote/compare/v0.6.0...v0.7.0

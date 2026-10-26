@@ -70,6 +70,10 @@ No. Se procesa en tu navegador y nunca sale de tu dispositivo.
 
 STL binario o ASCII, OBJ y 3MF.
 
+### Mi archivo es muy grande y tarda. ¿Puedo pararlo?
+
+Sí. Si la lectura tarda, aparece una barra con el porcentaje y el botón **«Cancelar»**: lo para al momento y te deja la pieza que tenías. También puedes abrir otro archivo directamente; el anterior se cancela solo.
+
 ### ¿Por qué el tiempo no coincide con mi laminador?
 
 Porque printquote usa una estimación simplificada. El laminador simula movimientos, retracciones, soportes y otros detalles; puedes calibrar el caudal para acercar ambos resultados.

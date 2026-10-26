@@ -24,7 +24,7 @@ Intentaré responder en una semana. Es un proyecto personal: no hay recompensas.
 
 ## Medidas actuales
 
-- Política de seguridad de contenidos (CSP) en `index.html` sin `unsafe-inline` ni `unsafe-eval`.
+- Política de seguridad de contenidos (CSP) en `index.html` sin `unsafe-inline` ni `unsafe-eval`, con Trusted Types (una única política que solo admite scripts del propio sitio dentro de `/printquote/`). El CI la comprueba en Chrome con el build real.
 - Lectura del modelo en un Web Worker con límites de tamaño y de triángulos.
 - Textos de la persona usuaria (nombres de archivo, datos del negocio) siempre con `textContent`, nunca `innerHTML`; CSV protegido contra inyección de fórmulas.
 - CI con gitleaks (secretos en todo el historial) y `npm audit`; Dependabot semanal.

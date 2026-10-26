@@ -120,9 +120,9 @@ El modo oscuro responde a `prefers-color-scheme`. Los controles tienen etiqueta,
 
 ## Seguridad
 
-- **CSP**: `scripts/csp-plugin.ts` añade al compilar un `<meta http-equiv="Content-Security-Policy">` a `index.html` (todo `'self'`, sin `unsafe-inline` ni `unsafe-eval`; `img-src` con `data:` y `blob:`; `worker-src 'self'`). En `npm run dev` no se pone, porque Vite inyecta estilos en línea. Si añades un script, estilo o recurso de otro origen, la CSP lo bloqueará: revísala.
+- **CSP**: `scripts/csp-plugin.ts` añade al compilar un `<meta http-equiv="Content-Security-Policy">` a `index.html` (todo `'self'`, sin `unsafe-inline` ni `unsafe-eval`; `img-src` con `data:` y `blob:`; `worker-src 'self'`). En `npm run dev` no se pone, porque Vite inyecta estilos en línea. Si añades un script, estilo o recurso de otro origen, la CSP lo bloqueará: revísala. Incluye **Trusted Types** (`require-trusted-types-for 'script'`, `trusted-types printquote`): nada de `innerHTML` con cadenas, y las URL de workers o del service worker pasan por `scriptUrl()` (`src/trusted-types.ts`). Comprueba el build con `npm run build && npm run test:integracion` (Chrome o Chromium sin cabeza; falla con cualquier violación, error de consola, worker que no arranca, PDF que no sale o service worker inactivo).
 - **Límites** (`src/stl/limits.ts`): 300 MB por archivo y 6 300 000 triángulos para STL, OBJ y 3MF; las líneas `v`/`f` de un OBJ no pueden pasar de 4 MB y cada entrada del ZIP de un 3MF, de 400 MB descomprimida. Se comprueban en la interfaz y otra vez en el worker.
-- **Web Worker**: el modelo se lee fuera del hilo principal; si llega otro archivo mientras tanto, el análisis anterior se cancela (`StlAnalyzer.cancel`).
+- **Web Worker**: el modelo se lee fuera del hilo principal; si llega otro archivo mientras tanto, el análisis anterior se cancela (`StlAnalyzer.cancel`). El worker informa del progreso (`src/stl/progress.ts`) y la interfaz muestra barra y «Cancelar» si tarda más de 400 ms.
 - **DOM**: los datos de la persona (nombres de archivo, datos del negocio) se escriben con `textContent`, nunca con `innerHTML`.
 - **CI**: gitleaks sobre todo el historial, `npm audit --omit=dev --audit-level=high` y Dependabot semanal.
 
