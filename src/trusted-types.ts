@@ -29,7 +29,9 @@ export type ScriptUrl = string & { readonly __scriptUrl?: never };
  */
 export function checkScriptUrl(input: string, base: string, origin: string, appPath: string): string {
   const url = new URL(input, base);
-  if (url.origin !== origin || !url.pathname.startsWith(appPath)) {
+  // Barras y puntos codificados (%2f, %5c, %2e) no los usa ningún script de la app: fuera, por si un servidor
+  // los decodificara y saliera de la carpeta.
+  if (url.origin !== origin || !url.pathname.startsWith(appPath) || /%(2f|5c|2e)/i.test(url.pathname)) {
     throw new TypeError(`URL de script no permitida: ${url.href}`);
   }
   return url.href;

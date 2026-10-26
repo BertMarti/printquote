@@ -20,6 +20,20 @@ describe('checkScriptUrl (política de Trusted Types)', () => {
     expect(() => check('/printquote/../otra-web/sw.js')).toThrow(TypeError);
   });
 
+  it('rechaza barras y puntos codificados aunque queden dentro de /printquote/', () => {
+    for (const path of [
+      '/printquote/..%2fotra-web/sw.js',
+      '/printquote/..%2Fotra-web/sw.js',
+      '/printquote/%5c..%5cotra-web/sw.js',
+      '/printquote/%2e%2e%2fotra-web/sw.js',
+      '/printquote/%2e%2e%2F%2e%2e%2fotra-web/sw.js',
+    ]) {
+      expect(() => check(path), path).toThrow(TypeError);
+    }
+    // Un segmento «%2E%2E» entero lo normaliza URL como «..»: queda dentro de la carpeta y es la URL real.
+    expect(check('/printquote/assets/%2E%2E/sw.js')).toBe(`${ORIGIN}/printquote/sw.js`);
+  });
+
   it('rechaza esquemas que ejecutan código o traen datos', () => {
     expect(() => check('data:text/javascript,alert(1)')).toThrow(TypeError);
     expect(() => check('blob:https://bertmarti.github.io/123')).toThrow(TypeError);
