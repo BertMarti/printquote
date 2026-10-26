@@ -1,29 +1,35 @@
 // Prueba de integración del build en Chrome/Chromium sin cabeza (la misma web que se publica en Pages).
 //
 // Uso: npm run build && npm run test:integracion [carpeta]   (por defecto dist/)
-//      CHROME=/ruta/a/chromium npm run test:integracion   (CHROME_PORT=9444 si el puerto 9333 está ocupado)
+//      CHROME=/ruta/a/chromium npm run test:integracion
 //
 // Sirve `dist/` bajo /printquote/ (como GitHub Pages), abre `#ejemplo` y falla si:
-// - la CSP o Trusted Types registran alguna violación (en la página o en el worker);
-// - hay errores en la consola, excepciones sin capturar o recursos que fallan;
+// - la CSP o Trusted Types registran alguna violación en la página (evento `securitypolicyviolation`, antes y
+//   después de recargar, y los avisos «security» de la consola);
+// - hay errores en la consola o excepciones sin capturar en la página o en el worker, o recursos que fallan.
+//   Ojo: el worker tiene URL propia y no hereda la CSP del <meta> de la página; lo que se comprueba de él es
+//   que se crea con la política de Trusted Types y que no registra errores (`Log.entryAdded`/consola);
 // - la pieza de ejemplo no se analiza en el Web Worker (sin caer al hilo principal), el visor 3D no aparece,
 //   el PDF no se genera o el service worker no queda activo y controlando la página tras recargar.
 // Sin dependencias: usa el protocolo DevTools de `chrome.mjs`.
 
-import { spawnSync } from 'node:child_process';
-import { createReadStream, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { spawn } from 'node:child_process';
+import { createReadStream, existsSync, mkdtempSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { dirname, extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // Node 20 trae WebSocket detrás de una opción: el script se vuelve a lanzar con ella.
+// Las señales se reenvían al hijo para que cierre Chrome y borre sus carpetas antes de salir.
 if (typeof WebSocket === 'undefined') {
-  const { status } = spawnSync(process.execPath, ['--experimental-websocket', ...process.argv.slice(1)], { stdio: 'inherit' });
-  process.exit(status ?? 1);
+  const child = spawn(process.execPath, ['--experimental-websocket', ...process.argv.slice(1)], { stdio: 'inherit' });
+  for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => child.kill(signal));
+  const code = await new Promise((done) => child.on('exit', (status, signal) => done(status ?? (signal === 'SIGINT' ? 130 : 143))));
+  process.exit(code);
 }
 
-const { sleep, withChrome } = await import('./chrome.mjs');
+const { cleanupOnSignal, removeSync, sleep, withChrome } = await import('./chrome.mjs');
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = resolve(process.argv[2] ?? join(root, 'dist'));
@@ -82,6 +88,11 @@ const origin = `http://127.0.0.1:${server.address().port}`;
 const appUrl = `${origin}${BASE}#ejemplo`;
 
 const downloads = mkdtempSync(join(tmpdir(), 'printquote-pdf-'));
+// Con Ctrl+C también se cierra el servidor y se borra la carpeta de descargas (Chrome lo cierra `chrome.mjs`).
+const forgetCleanup = cleanupOnSignal(() => {
+  server.close();
+  removeSync(downloads);
+});
 const problems = [];
 const checks = [];
 const ok = (text) => checks.push(text);
@@ -211,7 +222,8 @@ try {
   });
 } finally {
   server.close();
-  rmSync(downloads, { recursive: true, force: true });
+  removeSync(downloads);
+  forgetCleanup();
 }
 
 for (const line of checks) console.log(`✓ ${line}`);

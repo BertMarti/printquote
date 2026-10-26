@@ -1,17 +1,61 @@
 // Chrome o Edge headless manejado por el protocolo DevTools con el WebSocket de Node (sin dependencias).
 // Lo usan `captura.mjs` (capturas del README), `iconos.mjs` (iconos de la PWA) e `integracion.mjs` (prueba del build).
 //
-// Con la variable CHROME se indica la ruta del navegador si no está en un sitio habitual.
+// Con la variable CHROME se indica la ruta del navegador si no está en un sitio habitual. El puerto de depuración
+// lo elige Chrome (`--remote-debugging-port=0`) y se lee de `DevToolsActivePort` en su perfil temporal: así nunca
+// se engancha a otro Chrome que haya quedado vivo. Con Ctrl+C (SIGINT) o SIGTERM se cierra Chrome con todos sus
+// procesos, se borra el perfil y se sale con 130 o 143.
 
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 export const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 
-// CHROME_PORT permite elegir otro puerto de depuración si el 9333 está ocupado.
-const PORT = Number(process.env.CHROME_PORT ?? 9333);
+/** Espera síncrona (para los manejadores de señales, que no pueden esperar promesas). */
+const sleepSync = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+
+/** Borra una carpeta temporal; algún proceso hijo puede seguir escribiendo un instante: es un extra, nunca un fallo. */
+export function removeSync(dir) {
+  for (let i = 0; i < 5; i++) {
+    try {
+      rmSync(dir, { recursive: true, force: true });
+      return;
+    } catch {
+      sleepSync(200);
+    }
+  }
+}
+
+// Limpiezas pendientes si llega SIGINT o SIGTERM: un solo manejador para todas (Chrome, perfiles, descargas…).
+const cleanups = new Set();
+function onSignal(signal) {
+  for (const cleanup of [...cleanups].reverse()) {
+    try {
+      cleanup();
+    } catch {
+      /* se sigue con las demás */
+    }
+  }
+  process.exit(signal === 'SIGINT' ? 130 : 143);
+}
+
+/** Registra `cleanup` para Ctrl+C o SIGTERM. Devuelve la función que lo quita (llámala en el `finally`). */
+export function cleanupOnSignal(cleanup) {
+  if (cleanups.size === 0) {
+    process.once('SIGINT', onSignal);
+    process.once('SIGTERM', onSignal);
+  }
+  cleanups.add(cleanup);
+  return () => {
+    cleanups.delete(cleanup);
+    if (cleanups.size === 0) {
+      process.off('SIGINT', onSignal);
+      process.off('SIGTERM', onSignal);
+    }
+  };
+}
 
 function findChrome() {
   const found = [
@@ -28,10 +72,12 @@ function findChrome() {
   return found;
 }
 
-async function connect() {
-  for (let i = 0; i < 50; i++) {
+async function connect(profile) {
+  for (let i = 0; i < 100; i++) {
     try {
-      const pages = await (await fetch(`http://127.0.0.1:${PORT}/json/list`)).json();
+      // Chrome escribe aquí el puerto que ha elegido (primera línea) en cuanto está escuchando.
+      const port = Number(readFileSync(join(profile, 'DevToolsActivePort'), 'utf8').split('\n')[0]);
+      const pages = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
       const page = pages.find((p) => p.type === 'page');
       if (page) return new WebSocket(page.webSocketDebuggerUrl);
     } catch {
@@ -53,7 +99,7 @@ export async function withChrome(callback) {
   const browser = spawn(
     findChrome(),
     [
-      '--headless=new', `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`,
+      '--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`,
       '--hide-scrollbars', '--force-color-profile=srgb', '--lang=es-ES', '--accept-lang=es-ES',
       '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
       // En los ejecutores de GitHub (Ubuntu 24.04) AppArmor impide el sandbox de Chrome; solo se abre la web local.
@@ -63,8 +109,22 @@ export async function withChrome(callback) {
     // En su propio grupo de procesos (fuera de Windows) para cerrar también sus procesos hijos.
     { stdio: 'ignore', detached: process.platform !== 'win32' },
   );
+  // Cierra Chrome y todos sus procesos hijos (están en su propio grupo fuera de Windows).
+  const stop = () => {
+    try {
+      if (process.platform === 'win32') browser.kill();
+      else process.kill(-browser.pid, 'SIGTERM');
+    } catch {
+      browser.kill();
+    }
+  };
+  const forget = cleanupOnSignal(() => {
+    stop();
+    sleepSync(500);
+    removeSync(profile);
+  });
   try {
-    const socket = await connect();
+    const socket = await connect(profile);
     await new Promise((done) => socket.addEventListener('open', done, { once: true }));
     let id = 0;
     const pending = new Map();
@@ -91,21 +151,9 @@ export async function withChrome(callback) {
   } finally {
     // Se espera a que Chrome se cierre del todo (en la Raspberry Pi no conviene dejar uno vivo) y se borra el perfil.
     const closed = browser.exitCode !== null ? Promise.resolve() : new Promise((done) => browser.once('exit', done));
-    try {
-      if (process.platform === 'win32') browser.kill();
-      else process.kill(-browser.pid, 'SIGTERM');
-    } catch {
-      browser.kill();
-    }
+    stop();
     await Promise.race([closed, sleep(5000)]);
-    // Algún proceso hijo puede seguir escribiendo en el perfil un instante: borrarlo es un extra, nunca un fallo.
-    for (let i = 0; i < 5; i++) {
-      try {
-        rmSync(profile, { recursive: true, force: true });
-        break;
-      } catch {
-        await sleep(500);
-      }
-    }
+    removeSync(profile);
+    forget();
   }
 }
