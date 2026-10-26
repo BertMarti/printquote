@@ -142,6 +142,12 @@ try {
       const triangles = await run(`document.getElementById('out-triangles').textContent.trim()`);
       ok(`Pieza de ejemplo analizada (${triangles} triángulos, total ${await run(`document.getElementById('out-total').textContent.trim()`)})`);
     }
+    // Un `display` de la hoja de estilos puede tapar el atributo hidden (pasó con el cajetín de carga).
+    const visibleHidden = await run(`[...document.querySelectorAll('[hidden]')]
+      .filter((el) => getComputedStyle(el).display !== 'none')
+      .map((el) => el.id ? '#' + el.id : el.tagName.toLowerCase() + '.' + el.className)`);
+    if (visibleHidden.length === 0) ok('Ningún elemento con hidden se ve (tampoco el cajetín de carga)');
+    else problems.push(`Elementos con hidden que se ven: ${visibleHidden.join(', ')}`);
     if (workers.some((url) => url.includes(`${BASE}assets/stl.worker`))) ok('Análisis en el Web Worker (creado con la política de Trusted Types)');
     else problems.push(`El análisis no ha pasado por el Web Worker (workers vistos: ${workers.join(', ') || 'ninguno'})`);
     if (await waitFor('el visor 3D (three.js)', `!!document.querySelector('#viewer canvas')`)) ok('Visor 3D (three.js) dibujado');

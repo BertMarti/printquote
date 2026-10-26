@@ -688,7 +688,14 @@ input {
   animation: pq-blink 1s steps(2, jump-none) infinite;
 }
 
-.stage-loading-text { margin: 0; }
+/* `display: flex` taparía el atributo hidden: sin esto el cajetín se quedaría encima de la pieza ya cargada. */
+.stage-loading[hidden] {
+  display: none;
+}
+
+.stage-loading-text {
+  margin: 0;
+}
 
 .load-progress {
   width: 100%;
