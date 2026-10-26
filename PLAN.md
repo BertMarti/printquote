@@ -32,7 +32,15 @@ Trabajo de la rama `mejoras-2026-10-24` comprobado contra el código actual:
 - Lotes guardados con v0.6 (sin `surfaceMm2`) se vuelven a abrir: área deducida del resultado guardado, sin guardar geometría.
 - Dependabot #67 (`@types/node` 22.20.5) fusionada.
 
-## Siguiente
+## Hecho el 26/10/2026 (fase 5, v1.0.0)
+
+- Versión 1.0.0 con una sola fuente (`package.json` → `define` de Vite → `src/version.ts`): colofón al final de la ficha (versión, licencia MIT y enlace al código) y pie del PDF.
+- Repaso de calidad 1.0 con revisión cruzada (GPT-5.6 Luna) y comprobación de cada hallazgo: logotipo PNG con medidas enormes rechazado (bomba de descompresión en el PDF), aviso si lo importado no se puede guardar, historial sin importes negativos, y `docs/USO.md`/`SECURITY.md` fieles al PDF de 0.9 y a lo que se guarda en el navegador.
+- Sin issues abiertas, sin PRs de Dependabot y sin alertas abiertas.
+
+## Después de la 1.0
+
+Nada de esto deja a medias lo que ve el usuario; son mejoras y comprobaciones que necesitan hardware, personas o más tiempo.
 
 1. Probar OBJ y 3MF reales procedentes de laminadores, además de los modelos construidos en `tests/`, y documentar cualquier diferencia reproducible.
 2. Probar con lector de pantalla real el campo de copias, los anuncios, la barra de progreso y las hojas de impresión en Firefox y Safari.
@@ -41,6 +49,8 @@ Trabajo de la rama `mejoras-2026-10-24` comprobado contra el código actual:
 5. Subir `@types/node` a la vez que el mínimo de `engines` cuando se deje Node 22.
 6. Progreso más fino en 3MF (hoy salta de 10 % a 50 % durante la descompresión y la lectura del XML) y durante la ordenación de aristas.
 7. Ampliar la prueba de integración a móvil (390 px) y a un archivo grande con «Cancelar» (hoy se comprueba con un script aparte).
+8. Tope de vértices en OBJ y 3MF (hoy solo hay tope de triángulos y de tamaño de archivo): un archivo de 300 MB con millones de vértices y ninguna cara puede agotar la memoria del worker antes de decir «sin caras». Se recupera con el aviso `err.worker` (la página sigue funcionando), por eso es de severidad baja.
+9. Rechazar con un mensaje claro las piezas con medidas absurdas (coordenadas cerca del máximo de `float32`): hoy dan importes astronómicos pero finitos.
 
 ## Ideas
 
