@@ -1251,6 +1251,25 @@ input {
   display: none;
 }
 
+/* Colofón: versión, licencia y código fuente, al final de la ficha (como el cajetín de un plano). */
+.colophon {
+  padding: 14px var(--gutter) 18px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.colophon-name {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.colophon a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .history-footer {
   display: flex;
   flex-wrap: wrap;
@@ -1696,6 +1715,12 @@ input {
   }
 
   .help-toggle { width: 44px; }
+
+  .colophon a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
 
   .batch-copies-input,
   .field input[type='text'],
