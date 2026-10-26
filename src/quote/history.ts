@@ -1,7 +1,8 @@
 import { tIn, type Key, type Lang } from '../i18n';
 import type { MeshStats } from '../stl/types';
 import { BATCH_MAX, computeBatch, makePart, type BatchPart } from './batch';
-import type { Quote } from './model';
+import { computeQuote, wallThickness, type Quote } from './model';
+import { MATERIALS } from './materials';
 import { getPrinter } from './printers';
 import { normalizeSettings, type QuoteSettings } from './settings';
 
@@ -89,22 +90,69 @@ function toPart(fileName: string, stats: MeshStats, settings: QuoteSettings, quo
 /** La línea de un lote tal como se guarda (lote persistido y entrada del historial). */
 export const partToHistory = (part: BatchPart): HistoryPart => toPart(part.fileName, part.stats, part.settings, part.quote);
 
+/** Margen relativo al comparar el peso guardado con el recalculado (los dos son números de coma flotante). */
+const RECOVER_TOLERANCE = 1e-6;
+
 /**
- * Líneas de un lote a partir de lo guardado, o `null` si alguna pieza no trae el área (entradas de v0.6).
+ * Área de una pieza guardada sin `surfaceMm2` (lotes de v0.6), deducida de lo que sí se guardó y sin geometría:
+ * el modelo de coste es `impreso = cáscara + relleno% × (volumen − cáscara)` con `cáscara = área × pared`, así que
+ * con el peso total (impreso × densidad × copias), el volumen y los ajustes se despeja la cáscara y de ahí el área.
+ * Cuando el área no influye (relleno 100 %, pared 0 o cáscara que llena la pieza) vale cualquiera que dé lo mismo.
+ * Solo se acepta si `computeQuote` con ese área reproduce el peso y todos los importes guardados; si no (datos
+ * manipulados, otra fórmula u otros ajustes), devuelve `null` y el lote sigue sin «Abrir».
+ */
+export function recoverSurface(saved: HistoryPart): number | null {
+  const { settings, result, volumeMm3: volume } = saved;
+  const density = MATERIALS[settings.material].density;
+  const copies = Math.max(1, Math.round(settings.copies));
+  const wall = wallThickness(settings);
+  const infill = Math.min(100, Math.max(0, settings.infillPercent)) / 100;
+  if (!(density > 0) || volume <= 0) return null;
+
+  const printed = ((result.weightGrams / copies) * 1000) / density;
+  let surface = 0;
+  if (wall > 0 && infill < 1) {
+    const shell = Math.min(volume, Math.max(0, (printed - infill * volume) / (1 - infill)));
+    surface = shell / wall;
+  }
+  if (!Number.isFinite(surface)) return null;
+
+  const quote = computeQuote({ volume, surfaceArea: surface }, settings);
+  const close = (a: number, b: number): boolean => Math.abs(a - b) <= RECOVER_TOLERANCE * Math.max(1, Math.abs(a), Math.abs(b));
+  const same =
+    close(quote.totalWeightGrams, result.weightGrams) &&
+    close(quote.totalHours, result.hours) &&
+    quote.materialCost === result.materialCost &&
+    quote.energyCost === result.energyCost &&
+    quote.marginAmount === result.marginAmount &&
+    quote.subtotal === result.subtotal &&
+    quote.total === result.total;
+  return same ? surface : null;
+}
+
+/** Área guardada o, en lotes de v0.6, la deducida con `recoverSurface`; `null` si no se puede saber. */
+export function partSurface(saved: HistoryPart): number | null {
+  return saved.surfaceMm2 ?? recoverSurface(saved);
+}
+
+/**
+ * Líneas de un lote a partir de lo guardado, o `null` si de alguna pieza no se puede saber el área (lote de v0.6
+ * cuyo resultado no cuadra; ver `recoverSurface`).
  * Cada línea se recalcula con `computeQuote` (vía `makePart`): no se copia ningún importe. Lo que no se guarda
  * (esquina de la caja, aristas abiertas, volumen con signo) toma valores neutros.
  */
 export function batchFromParts(list: readonly HistoryPart[]): BatchPart[] | null {
   const parts: BatchPart[] = [];
   for (const saved of list) {
-    if (saved.surfaceMm2 === undefined) return null;
+    const surface = partSurface(saved);
+    if (surface === null) return null;
     const { x, y, z } = saved.size;
     const zero = { x: 0, y: 0, z: 0 };
     const stats = {
       triangleCount: saved.triangles,
       volume: saved.volumeMm3,
       signedVolume: saved.volumeMm3,
-      surfaceArea: saved.surfaceMm2,
+      surfaceArea: surface,
       bounds: { min: zero, max: { x, y, z }, size: { x, y, z } },
       openEdges: 0,
     };

@@ -1,4 +1,5 @@
 import type { BoundingBox, Mesh, MeshStats, Vec3 } from './types';
+import { createProgress, PROGRESS_EVERY, type ProgressFn } from './progress';
 
 /** Tamaño de cama por defecto (mm): ancho X, fondo Y, alto Z. */
 export const DEFAULT_BED: Vec3 = { x: 220, y: 220, z: 250 };
@@ -36,7 +37,8 @@ export function computeBounds(positions: Float32Array): BoundingBox {
  * triángulo con un punto de referencia (v1 · (v2 × v3) / 6). Se usa el centro de
  * la caja como referencia para no perder precisión con piezas lejos del origen.
  */
-export function computeStats(mesh: Mesh): MeshStats {
+export function computeStats(mesh: Mesh, onProgress?: ProgressFn): MeshStats {
+  const progress = createProgress(onProgress);
   const p = mesh.positions;
   const bounds = computeBounds(p);
   const cx = (bounds.min.x + bounds.max.x) / 2;
@@ -62,13 +64,16 @@ export function computeStats(mesh: Mesh): MeshStats {
   }
 
   const signedVolume = signedVolume6 / 6;
+  const welded = weldVertices(p, WELD_TOLERANCE, (fraction) => progress.stage(0, 0.7)(fraction, 1));
+  const openEdges = countOpenEdgesFromIds(welded.ids, welded.count, (fraction) => progress.stage(0.7, 0.9)(fraction, 1));
+  progress.done();
   return {
     triangleCount: mesh.triangleCount,
     signedVolume,
     volume: Math.abs(signedVolume),
     surfaceArea: area2 / 2,
     bounds,
-    openEdges: countOpenEdges(p),
+    openEdges,
   };
 }
 
@@ -90,7 +95,7 @@ const WELD_CELL_FACTOR = 16;
  * menos de `tol` del borde de su celda busca también en la vecina, así dos puntos casi
  * iguales a ambos lados de un borde se unen igualmente.
  */
-export function weldVertices(positions: Float32Array, tolerance = WELD_TOLERANCE): { ids: Uint32Array; count: number } {
+export function weldVertices(positions: Float32Array, tolerance = WELD_TOLERANCE, onProgress?: ProgressFn): { ids: Uint32Array; count: number } {
   const vertexCount = Math.floor(positions.length / 3);
   let maxAbs = 0;
   for (let i = 0; i < vertexCount * 3; i++) {
@@ -156,7 +161,9 @@ export function weldVertices(positions: Float32Array, tolerance = WELD_TOLERANCE
       firstInCell[key] = found;
     }
     ids[v] = found;
+    if (v % PROGRESS_EVERY === 0) onProgress?.((v + 1) / vertexCount);
   }
+  onProgress?.(1);
   return { ids, count };
 }
 
@@ -167,7 +174,11 @@ export function weldVertices(positions: Float32Array, tolerance = WELD_TOLERANCE
  */
 export function countOpenEdges(positions: Float32Array, tolerance = WELD_TOLERANCE): number {
   const { ids, count } = weldVertices(positions, tolerance);
+  return countOpenEdgesFromIds(ids, count);
+}
 
+/** `countOpenEdges` con los vértices ya soldados (`computeStats` suelda una sola vez e informa del progreso). */
+function countOpenEdgesFromIds(ids: Uint32Array, count: number, onProgress?: ProgressFn): number {
   // Cada arista es un número exacto (`lo * count + hi`; count² < 2^53 en cualquier malla que quepa en memoria).
   // Se guardan en un Float64Array y se ordenan: las repetidas quedan juntas. Antes era un Map, limitado en V8
   // a 2^24 ≈ 16,7 M entradas: una malla de 6,3 M triángulos sin aristas compartidas lo desbordaba y daba un
@@ -183,17 +194,24 @@ export function countOpenEdges(positions: Float32Array, tolerance = WELD_TOLERAN
     addEdge(a, b);
     addEdge(b, c);
     addEdge(c, a);
+    if (t % (3 * PROGRESS_EVERY) === 0) onProgress?.((t / Math.max(ids.length, 1)) * 0.5);
   }
 
   const sorted = keys.subarray(0, n).sort();
   let open = 0;
+  let nextReport = 0;
   for (let i = 0; i < n; ) {
     const key = sorted[i];
     let j = i + 1;
     while (j < n && sorted[j] === key) j++;
     if (j - i !== 2) open++;
+    if (onProgress && j >= nextReport) {
+      onProgress(0.5 + (j / Math.max(n, 1)) * 0.5);
+      nextReport = j + PROGRESS_EVERY;
+    }
     i = j;
   }
+  onProgress?.(1);
   return open;
 }
 

@@ -18,11 +18,12 @@ Web que calcula el presupuesto de una pieza de impresión 3D: arrastras un STL, 
 - Tests: `npm test` (Vitest; `testTimeout` 30 s porque la Raspberry Pi va justa)
 - Build: `npm run build` (typecheck + `vite build`; salida en `dist/`, con la CSP en `dist/index.html`)
 - Probar el build como en Pages: `npm run preview` → <http://localhost:4173/printquote/>
+- Prueba de integración del build en Chrome/Chromium (CSP, Trusted Types, worker, visor, PDF, service worker): `npm run build && npm run test:integracion` (`CHROME=/ruta` si no lo encuentra; en la Raspberry Pi tarda ~1 min y va con `nice`). También corre en el CI (ubuntu).
 - Despliegue: automático con `.github/workflows/deploy.yml` al entrar en `main` (o `workflow_dispatch`).
 - Capturas del README/Open Graph: `node scripts/captura.mjs` con la web en marcha (Chrome; en Node 20, `node --experimental-websocket`).
 
 ## Estructura
-- `src/stl/` lectores STL (binario y ASCII), OBJ y 3MF, geometría (volumen, área, caja) y `limits.ts` (topes comunes: 300 MB y 6 300 000 triángulos). Se leen en un Web Worker (`stl.worker.ts` + `analyzer.ts`, cancelable).
+- `src/stl/` lectores STL (binario y ASCII), OBJ y 3MF, geometría (volumen, área, caja) y `limits.ts` (topes comunes: 300 MB y 6 300 000 triángulos). Se leen en un Web Worker (`stl.worker.ts` + `analyzer.ts`, cancelable, con progreso `src/stl/progress.ts` hacia la barra `#load-progress` y el botón «Cancelar»).
 - `scripts/` plugins de Vite (`pwa-plugin.ts`, `csp-plugin.ts`), capturas (`captura.mjs`, `chrome.mjs`) y la pieza de ejemplo.
 - `src/quote/` modelo de coste (material, relleno, tiempo, energía, margen) y lote de piezas (`batch.ts`: suma líneas de `computeQuote`; no tiene fórmula propia).
 - `src/pdf/` presupuesto en PDF: contenido puro en `document.ts` (`buildQuoteDocument`, `buildBatchDocument`) y dibujo con pdf-lib en `render.ts`; un lote lleva `batch` (tabla de piezas a todo el ancho) y el dibujo pasa de página y numera («Página n de N»).
@@ -35,7 +36,7 @@ Web que calcula el presupuesto de una pieza de impresión 3D: arrastras un STL, 
 
 ## Seguridad y privacidad (obligatorio)
 - **Nada sale del navegador**: ni el archivo 3D ni los datos del negocio. Nada de analítica ni orígenes externos.
-- **CSP** (`scripts/csp-plugin.ts`, solo en el build): todo `'self'`, sin `unsafe-inline` ni `unsafe-eval`. Prohibido añadir `<script>` en línea, `style="…"` en el HTML, `on*=` o recursos de otro origen; si de verdad hace falta, cambia la CSP y su test (`tests/csp.test.ts`) y justifícalo en `MEMORY.md`.
+- **CSP** (`scripts/csp-plugin.ts`, solo en el build): todo `'self'`, sin `unsafe-inline` ni `unsafe-eval`, y **Trusted Types** (`require-trusted-types-for 'script'`, `trusted-types printquote`). Toda URL de script (`new Worker`, `serviceWorker.register`) pasa por `scriptUrl()` de `src/trusted-types.ts`; no crees otras políticas ni una `default`. Prohibido añadir `<script>` en línea, `style="…"` en el HTML, `on*=` o recursos de otro origen; si de verdad hace falta, cambia la CSP y su test (`tests/csp.test.ts`) y justifícalo en `MEMORY.md`.
 - **Origen compartido**: `https://bertmarti.github.io` lo comparten todas las webs de Pages de Alberto. Claves de `localStorage` solo con prefijo `printquote:` y solo a través de `src/ui/storage.ts`; todo lo leído se valida (normalizadores) y lo que no se pueda leer se apunta en `takeStorageIssues()` para avisar. «Borrar mis datos» (`clearAllData`) quita solo `printquote:*`; **nunca** `localStorage.clear()`. Nada sensible persistido (ni claves ni tokens).
 - **Importar ajustes** (`src/quote/backup.ts`): archivo no fiable; tamaño antes de leer (1 MiB), marca `app: 'printquote'` y `v: 1`, y los mismos normalizadores.
 - **Nunca `innerHTML`/`insertAdjacentHTML` con datos**: `textContent` y nodos DOM (nombres de archivo, datos del negocio, historial).
@@ -69,7 +70,7 @@ Presupuesto de pedidos con varias piezas. Contrato:
 - **Instantánea**: la línea (`BatchPart`) conserva los ajustes con que se añadió; solo se editan las copias en la propia línea (`withCopies`: `computeQuote` con los ajustes originales de la línea; el campo se actualiza en su sitio para no perder el foco); para otros ajustes, quitar y volver a añadir. Máximo `BATCH_MAX` = 50.
 - **Persistencia**: el lote se guarda en `localStorage` (`printquote:lote:v1`, `{ v: 1, parts: HistoryPart[] }`; `loadBatch`/`saveBatch` en `ui/storage.ts`). Cada línea se guarda como `HistoryPart` (con `surfaceMm2`, sin geometría) y al leer se valida con las mismas funciones que el historial (`normalizeBatchParts`) y se recalcula con `computeQuote` (`batchFromParts`). Una pieza rota o sin área descarta el lote entero; si no cabe, falla en silencio.
 - **Botones**: «Copiar presupuesto», «Imprimir», «Descargar PDF» y «Guardar este presupuesto» son de la pieza cargada; el lote tiene «Copiar lote», «PDF del lote» (sin vista 3D, con paginación) y «Guardar lote» (historial). **Excepción**: «Imprimir» imprime el lote en cuanto lo hay (`syncPrint` en `app.ts`; el botón pasa a «Imprimir lote» y `renderBatchSheet` reutiliza `#print-sheet`); sin lote, la pieza.
-- **Historial**: `HistoryEntry.parts?` (retrocompatible); `HistoryPart.surfaceMm2` (opcional) permite reabrir un lote: «Abrir» llama a `HistoryHost.openBatch` → `batchFromParts` → `setupBatch().set()` (reemplaza el lote; con uno en curso pide un segundo clic). Los lotes de v0.6 (sin área) no tienen «Abrir». No se guarda geometría. El CSV lleva una fila por pieza.
+- **Historial**: `HistoryEntry.parts?` (retrocompatible); `HistoryPart.surfaceMm2` (opcional) permite reabrir un lote: «Abrir» llama a `HistoryHost.openBatch` → `batchFromParts` → `setupBatch().set()` (reemplaza el lote; con uno en curso pide un segundo clic). Los lotes de v0.6 (sin área) se abren deduciendo el área con `recoverSurface` (solo si reproduce los importes guardados; si no, sin «Abrir»). No se guarda geometría. El CSV lleva una fila por pieza.
 - El enlace para compartir **nunca** lleva el lote.
 - `src/ui/batch.ts` recibe un `BatchHost` (`current`, `announce`, `changed`) y no importa `app.ts`; la lista reutiliza las clases `.history-*` y `.rows`. Tras quitar, el foco pasa al siguiente «Quitar» o a «Añadir esta pieza».
 

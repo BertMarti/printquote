@@ -3,6 +3,7 @@ import { parseObj } from './obj';
 import { parseStl } from './parse';
 import { parse3mf } from './threemf';
 import type { Mesh } from './types';
+import type { ProgressFn } from './progress';
 
 /** Extensiones que acepta la aplicación, para el selector de archivos. */
 export const MODEL_EXTENSIONS = ['.stl', '.obj', '.3mf'] as const;
@@ -36,17 +37,17 @@ export function detectKind(bytes: Uint8Array, fileName?: string): Kind {
 }
 
 /** Lee un STL, un OBJ o un 3MF. */
-export async function parseModel(data: ArrayBuffer | Uint8Array, fileName?: string): Promise<Mesh> {
+export async function parseModel(data: ArrayBuffer | Uint8Array, fileName?: string, onProgress?: ProgressFn): Promise<Mesh> {
   const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
   switch (detectKind(bytes, fileName)) {
     case '3mf':
       if (!isZip(bytes)) {
         throw new ModelParseError('err.3mf.notZip');
       }
-      return parse3mf(bytes);
+      return parse3mf(bytes, onProgress);
     case 'obj':
-      return parseObj(bytes);
+      return parseObj(bytes, onProgress);
     case 'stl':
-      return parseStl(bytes);
+      return parseStl(bytes, onProgress);
   }
 }

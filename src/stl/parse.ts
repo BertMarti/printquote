@@ -3,6 +3,7 @@ import type { Params } from '../i18n/interpolate';
 import { ModelParseError } from './errors';
 import { MAX_TRIANGLES, MAX_TRIANGLES_TEXT } from './limits';
 import type { Mesh } from './types';
+import { PROGRESS_EVERY, type ProgressFn } from './progress';
 
 /** Error de lectura de un STL (mensajes en `i18n/es.ts`, claves `err.stl.*`). */
 export class StlParseError extends ModelParseError {
@@ -35,7 +36,7 @@ const MAX_NUMBER_TOKEN = 64;
  * 4. Si el recuento es 0 pero el tamaño cuadra con 84 + 50 × n, se leen esos n
  *    triángulos (hay exportadores que no rellenan el recuento).
  */
-export function parseStl(data: ArrayBuffer | Uint8Array): Mesh {
+export function parseStl(data: ArrayBuffer | Uint8Array, onProgress?: ProgressFn): Mesh {
   const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
 
   if (bytes.byteLength === 0) {
@@ -50,28 +51,28 @@ export function parseStl(data: ArrayBuffer | Uint8Array): Mesh {
     const expected = BINARY_PREAMBLE + count * BYTES_PER_TRIANGLE;
 
     if (expected === bytes.byteLength && !(looksAscii && containsFacet(bytes))) {
-      return parseBinary(view, count);
+      return parseBinary(view, count, onProgress);
     }
     if (looksAscii) {
-      return parseAscii(bytes);
+      return parseAscii(bytes, onProgress);
     }
     if (count > 0 && expected < bytes.byteLength) {
-      return parseBinary(view, count);
+      return parseBinary(view, count, onProgress);
     }
     const inferred = (bytes.byteLength - BINARY_PREAMBLE) / BYTES_PER_TRIANGLE;
     if (count === 0 && Number.isInteger(inferred)) {
-      return parseBinary(view, inferred);
+      return parseBinary(view, inferred, onProgress);
     }
     throw new StlParseError('err.stl.size');
   }
 
   if (looksAscii) {
-    return parseAscii(bytes);
+    return parseAscii(bytes, onProgress);
   }
   throw new StlParseError('err.stl.small');
 }
 
-function parseBinary(view: DataView, count: number): Mesh {
+function parseBinary(view: DataView, count: number, onProgress?: ProgressFn): Mesh {
   if (count === 0) {
     throw new StlParseError('err.stl.noTriangles');
   }
@@ -89,7 +90,9 @@ function parseBinary(view: DataView, count: number): Mesh {
       }
       positions[t * 9 + k] = value;
     }
+    if (t % PROGRESS_EVERY === 0) onProgress?.((t + 1) / count);
   }
+  onProgress?.(1);
   return { positions, triangleCount: count, format: 'binary' };
 }
 
@@ -157,7 +160,7 @@ class Tokenizer {
   }
 }
 
-function parseAscii(bytes: Uint8Array): Mesh {
+function parseAscii(bytes: Uint8Array, onProgress?: ProgressFn): Mesh {
   const tokens = new Tokenizer(bytes, hasBom(bytes) ? UTF8_BOM.length : 0);
   let values = new Float32Array(9 * 1024);
   let length = 0;
@@ -165,7 +168,13 @@ function parseAscii(bytes: Uint8Array): Mesh {
   let verticesInFacet = 0;
   let insideFacet = false;
 
+  // El tokenizador avanza a saltos: se informa al cruzar cada umbral de bytes, no en posiciones exactas.
+  let nextReport = 0;
   while (tokens.next()) {
+    if (onProgress && tokens.pos >= nextReport) {
+      onProgress(tokens.pos / bytes.length);
+      nextReport = tokens.pos + PROGRESS_EVERY;
+    }
     if (tokens.is('vertex')) {
       if (!insideFacet) {
         throw new StlParseError('err.stl.vertexOutside');
@@ -217,6 +226,7 @@ function parseAscii(bytes: Uint8Array): Mesh {
     throw new StlParseError('err.stl.noTriangles');
   }
 
+  onProgress?.(1);
   return { positions: values.slice(0, length), triangleCount: facet, format: 'ascii' };
 }
 

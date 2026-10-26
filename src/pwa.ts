@@ -1,3 +1,5 @@
+import { scriptUrl } from './trusted-types';
+
 /**
  * Registra el service worker (`src/sw.js`, que `scripts/pwa-plugin.ts` copia a `dist/sw.js`) para que la
  * app se pueda instalar y abrir sin conexión. Solo en producción: en `npm run dev` estorbaría al hot reload.
@@ -8,7 +10,7 @@ export function registerServiceWorker(): void {
   // Tras `load`: el precaché (≈ 0,7 MB) no compite con la primera carga.
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL, updateViaCache: 'none' })
+      .register(scriptUrl(`${import.meta.env.BASE_URL}sw.js`), { scope: import.meta.env.BASE_URL, updateViaCache: 'none' })
       .catch(() => undefined);
   });
 }

@@ -228,6 +228,10 @@ export const en: Record<Key, string> = {
   // ── Loading files ──
   'load.reading': 'Reading “{name}”…',
   'load.reading.announce': 'Reading {name}…',
+  'load.progress': 'Analysis progress',
+  'load.progress.value': '{percent}%',
+  'load.cancel': 'Cancel',
+  'load.cancelled': 'Analysis of “{name}” cancelled.',
   'load.done': 'Part loaded: {name}.',
   'load.failed.title': '“{name}” could not be read',
   'load.tooBig.title': '“{name}” is too large',

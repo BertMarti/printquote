@@ -3,6 +3,7 @@ import type { Params } from '../i18n/interpolate';
 import { ModelParseError } from './errors';
 import { MAX_TRIANGLES, MAX_TRIANGLES_TEXT } from './limits';
 import type { Mesh } from './types';
+import { PROGRESS_EVERY, type ProgressFn } from './progress';
 
 /** Un OBJ con un byte nulo en el arranque es un binario cualquiera, no texto. */
 const SNIFF_BYTES = 1024;
@@ -114,7 +115,7 @@ export function triangulate(
  * - Se ignoran normales, texturas, grupos, materiales, líneas y puntos.
  * - Todas las piezas del archivo (`o`/`g`) se juntan en una sola malla.
  */
-export function parseObj(data: ArrayBuffer | Uint8Array): Mesh {
+export function parseObj(data: ArrayBuffer | Uint8Array, onProgress?: ProgressFn): Mesh {
   const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
   if (bytes.byteLength === 0) throw new ModelParseError('err.empty');
   for (let i = 0, end = Math.min(bytes.length, SNIFF_BYTES); i < end; i++) {
@@ -134,7 +135,13 @@ export function parseObj(data: ArrayBuffer | Uint8Array): Mesh {
   };
 
   let pos = 0;
+  // Las líneas tienen longitudes distintas: se informa al cruzar cada umbral, no en posiciones exactas.
+  let nextReport = 0;
   while (pos < text.length) {
+    if (onProgress && pos >= nextReport) {
+      onProgress((pos / text.length) * 0.5);
+      nextReport = pos + PROGRESS_EVERY;
+    }
     // Una línea acabada en «\» continúa en la siguiente (algunos exportadores parten las caras largas).
     let line = '';
     for (;;) {
@@ -223,6 +230,8 @@ export function parseObj(data: ArrayBuffer | Uint8Array): Mesh {
     positions[i * 3] = vertices.data[v * 3] ?? 0;
     positions[i * 3 + 1] = vertices.data[v * 3 + 1] ?? 0;
     positions[i * 3 + 2] = vertices.data[v * 3 + 2] ?? 0;
+    if (i % PROGRESS_EVERY === 0) onProgress?.(0.5 + (i / (triangleCount * 3)) * 0.5);
   }
+  onProgress?.(1);
   return { positions, triangleCount, format: 'obj', largePolygons };
 }

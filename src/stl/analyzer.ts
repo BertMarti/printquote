@@ -1,5 +1,9 @@
 import { analyzeModel, type AnalyzedStl, type AnalyzeRequest, type AnalyzeResponse } from './analyze';
 import { ModelParseError } from './errors';
+import { scriptUrl } from '../trusted-types';
+// `?worker&url`: Vite compila el worker aparte y da solo su URL, que pasa por la política de Trusted Types
+// (con `new Worker(new URL(…))` Vite crearía el worker con una cadena y la CSP lo bloquearía).
+import stlWorkerUrl from './stl.worker.ts?worker&url';
 
 /** Lo mínimo que se usa de un Worker (permite probarlo con un doble en Node). */
 export interface WorkerLike {
@@ -10,13 +14,13 @@ export interface WorkerLike {
 }
 
 function createStlWorker(): WorkerLike {
-  // Vite detecta esta forma exacta y empaqueta el worker como un archivo aparte.
-  return new Worker(new URL('./stl.worker.ts', import.meta.url), { type: 'module' });
+  return new Worker(scriptUrl(stlWorkerUrl), { type: 'module' });
 }
 
 interface Pending {
   resolve: (result: AnalyzedStl) => void;
   reject: (error: Error) => void;
+  onProgress?: (percent: number) => void;
 }
 
 /**
@@ -35,7 +39,7 @@ export class StlAnalyzer {
   constructor(private readonly createWorker: () => WorkerLike = createStlWorker) {}
 
   /** Lee y mide el modelo. El buffer se transfiere al worker: no se debe reutilizar después. */
-  analyze(buffer: ArrayBuffer, fileName?: string): Promise<AnalyzedStl> {
+  analyze(buffer: ArrayBuffer, fileName?: string, onProgress?: (percent: number) => void): Promise<AnalyzedStl> {
     const worker = this.ensureWorker();
     if (!worker) {
       // Sin worker se analiza en el hilo principal. Un 3MF se descomprime de forma asíncrona, así que podrían
@@ -44,14 +48,14 @@ export class StlAnalyzer {
       const controller = new AbortController();
       this.mainAbort = controller;
       this.mainRunning++;
-      return analyzeModel(buffer, fileName, controller.signal).finally(() => {
+      return analyzeModel(buffer, fileName, controller.signal, (fraction) => onProgress?.(Math.floor(fraction * 100))).finally(() => {
         this.mainRunning--;
         if (this.mainAbort === controller) this.mainAbort = null;
       });
     }
     const id = this.nextId++;
     return new Promise<AnalyzedStl>((resolve, reject) => {
-      this.pending.set(id, { resolve, reject });
+      this.pending.set(id, onProgress ? { resolve, reject, onProgress } : { resolve, reject });
       worker.postMessage(fileName === undefined ? { id, buffer } : { id, buffer, fileName }, [buffer]);
     });
   }
@@ -101,6 +105,10 @@ export class StlAnalyzer {
   private onMessage(response: AnalyzeResponse): void {
     const pending = this.pending.get(response.id);
     if (!pending) return;
+    if ('progress' in response) {
+      pending.onProgress?.(response.progress);
+      return;
+    }
     this.pending.delete(response.id);
     if (response.ok) {
       pending.resolve(response.result);

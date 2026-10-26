@@ -233,6 +233,10 @@ export const es = {
   // ── Carga de archivos ──
   'load.reading': 'Leyendo «{name}»…',
   'load.reading.announce': 'Leyendo {name}…',
+  'load.progress': 'Progreso del análisis',
+  'load.progress.value': '{percent} %',
+  'load.cancel': 'Cancelar',
+  'load.cancelled': 'Análisis de «{name}» cancelado.',
   'load.done': 'Pieza cargada: {name}.',
   'load.failed.title': 'No se ha podido leer «{name}»',
   'load.tooBig.title': '«{name}» es demasiado grande',

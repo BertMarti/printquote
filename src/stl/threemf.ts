@@ -3,6 +3,7 @@ import type { Params } from '../i18n/interpolate';
 import { ModelParseError } from './errors';
 import { MAX_TRIANGLES, MAX_TRIANGLES_TEXT } from './limits';
 import type { Mesh } from './types';
+import type { ProgressFn } from './progress';
 import { attributes, scanXml } from './xml';
 import { readZipDirectory, readZipEntry, zipKey, type ZipEntry } from './zip';
 
@@ -261,11 +262,12 @@ function scale(factor: number): Matrix {
  * apuntan a otros archivos `.model` del ZIP (extensión de producción, que usan Bambu Studio y
  * PrusaSlicer).
  */
-export async function parse3mf(data: ArrayBuffer | Uint8Array): Promise<Mesh> {
+export async function parse3mf(data: ArrayBuffer | Uint8Array, onProgress?: ProgressFn): Promise<Mesh> {
   const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
   if (bytes.byteLength === 0) fail('err.empty');
 
   const entries = readZipDirectory(bytes);
+  onProgress?.(0.1);
   const decoder = new TextDecoder('utf-8');
   const read = async (entry: ZipEntry): Promise<string> => decoder.decode(await readZipEntry(bytes, entry));
 
@@ -304,6 +306,7 @@ export async function parse3mf(data: ArrayBuffer | Uint8Array): Promise<Mesh> {
       triangles += object.mesh.triangles.length / 3;
       if (triangles > MAX_3MF_TRIANGLES) fail('err.3mf.tooManyTriangles', { max: MAX_TRIANGLES_TEXT });
       instances.push({ mesh: object.mesh, matrix: composeMatrix(toRoot, scale(root.unit)) });
+      onProgress?.(0.1 + Math.min(0.4, triangles / Math.max(MAX_3MF_TRIANGLES, triangles) * 0.4));
     }
     for (const component of object.components) {
       const target = component.path ? await load(component.path) : file;
@@ -325,7 +328,9 @@ export async function parse3mf(data: ArrayBuffer | Uint8Array): Promise<Mesh> {
     }
   }
 
-  return meshFromInstances(instances);
+  const mesh = meshFromInstances(instances);
+  onProgress?.(1);
+  return mesh;
 }
 
 function meshFromInstances(instances: readonly Instance[]): Mesh {

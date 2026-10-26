@@ -673,9 +673,12 @@ input {
   font-family: var(--font-mono);
   font-size: 13px;
   overflow-wrap: anywhere;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
 }
 
-.stage-loading::before {
+.stage-loading-text::before {
   content: '';
   display: inline-block;
   width: 8px;
@@ -683,6 +686,36 @@ input {
   margin-right: 10px;
   background: var(--accent);
   animation: pq-blink 1s steps(2, jump-none) infinite;
+}
+
+/* `display: flex` taparía el atributo hidden: sin esto el cajetín se quedaría encima de la pieza ya cargada. */
+.stage-loading[hidden] {
+  display: none;
+}
+
+.stage-loading-text {
+  margin: 0;
+}
+
+.load-progress {
+  width: 100%;
+  height: 6px;
+  border: 1px solid var(--bg);
+  box-sizing: border-box;
+}
+
+.load-progress-bar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 120ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .load-progress-bar { transition: none; }
 }
 
 @keyframes pq-blink {

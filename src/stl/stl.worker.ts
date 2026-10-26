@@ -11,5 +11,5 @@ interface WorkerScope {
 const scope = self as unknown as WorkerScope;
 
 scope.addEventListener('message', (event) => {
-  void handleAnalyzeRequest(event.data).then(({ response, transfer }) => scope.postMessage(response, transfer));
+  void handleAnalyzeRequest(event.data, (progress) => scope.postMessage({ id: event.data.id, progress }, [])).then(({ response, transfer }) => scope.postMessage(response, transfer));
 });
