@@ -86,7 +86,7 @@ Detalles a tener en cuenta:
 
 ### STL
 
-Se aceptan STL **binarios y de texto (ASCII)**; printquote los distingue solo. El STL no guarda unidades, así que printquote **asume que está en milímetros**, que es lo habitual. Si no lo está, mira [Preguntas frecuentes](#15-preguntas-frecuentes-y-solución-de-problemas).
+Se aceptan STL **binarios y de texto (ASCII)**; printquote los distingue solo. El STL no guarda unidades, así que printquote **asume que está en milímetros**, que es lo habitual. Si no lo está, mira [Preguntas frecuentes](#16-preguntas-frecuentes-y-solución-de-problemas).
 
 ### OBJ
 
@@ -158,7 +158,7 @@ Debajo pueden aparecer **avisos**. Ninguno bloquea el cálculo; son advertencias
 | **Malla abierta** («La malla parece abierta o con huecos…») | La pieza tiene agujeros en su superficie, como una caja sin tapa. El volumen, el peso y el precio pueden no ser fiables. | Repara la malla en tu laminador o editor 3D (la mayoría tienen una opción de «reparar»). |
 | **Normales invertidas** («Las normales parecen invertidas…») | Las caras de la pieza «miran hacia dentro». printquote usa el valor absoluto del volumen, así que el cálculo suele salir bien. | Conviene revisar la malla, pero normalmente no cambia el presupuesto. |
 | **No cabe en la cama** («…no cabe en la cama de … ni siquiera girándola») | La pieza es mayor que la cama configurada. Se permite girarla 90° en horizontal. | Comprueba las medidas de la cama (bloque 03), reduce la pieza o divídela en partes. |
-| **Pieza diminuta** («La pieza mide solo … mm en su lado mayor…») | Ningún lado supera 1 mm. Casi seguro el STL o el OBJ se exportó en **metros** u otra unidad. | Vuelve a exportarlo en milímetros. Más detalles en [las preguntas frecuentes](#15-preguntas-frecuentes-y-solución-de-problemas). |
+| **Pieza diminuta** («La pieza mide solo … mm en su lado mayor…») | Ningún lado supera 1 mm. Casi seguro el STL o el OBJ se exportó en **metros** u otra unidad. | Vuelve a exportarlo en milímetros. Más detalles en [las preguntas frecuentes](#16-preguntas-frecuentes-y-solución-de-problemas). |
 | **Polígonos de más de 200 vértices** («El OBJ tiene polígonos de más de 200 vértices (n)…») | Solo en OBJ. Las caras de más de 200 vértices se dividen en abanico, que solo es correcto si son convexas; si alguna es cóncava, la superficie, el peso y la vista 3D pueden salir mal. Las de hasta 200 se dividen bien aunque sean cóncavas. | Vuelve a exportar el modelo con las caras triangulares (en Blender, el modificador «Triangulate»; en otros programas, «Triangular caras»). |
 
 Si la pieza está abierta *y además* tiene las normales invertidas, solo se muestra el aviso de malla abierta.
@@ -301,7 +301,7 @@ El texto copiado y la hoja impresa muestran el total **sin IVA** (es la base imp
 
 El bloque **08 Presupuestos** (plegado por defecto; el número entre paréntesis es cuántos tienes guardados) recuerda tus presupuestos en este navegador, para repetirlos o llevarlos a una hoja de cálculo:
 
-1. Con una pieza cargada, escribe el **cliente** si quieres (opcional; solo se ve en el historial y en el CSV, no sale en el PDF) y pulsa **Guardar este presupuesto** (o Intro en el campo del cliente).
+1. Con una pieza cargada, escribe el **cliente** si quieres (opcional; aparece en el historial, en el CSV y en el PDF) y pulsa **Guardar este presupuesto** (o Intro en el campo del cliente).
 2. Cada presupuesto aparece en la lista con la pieza, la fecha, el cliente, el material y el total (sin IVA, tal como salió).
 3. **Abrir** (en una pieza) restaura todos los parámetros (material, precios, impresora, relleno, copias…) y el cliente. El archivo 3D **no se guarda**: si no hay pieza cargada, arrastra la pieza para recalcular; si ya hay una, se recalcula con ella (el total puede diferir del guardado si la pieza es otra).
 4. **Borrar** quita un presupuesto; **Borrar todos** pide confirmar con un segundo clic.
@@ -343,27 +343,37 @@ Todos son opcionales: puedes descargar el PDF aunque no hayas rellenado nada. El
 
 **Numeración.** Al descargar cada PDF, el número del siguiente presupuesto **sube solo** y conserva los ceros: `2026-009` pasa a `2026-010` y `PQ7`, a `PQ8`. Si el número no lleva ninguna cifra, se le añade `-2`. Puedes cambiarlo a mano cuando quieras. printquote no comprueba duplicados ni guarda un historial.
 
+### Tus datos
+
+El bloque **09 Tus datos** permite **Exportar ajustes** a un archivo JSON e **Importar ajustes** desde otro navegador u ordenador. El archivo exportado por printquote incluye los ajustes, tus impresoras, tus materiales y los datos del negocio, incluido el logotipo si lo tienes. Importar reemplaza las partes que sí vengan en el archivo; si falta alguna, esa parte se queda como estaba. Los presupuestos guardados y el lote en curso no forman parte de este archivo: el historial se exporta aparte en CSV.
+
 ### Descargar el PDF
 
 Pulsa **«Descargar PDF»** (en su propia fila, debajo de «Copiar presupuesto» e «Imprimir»). El archivo se llama `presupuesto-2026-001.pdf` (con el número del presupuesto; en inglés, `quote-2026-001.pdf`) y se genera en tu navegador. La primera vez tarda un instante porque se descarga el generador de PDF.
 
-El PDF es de **una página A4** y contiene:
+El PDF de una pieza ocupa **una página A4** y contiene:
 
 1. Cabecera con el nombre y el logotipo del negocio, y el **número**, la **fecha** de hoy y la fecha hasta la que es **válido**.
 2. Los datos del emisor: NIF/CIF, dirección, teléfono, correo y web.
-3. La vista 3D de la pieza y sus datos: archivo, dimensiones, volumen, material y precio por kilo, relleno y perímetros.
-4. El desglose: copias, peso total, tiempo (estimación), material, energía, subtotal, margen y, si hay más de una copia, el precio por copia sin IVA.
-5. **Base imponible**, **IVA** y **Total con IVA**, y las notas de que el tiempo es una estimación y de la validez.
+3. La vista 3D de la pieza y sus datos: archivo, dimensiones, volumen, material, relleno y perímetros.
+4. Un **Resumen** con el peso, el tiempo estimado, el precio por copia si hay varias copias, la base imponible, el IVA y el total con IVA.
+5. El cliente, si lo has escrito, y las notas del negocio, además de las notas de que el tiempo es una estimación y de la validez.
+
+El PDF de un lote puede ocupar **varias páginas**. Incluye una tabla con todas las piezas, repite su cabecera cuando cambia de página y muestra «Página n de N». El IVA se calcula una sola vez sobre la suma del lote. No lleva vista 3D.
+
+Por defecto, el PDF no muestra tus costes internos. Si marcas **«Mostrar el desglose de costes en el PDF (material, energía y margen)»** en «07 Datos del negocio», el título «Resumen» pasa al desglose y aparecen el material, la energía, el subtotal, el margen y el precio por kilo, además del resto de datos.
+
+El pie dice «Generado con printquote», el número de versión (por ejemplo, 1.0.0) y la dirección de la web.
 
 El idioma del PDF es el que tengas activo en la interfaz.
 
 **El IVA.** La base imponible es el total que ves en el panel. La cuota se calcula como base × tipo y se **redondea a céntimos**; el total con IVA es siempre base + cuota, como en una factura. Con la pieza de ejemplo (1,59 €) y el 21 %: IVA 0,33 € y total 1,92 €. Con un 10,55 %: IVA 0,17 € y total 1,76 €. El tipo se rotula en el PDF tal como lo escribiste (por ejemplo «IVA (10,55 %)»).
 
-**Límites del PDF** (todo ello, para que quepa siempre en una página):
+**Límites del PDF**:
 
 - **Alfabetos.** El PDF incrusta las fuentes Noto Sans y JetBrains Mono (licencia libre OFL), que cubren el latino (español, polaco, turco, rumano, checo…), el **griego** y el **cirílico**. Las letras latinas que faltan (vietnamita, por ejemplo) se transcriben sin marcas, y el resto (chino, japonés, árabe, emojis…) salen como «**?**». Los caracteres invisibles se eliminan. Las fuentes se descargan la primera vez que pulsas «Descargar PDF» (unos 230 kB) y hace falta conexión en ese momento.
 - **Dirección.** El bloque del emisor (NIF, dirección, teléfono, correo y web) ocupa como máximo **10 líneas** en el PDF; si tu dirección es tan larga que se pasa, lo que sobra se corta y la última línea acaba en «...». Escribe la dirección de forma breve, en pocas líneas. El formulario admite hasta 200 caracteres.
-- Un solo folio; sin campo de cliente (no hay un espacio para el nombre de quien recibe el presupuesto).
+- El PDF de una pieza es de un folio. El PDF del lote puede tener varios, con «Página n de N».
 - Si algo falla al generarlo, verás «No se ha podido crear el PDF» y puedes usar **Imprimir** y guardar la hoja como PDF.
 
 ## 11. Cómo se calcula (con un ejemplo completo)
@@ -430,8 +440,10 @@ Y una vez imprimida la pieza, compara el peso real en una báscula con el de pri
 
 - El archivo (STL, OBJ o 3MF) se lee con las funciones de tu navegador y se procesa **en tu equipo**. No hay servidor que lo reciba: la web es estática.
 - No hay analítica, ni cookies, ni cuentas.
-- Se guardan **solo tus preferencias** en el almacenamiento local de tu navegador (`localStorage`), para que estén ahí la próxima vez: los ajustes (material, precios, impresora, relleno, etc.), el idioma y los **datos del negocio** (incluido el logotipo, ya reducido y el número del próximo presupuesto). El archivo 3D y el presupuesto no se guardan. Los **enlaces** para compartir solo llevan parámetros de cálculo (ver [Compartir los parámetros con un enlace](#compartir-los-parámetros-con-un-enlace)). Los **presupuestos guardados** del historial (pieza, cliente, parámetros y resultado; nunca el archivo 3D) también se quedan solo aquí, y se borran uno a uno o todos desde el bloque 07. Puedes borrar los ajustes con «Restablecer valores por defecto», los datos del negocio con «Borrar los datos del negocio», o todo limpiando los datos del sitio en tu navegador.
+- Se guarda en el almacenamiento local de tu navegador (`localStorage`), siempre en este navegador: los ajustes (material, precios, impresora, relleno, etc.), el idioma, los **datos del negocio** (incluido el logotipo ya reducido y el número del próximo presupuesto), tus perfiles de **«Mis impresoras» y «Mis materiales»**, el historial de presupuestos del bloque **08 Presupuestos**, el lote en curso y la marca de que ya has visto la bienvenida. El archivo 3D no se guarda; los presupuestos guardados sí (pieza, cliente, parámetros y resultado, nunca la geometría). Los **enlaces** para compartir solo llevan parámetros de cálculo (ver [Compartir los parámetros con un enlace](#compartir-los-parámetros-con-un-enlace)). Puedes borrar partes desde sus propios bloques, o abrir **«09 Tus datos»** y pulsar **«Borrar mis datos»**: elimina solo lo que printquote guarda con su prefijo y no los datos de otras webs.
 - Al pulsar «Copiar presupuesto», «Imprimir» o «Descargar PDF», el texto, la hoja o el PDF se quedan en tu equipo; printquote no envía nada (el PDF se genera en tu navegador).
+
+**¿Qué versión uso?** Al final de la ficha, debajo de **«09 Tus datos»**, está el colofón: «printquote» con el número de versión (por ejemplo, 1.0.0), «Software libre con licencia MIT» y el enlace **«Código fuente, novedades y avisos»** al repositorio de GitHub, donde están las novedades de cada versión y cómo avisar de un problema de seguridad.
 
 ## 14. Cambiar el idioma
 

@@ -1,10 +1,10 @@
 # Seguridad
 
-printquote es una web estática: el archivo 3D se lee **en tu navegador** y nunca se sube a ningún servidor. No hay cuentas, ni cookies, ni analítica; los ajustes, los datos del negocio y el historial se guardan solo en el `localStorage` de tu navegador.
+printquote es una web estática: el archivo 3D se lee **en tu navegador** y nunca se sube a ningún servidor. No hay cuentas, ni cookies, ni analítica. En el `localStorage` de tu navegador se guardan los ajustes, el idioma, los datos del negocio (incluido el logotipo), los perfiles de «Mis impresoras» y «Mis materiales», el historial de presupuestos, el lote en curso y la marca de que ya has visto la bienvenida. El archivo 3D no se guarda.
 
 ## Versiones con soporte
 
-Solo la versión publicada en <https://bertmarti.github.io/printquote/> (rama `main`).
+Tiene soporte la versión publicada en <https://bertmarti.github.io/printquote/> (la 1.x, rama `main`).
 
 ## Cómo avisar de una vulnerabilidad
 
