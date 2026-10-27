@@ -1,4 +1,5 @@
 import { DEFAULT_VAT_PERCENT } from './tax';
+import { isSafePng } from './png';
 
 /** Datos del negocio que salen en el PDF. Se guardan solo en este navegador. */
 export interface BusinessProfile {
@@ -70,9 +71,9 @@ export const DEFAULT_BUSINESS: BusinessProfile = {
 
 const LOGO_DATA_URL = /^data:image\/(png|jpeg);base64,[A-Za-z0-9+/]+=*$/;
 
-/** ¿Es un logotipo aceptable para guardar y para el PDF (PNG o JPEG en base64 y de tamaño razonable)? */
+/** ¿Es un logotipo aceptable para guardar y para el PDF (PNG o JPEG en base64, de tamaño razonable y, si es PNG, sin medidas enormes)? */
 export function isValidLogo(value: unknown): value is string {
-  return typeof value === 'string' && value.length <= MAX_LOGO_DATA_URL_CHARS && LOGO_DATA_URL.test(value);
+  return typeof value === 'string' && value.length <= MAX_LOGO_DATA_URL_CHARS && LOGO_DATA_URL.test(value) && isSafePng(value);
 }
 
 /** Quita caracteres de control (salvo saltos de línea si `multiline`), recorta y limita la longitud. */

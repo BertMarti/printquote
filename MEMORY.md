@@ -1,7 +1,14 @@
 # MEMORY.md · printquote
-Última actualización: 2026-10-26 por Claude (jefe del repo en la fase 3, rama `fase3-2026-10-25`)
+Última actualización: 2026-10-26 por Claude (jefe del repo en la fase 5, rama `v1-2026-10-26`)
 
 ## Estado actual
+
+### v1.0.0 (fase 5, 26/10/2026, rama `v1-2026-10-26`, PR abierta sin fusionar; la release y la etiqueta las crea el orquestador)
+- **Versión con una sola fuente**: `package.json` → `define: { __APP_VERSION__ }` en `vite.config.ts` → `APP_VERSION` en `src/version.ts` (con respaldo `'0.0.0'` si no hay `define`). La usan el colofón (`section.colophon` con `aria-label` al final del `<form>`; no `<footer>`, porque dentro de `<aside>`/`<form>` tiene rol genérico y axe prohíbe ahí `aria-label`; `#app-version` lo rellena `startApp`) y el pie del PDF (`pdf.footer` con `{version}`). `tests/version.test.ts` comprueba package.json, lockfile, PDF y colofón. Para subir de versión: `npm version X.Y.Z --no-git-tag-version` y CHANGELOG; nada más.
+- **Logotipo PNG**: `src/quote/png.ts` lee las medidas de la cabecera IHDR sin descodificar; `isValidLogo` y `embedImage` del PDF rechazan PNG de más de 2048 × 2048 píxeles o de más de 4096 por lado (la app guarda el logotipo a 400 px como mucho) (pdf-lib descomprime los PNG enteros; los JPEG los copia tal cual, por eso no se miran).
+- **Importar**: `saveSettings` devuelve `boolean` como `saveBusiness`/`saveProfiles`; si alguno falla, el estado añade `data.imported.unsaved`.
+- **Historial**: `normalizePart` exige resultados `>= 0`.
+- Revisión cruzada de Luna (`--agent plan`): 16 hallazgos. Comprobados uno a uno: falso el de rutas `/favicon.svg` (Vite las reescribe a `/printquote/` en el build: lo comprueba la prueba de integración); el de memoria con 6,3 M triángulos ya lo midió Fable en la fase 2; el de `getItem` que lanza se descartó en la fase 2. Tope de vértices en OBJ/3MF y medidas absurdas, a `PLAN.md` («Después de la 1.0»), severidad baja.
 
 ### v0.10.0 (fase 3, 25–26/10/2026, rama `fase3-2026-10-25`, PR #68 abierta sin fusionar)
 - **Trusted Types**: la CSP lleva `require-trusted-types-for 'script'` y `trusted-types printquote`. `trusted-types 'none'` no vale: en Chromium `new Worker(url)` y `navigator.serviceWorker.register(url)` son sumideros de `TrustedScriptURL` y fallan con una cadena (comprobado: «This document requires 'TrustedScriptURL' assignment»). La única política (`src/trusted-types.ts`, `scriptUrl()`) solo crea URL de script del mismo origen bajo `BASE_URL`; sin la API (Firefox, Node) se comprueba igual y se usa la cadena. Sin `'allow-duplicates'`: la política se crea una sola vez (en caché del módulo). El worker se importa con `?worker&url`: con `new Worker(new URL(…, import.meta.url))` Vite pasaría una cadena y no se puede envolver sin que Vite deje de detectarlo. three.js, pdf-lib y Vite no usan sumideros de HTML (`grep` del bundle: 0 `innerHTML`).
@@ -288,3 +295,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-10-01 builder · Claude Code Sonnet (agent/builder/54-lote-imprimir): #54 imprimir el lote (`renderBatchSheet`, `syncPrint`), versión 0.7.0, CHANGELOG, MEMORY limpia de pendientes cerrados.
 - 2026-10-24 Claude Opus 5.5 (jefe) con GPT-5.6 Luna y Zen (mejoras-2026-10-24): noche de mejoras: seguridad (límites, cancelación, CSP, gitleaks, audit, Dependabot, SECURITY.md), UI del estado vacío y reencuadre, README de usuario + DESARROLLO.md, PLAN.md, `.claude/`, tests, versión 0.8.0. PR abierto sin fusionar.
 - 2026-10-26 Claude Opus 5.5 (jefe) con GPT-5.6 Luna y Zen (fase3-2026-10-25): Trusted Types, prueba de integración en Chrome (local y CI), progreso del análisis con «Cancelar», lotes de v0.6 con «Abrir», capturas regeneradas, versión 0.10.0. PR #68 sin fusionar.
+- 2026-10-26 Claude Opus 5.5 (jefe) con GPT-5.6 Luna (v1-2026-10-26): versión 1.0.0 (colofón y pie del PDF con la versión), logotipo PNG con medidas enormes rechazado, aviso al importar sin poder guardar, historial sin importes negativos, USO/SECURITY fieles, CHANGELOG 1.0.0 y PLAN «Después de la 1.0». PR sin fusionar.

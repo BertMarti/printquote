@@ -32,6 +32,7 @@ Web que calcula el presupuesto de una pieza de impresión 3D: arrastras un STL, 
 - `src/ui/batch.ts` bloque «06 Lote» (instantáneas por pieza, persistidas; recibe un `BatchHost`, no importa `app.ts`). El bloque 07 es «Datos del negocio», el 08 «Presupuestos» y el 09 «Tus datos» (`src/ui/data-ui.ts`: exportar/importar y «Borrar mis datos»). Perfiles propios en `src/ui/profiles-ui.ts` (bloques 02 y 03).
 - `src/ui/demo.ts` modo demo: guion `DEMO_STEPS` en datos y su control; no importa `app.ts`, recibe un `DemoHost` (ver «Modo demo»).
 - `public/samples/` pieza de ejemplo original.
+- `src/version.ts` versión de la app (la pone Vite desde `package.json`): colofón al final de la ficha y pie del PDF. Para cambiarla basta `npm version X.Y.Z --no-git-tag-version`.
 - `tests/` pruebas unitarias.
 
 ## Seguridad y privacidad (obligatorio)

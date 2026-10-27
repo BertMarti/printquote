@@ -4,6 +4,35 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 
 ## [Sin publicar]
 
+## [1.0.0] - 2026-10-26
+
+**Primera versión estable.** Reúne todo lo hecho desde la v0.7.0, la última publicada: las versiones 0.8.0, 0.9.0 y 0.10.0 no salieron como release y sus novedades llegan juntas ahora (el detalle está en sus entradas, más abajo). No queda nada a medias en la interfaz ni fallos conocidos de severidad media o alta.
+
+### El camino desde la v0.7.0
+
+- **Más seguro (0.8.0 y 0.10.0)**: límites comunes para STL, OBJ y 3MF (300 MB y 6 300 000 triángulos) que cortan antes de agotar la memoria; abrir otro archivo cancela el análisis anterior; política de seguridad de contenidos (CSP) estricta, sin scripts ni estilos en línea, y **Trusted Types**, que protegen también al resto de webs de `bertmarti.github.io`.
+- **Más fácil de usar (0.9.0)**: primera visita guiada con pieza de ejemplo, ayuda «?» en cada ajuste técnico, **Mis impresoras** y **Mis materiales**, copia de los ajustes en un archivo (exportar e importar) y **Borrar mis datos**.
+- **Pensado para tus clientes (0.9.0)**: el PDF lleva el nombre del cliente y tus notas (plazo, forma de pago…) y, por defecto, ya no enseña tus costes ni tu margen; una casilla recupera el desglose.
+- **Archivos grandes (0.10.0)**: barra de progreso con el porcentaje real y botón **Cancelar**; mallas de millones de triángulos sueltos que antes daban «error inesperado» se analizan sin problemas.
+- **Datos a salvo**: lo guardado en el navegador se valida al leerlo y, si algo está dañado o manipulado, la app arranca con los valores por defecto y lo avisa; los lotes guardados con la versión 0.6 se vuelven a abrir.
+- **Probado en un navegador de verdad**: cada cambio pasa por una prueba de la web compilada en Chrome (pieza de ejemplo, visor 3D, PDF, modo sin conexión y cero violaciones de seguridad), además de más de 600 pruebas automáticas.
+- **Documentación**: README pensado para quien usa la app, guía de uso al día y política de seguridad.
+
+### Añadido
+
+- **Colofón con la versión** al final de la ficha (debajo de «09 Tus datos»): «printquote 1.0.0 · Software libre con licencia MIT» y el enlace «Código fuente, novedades y avisos» al repositorio. La versión sale de `package.json` (`src/version.ts`).
+- El pie del PDF dice con qué versión se generó («Generado con printquote 1.0.0 · bertmarti.github.io/printquote»).
+
+### Seguridad
+
+- Un logotipo PNG con medidas enormes (una «bomba de descompresión»: pocos bytes que ocupan gigas al abrirlos) ya no se acepta al leer los datos del negocio ni al importar un archivo de ajustes, y el PDF tampoco lo incrusta: antes podía agotar la memoria de la pestaña al pulsar «Descargar PDF».
+- El historial descarta al leerlo las entradas con importes, peso o tiempo negativos (no los produce ningún cálculo: son datos manipulados).
+
+### Corregido
+
+- Importar ajustes en un navegador que no deja guardar (sin espacio o en modo privado) decía «Ajustes importados.» aunque se perdían al recargar; ahora lo avisa.
+- Guía de uso (`docs/USO.md`) y `SECURITY.md` al día: el cliente sí sale en el PDF, el PDF de un lote ocupa varias páginas, qué guarda la app en el navegador y desde qué bloque se borra, y enlaces internos que apuntaban a una sección renumerada.
+
 ## [0.10.0] - 2026-10-26
 
 Fase 3: más protección para todas las webs del origen compartido, una prueba del build en un navegador de verdad en cada PR y una carga de archivos grandes que se ve y se puede parar.
@@ -191,7 +220,8 @@ Primera versión: el MVP.
 - **Revisión de QA** (PR #2): parser ASCII byte a byte, soldado de vértices con tolerancia, lectura en un Web Worker, three.js cargado bajo demanda, regiones vivas accesibles, Open Graph y tests de interfaz (57 → 132 tests).
 - **Documentación** (PR #4): guía de uso (`docs/USO.md`) y guía de contribución (`CONTRIBUTING.md`).
 
-[Sin publicar]: https://github.com/BertMarti/printquote/compare/v0.10.0...HEAD
+[Sin publicar]: https://github.com/BertMarti/printquote/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/BertMarti/printquote/compare/v0.7.0...v1.0.0
 [0.10.0]: https://github.com/BertMarti/printquote/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/BertMarti/printquote/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/BertMarti/printquote/compare/v0.7.0...v0.8.0

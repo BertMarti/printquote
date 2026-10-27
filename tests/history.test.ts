@@ -115,6 +115,7 @@ describe('normalizeHistory (lo que viene de localStorage no es de fiar)', () => 
       { ...good, id: 'total-nan', result: { ...good.result, total: 'x' } },
       { ...good, id: 'infinito', volumeMm3: Number.POSITIVE_INFINITY },
       { ...good, id: 'sin-resultado', result: undefined },
+      { ...good, id: 'negativo', result: { ...good.result, total: -5 } },
     ];
     expect(normalizeHistory(raw).map((e) => e.id)).toEqual(['good']);
   });

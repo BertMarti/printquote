@@ -41,6 +41,7 @@ import {
 } from './storage';
 import { setupProfiles } from './profiles-ui';
 import { setupData } from './data-ui';
+import { APP_VERSION } from '../version';
 
 const SAMPLE_FILE = 'soporte-movil.stl';
 export const LOAD_PROGRESS_DELAY_MS = 400;
@@ -168,6 +169,8 @@ export function startApp(demoScale = 1): void {
   let batch: ReturnType<typeof setupBatch> | null = null;
   /** El aviso se guarda como función para poder volver a pintarlo si cambia el idioma. */
   let noticeBuilder: (() => readonly [title: string, message: string]) | null = null;
+
+  byId('app-version').textContent = APP_VERSION;
 
   const analyzer = new StlAnalyzer();
   /** Cada carga recibe un número; si llega otra antes de terminar, el resultado viejo se descarta. */

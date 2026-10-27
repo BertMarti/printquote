@@ -229,6 +229,17 @@ describe('fase 2 en la interfaz completa', () => {
     expect(stored()).toEqual(['Nueva', 'Importada']);
   });
 
+  it('si el navegador no deja guardar lo importado, se aplica igual pero lo avisa', async () => {
+    start();
+    vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
+      throw new DOMException('lleno', 'QuotaExceededError');
+    });
+    chooseFile(backupFile(JSON.stringify({ app: 'printquote', v: 1, settings: { infillPercent: 35 } })));
+    await until(() => /importados/.test($('data-status').textContent ?? ''));
+    expect($('data-status').textContent).toMatch(/se perderán al recargar/);
+    expect($<HTMLInputElement>('in-infill').value).toBe('35');
+  });
+
   it('un archivo de otra aplicación no se importa', async () => {
     start();
     chooseFile(backupFile(JSON.stringify({ app: 'otra', v: 1 })));

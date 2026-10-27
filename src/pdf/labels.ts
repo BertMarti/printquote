@@ -1,4 +1,5 @@
 import { getLocale, tIn, type Lang } from '../i18n';
+import { APP_VERSION } from '../version';
 import type { PdfLabels } from './document';
 
 /** Textos fijos del PDF en un idioma (los de `i18n/*.ts`, claves `pdf.*`). */
@@ -41,7 +42,7 @@ export function pdfLabels(lang: Lang): PdfLabels {
     timeShort: t('pdf.timeShort'),
     amount: t('pdf.amount'),
     pageOf: t('pdf.pageOf'),
-    footer: t('pdf.footer'),
+    footer: tIn(lang, 'pdf.footer', { version: APP_VERSION }),
     pdfTitle: t('pdf.documentTitle'),
     language: getLocale(lang),
     dateLocale: getLocale(lang),

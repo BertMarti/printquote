@@ -64,11 +64,13 @@ export function loadSettings(): QuoteSettings {
   }
 }
 
-export function saveSettings(settings: QuoteSettings): void {
+/** Guarda los ajustes. Devuelve false si el navegador no deja (modo privado o almacenamiento lleno): la app sigue funcionando sin recordarlos. */
+export function saveSettings(settings: QuoteSettings): boolean {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    return true;
   } catch {
-    // Modo privado o almacenamiento lleno: la app sigue funcionando sin recordar ajustes.
+    return false;
   }
 }
 

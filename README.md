@@ -2,7 +2,7 @@
 
 ![printquote](docs/img/banner.svg)
 
-[![CI](https://github.com/BertMarti/printquote/actions/workflows/ci.yml/badge.svg)](https://github.com/BertMarti/printquote/actions/workflows/ci.yml) [![Despliegue](https://github.com/BertMarti/printquote/actions/workflows/deploy.yml/badge.svg)](https://github.com/BertMarti/printquote/actions/workflows/deploy.yml) [![Web](https://img.shields.io/badge/web-abrir_printquote-ff5a1f.svg)](https://bertmarti.github.io/printquote/) [![Licencia MIT](https://img.shields.io/badge/licencia-MIT-111111.svg)](LICENSE) [![Privacidad](https://img.shields.io/badge/privacidad-100%25_en_tu_navegador-111111.svg)](#tu-archivo-no-sale-de-tu-navegador)
+[![CI](https://github.com/BertMarti/printquote/actions/workflows/ci.yml/badge.svg)](https://github.com/BertMarti/printquote/actions/workflows/ci.yml) [![Despliegue](https://github.com/BertMarti/printquote/actions/workflows/deploy.yml/badge.svg)](https://github.com/BertMarti/printquote/actions/workflows/deploy.yml) [![Web](https://img.shields.io/badge/web-abrir_printquote-ff5a1f.svg)](https://bertmarti.github.io/printquote/) [![Versión](https://img.shields.io/github/package-json/v/BertMarti/printquote?label=versi%C3%B3n&color=ff5a1f)](CHANGELOG.md) [![Licencia MIT](https://img.shields.io/badge/licencia-MIT-111111.svg)](LICENSE) [![Privacidad](https://img.shields.io/badge/privacidad-100%25_en_tu_navegador-111111.svg)](#tu-archivo-no-sale-de-tu-navegador)
 
 ### [👉 Abrir printquote](https://bertmarti.github.io/printquote/)
 
@@ -45,7 +45,7 @@ printquote calcula un presupuesto aproximado para imprimir una pieza 3D: peso, t
 
 ## Tu archivo no sale de tu navegador
 
-El archivo 3D se lee y se procesa en tu propio dispositivo: no se sube a ningún servidor y no hay cuentas, cookies ni analítica. Los ajustes, tus perfiles, los datos del negocio, el lote y el historial se guardan **solo en este navegador**. Para quitarlo todo de golpe, abre **«09 Tus datos»** y pulsa **«Borrar mis datos»** (dos veces, para confirmar). Los límites son 300 MB por archivo y 6,3 millones de triángulos por pieza, para que la pestaña no se bloquee.
+El archivo 3D se lee y se procesa en tu propio dispositivo: no se sube a ningún servidor y no hay cuentas, cookies ni analítica. Los ajustes, el idioma, tus perfiles, los datos del negocio (incluido el logotipo), el lote, el historial y la marca de bienvenida se guardan **solo en este navegador**. Para quitarlo todo de golpe, abre **«09 Tus datos»** y pulsa **«Borrar mis datos»** (dos veces, para confirmar); solo borra lo de printquote. Los límites son 300 MB por archivo y 6,3 millones de triángulos por pieza, para que la pestaña no se bloquee.
 
 ## Presupuestar para tus clientes
 
@@ -88,7 +88,7 @@ Sí. Tras abrirla una vez con conexión puedes instalarla y usarla sin red. Tamb
 
 ### ¿Cómo paso mis ajustes a otro navegador?
 
-En **«09 Tus datos»** pulsa «Exportar ajustes»: se descarga un archivo `.json` con tus ajustes, perfiles y datos del negocio. En el otro navegador, «Importar ajustes» y elige ese archivo. Los presupuestos guardados se exportan aparte, en CSV, desde «08 Presupuestos».
+En **«09 Tus datos»** pulsa «Exportar ajustes»: se descarga un archivo `.json` con tus ajustes, perfiles y datos del negocio, incluido el logotipo si lo tienes. En el otro navegador, «Importar ajustes» y elige ese archivo. La importación reemplaza las partes que incluya el archivo; las que falten se quedan como estaban. Los presupuestos guardados se exportan aparte, en CSV, desde «08 Presupuestos».
 
 ### Me sale «Datos guardados descartados». ¿Qué ha pasado?
 
