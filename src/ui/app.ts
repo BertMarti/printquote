@@ -859,8 +859,9 @@ export function startApp(demoScale = 1): void {
         const bytes = await renderQuotePdf(build(), fonts);
         const name = pdfFileName(issuer);
         download(new Blob([bytes as BlobPart], { type: 'application/pdf' }), name);
-        if (issuer.autoNumber) {
-          // El número sube solo tras descargar: el siguiente presupuesto ya sale con el nuevo.
+        // El número sube solo tras descargar: el siguiente presupuesto ya sale con el nuevo. Si mientras se generaba
+        // se ha cambiado el número o se ha quitado la autonumeración, manda lo que se ha escrito.
+        if (issuer.autoNumber && business.autoNumber && business.quoteNumber === issuer.quoteNumber) {
           updateBusiness({ quoteNumber: nextQuoteNumber(issuer.quoteNumber) });
           syncBusiness();
           announce(t('pdf.done', { name, next: business.quoteNumber }));

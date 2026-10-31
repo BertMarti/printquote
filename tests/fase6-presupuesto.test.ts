@@ -171,6 +171,20 @@ describe('presupuesto 1.1', () => {
       expect($<HTMLInputElement>('in-biz-number').value).toBe(DEFAULT_BUSINESS.quoteNumber);
     });
 
+    it('si se cambia el número mientras se genera el PDF, no se pisa al terminar', async () => {
+      startApp();
+      type('in-biz-number', '2026-009');
+      $('sample-button').click();
+      await until(() => $('out-total').textContent !== '—');
+      $('pdf-button').click();
+      type('in-biz-number', 'A-1'); // durante la generación (asíncrona)
+      await until(() => downloads.length === 1);
+      await until(() => !$<HTMLButtonElement>('pdf-button').disabled);
+      expect(downloads).toEqual(['presupuesto-2026-009.pdf']);
+      expect(loadBusiness().quoteNumber).toBe('A-1');
+      expect($<HTMLInputElement>('in-biz-number').value).toBe('A-1');
+    });
+
     it('validez 0 se acepta sin error y tiene su pista accesible', () => {
       startApp();
       type('in-biz-validity', '0');
