@@ -1,7 +1,13 @@
 # MEMORY.md · printquote
-Última actualización: 2026-10-26 por Claude (jefe del repo en la fase 5, rama `v1-2026-10-26`)
+Última actualización: 2026-10-31 por Claude (jefe del repo en la fase 6, rama `v1.1-2026-10-31`)
 
 ## Estado actual
+
+### v1.1.0 (fase 6, 31/10/2026, rama `v1.1-2026-10-31`, PR sin fusionar; release y etiqueta las crea el orquestador)
+- **Datos del presupuesto**: el cliente y las notas del negocio ya existían (0.9). Nuevo: `BusinessProfile.autoNumber` (por defecto `true`; `false` → `quoteNumber` libre, puede ir vacío y no sube), validez mínima 0 (sin «Válido hasta» ni `noteValidity`), `#in-quote-notes` en el bloque 08 → `quoteNotes` del PDF (máx. 4 líneas, título `pdf.quoteNotes`) y `HistoryEntry.note?` (opcional, `cleanMultiline`, `NOTE_MAX` 300; una nota que no es texto se ignora sin descartar la entrada). Los datos de la v1.0 se leen sin avisos (sin `autoNumber` = `true`). El número solo sube si la autonumeración sigue activa y no se cambió mientras se generaba el PDF (hallazgo de la revisión cruzada). Notas que no caben → `newPage()`.
+- **Carga**: `afterFirstPaint` (rAF + `setTimeout(0)`, respaldo 1 s) para `supportsWebGL()` + `import()` del visor; `loadStarted` evita que el aviso «Sin vista 3D» tape una pieza que ya se abre. Probado también con dos fotogramas + `requestIdleCallback`: peor (visor más tarde, FCP igual), descartado. `preloadPdf()` pide `render-*.js` y `loadFonts()` a la vez y se dispara con `pointerenter`/`focus`/`touchstart` en los botones de PDF (la decisión de v0.6 de no precalentar el PDF al arrancar se mantiene: solo con intención). Medidas con `scripts/medir-carga.mjs` (en la Pi el primer contexto WebGL con SwiftShader tarda ~3 s; el script arranca la GPU en about:blank salvo `MEDIR_GPU_FRIA=1`). Resultados en CHANGELOG 1.1.0. En la Pi hay mucho ruido entre ejecuciones: comparar alternando builds (`MEDIR_SIN_PDF=1`, una ejecución cada vez).
+- **Estudiado y descartado**: fontkit es 570 kB de los 1,1 MB del chunk del PDF y viene preempaquetado en CommonJS (sin tree-shaking); WOFF2 no compensa (Pages ya sirve los TTF con gzip, 77 → 38 kB); separar los diccionarios es/en ahorraría ~8 kB gzip a cambio de un `t()` asíncrono.
+- **Mantenimiento**: `overrides.minimatch ^11.0.3` (GHSA-g3hv-75wg-m249, desarrollo); ESLint revisa los mismos archivos con la 10 y la 11. TypeScript 7 sigue bloqueado (`typescript-eslint` 8.72.1 pide `<6.1`); `@types/node` 26 compila pero se queda en 22 (línea del CI). Probado con Node 22.23 (`node-linux-arm64@22` en el scratchpad) y 20.19.
 
 ### v1.0.0 (fase 5, 26/10/2026, rama `v1-2026-10-26`, PR abierta sin fusionar; la release y la etiqueta las crea el orquestador)
 - **Versión con una sola fuente**: `package.json` → `define: { __APP_VERSION__ }` en `vite.config.ts` → `APP_VERSION` en `src/version.ts` (con respaldo `'0.0.0'` si no hay `define`). La usan el colofón (`section.colophon` con `aria-label` al final del `<form>`; no `<footer>`, porque dentro de `<aside>`/`<form>` tiene rol genérico y axe prohíbe ahí `aria-label`; `#app-version` lo rellena `startApp`) y el pie del PDF (`pdf.footer` con `{version}`). `tests/version.test.ts` comprueba package.json, lockfile, PDF y colofón. Para subir de versión: `npm version X.Y.Z --no-git-tag-version` y CHANGELOG; nada más.
@@ -239,7 +245,7 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-10-24 (Claude): `scripts/chrome.mjs` usa el `WebSocket` global (Node 22, como pide `engines`); con Node 20 hay que lanzarlo con `node --experimental-websocket`.
 
 ## Siguiente paso
-1. Alberto: revisar y fusionar el PR de `mejoras-2026-10-24` (v0.8.0); el despliegue a Pages es automático al entrar en `main`. Después, etiqueta `v0.8.0`. La hoja de ruta priorizada está en `PLAN.md`.
+1. Orquestador/Alberto: revisar y fusionar la PR de `v1.1-2026-10-31` y publicar la release v1.1.0 (texto en el informe). El despliegue a Pages es automático al entrar en `main`. La hoja de ruta está en `PLAN.md`.
 2. Pendiente de una persona (no automatizable aquí): probar con lector de pantalla real (NVDA/VoiceOver) el campo de copias del lote y los anuncios, y la hoja de impresión (de una pieza y de un lote) en Firefox y Safari y en una impresora real.
 3. Pendiente de una persona: releer `docs/USO.md` con calma y probar la calibración con su laminador real; los valores de partida (caudal, potencia) son orientativos.
 4. Ideas sin hacer: migración de esquema del lote persistido (si cambia se descarta). (Los lotes de v0.6 se abren desde 0.10.0.)
@@ -251,7 +257,7 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - El chunk del visor pesa ~560 kB (139 kB gzip) por three.js y el del PDF ~1,1 MB (507 kB gzip, pdf-lib + fontkit); ambos se cargan aparte con `import()` y `chunkSizeWarningLimit` está en 1200 kB.
 - Modelo de coste simplificado: no incluye soportes, balsa ni purga; la cáscara (área × grosor) sobreestima en piezas muy detalladas.
 - Los OBJ y 3MF no se han probado con archivos reales de laminadores (solo con los construidos en los tests y una prueba manual en Chrome).
-- PDF: una página; sin campo de cliente. Revisar el PDF impreso/abierto en distintos visores (solo se ha comprobado renderizado con PyMuPDF y la descarga en Chrome).
+- PDF: una página salvo que las notas no quepan (pasan a otra); con cliente y notas de este presupuesto desde 0.9/1.1. Revisar el PDF impreso/abierto en distintos visores (solo se ha comprobado renderizado con PyMuPDF/pdftoppm y la descarga en Chrome).
 - Las notas de impresora y demás textos están traducidos, pero `docs/USO.md` y el README siguen solo en español (documentación); los meta Open Graph del HTML servido también (en el navegador sí cambian). `docs/captura.png` y `public/og.png` se regeneraron con la interfaz de v0.2 (#22).
 - El bloque del emisor del PDF se recorta a 10 líneas por el final: una dirección muy larga puede tapar teléfono, correo y web (está documentado en `docs/USO.md`).
 - Mallas muy grandes (> 400 000 triángulos) no dibujan las aristas marcadas, por rendimiento. Con mallas grandes (< 400 000) el `EdgesGeometry` y las normales del visor se calculan aún en el hilo principal (unos cientos de ms de bloqueo tras la lectura).
@@ -296,3 +302,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-10-24 Claude Opus 5.5 (jefe) con GPT-5.6 Luna y Zen (mejoras-2026-10-24): noche de mejoras: seguridad (límites, cancelación, CSP, gitleaks, audit, Dependabot, SECURITY.md), UI del estado vacío y reencuadre, README de usuario + DESARROLLO.md, PLAN.md, `.claude/`, tests, versión 0.8.0. PR abierto sin fusionar.
 - 2026-10-26 Claude Opus 5.5 (jefe) con GPT-5.6 Luna y Zen (fase3-2026-10-25): Trusted Types, prueba de integración en Chrome (local y CI), progreso del análisis con «Cancelar», lotes de v0.6 con «Abrir», capturas regeneradas, versión 0.10.0. PR #68 sin fusionar.
 - 2026-10-26 Claude Opus 5.5 (jefe) con GPT-5.6 Luna (v1-2026-10-26): versión 1.0.0 (colofón y pie del PDF con la versión), logotipo PNG con medidas enormes rechazado, aviso al importar sin poder guardar, historial sin importes negativos, USO/SECURITY fieles, CHANGELOG 1.0.0 y PLAN «Después de la 1.0». PR sin fusionar.
+- 2026-10-31 Claude Opus 5.5 (jefe) con GPT-5.6 Luna (v1.1-2026-10-31): versión 1.1.0: autonumeración y validez opcionales, notas de este presupuesto (PDF e historial), notas que pasan de página, WebGL tras el primer pintado, precarga del PDF con la intención, `npm run medir`, `npm audit` a 0. PR sin fusionar.

@@ -119,7 +119,7 @@ describe('datos del negocio', () => {
     expect(dirty.phone).toBe('');
     expect(dirty.logo).toBeNull();
     expect(dirty.quoteNumber).toBe(DEFAULT_BUSINESS.quoteNumber);
-    expect(dirty.validityDays).toBe(1);
+    expect(dirty.validityDays).toBe(0);
     expect(dirty.vatPercent).toBe(100);
     expect(normalizeBusiness({ vatPercent: -3, validityDays: 9999 })).toMatchObject({ vatPercent: 0, validityDays: 365 });
   });

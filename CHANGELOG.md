@@ -4,6 +4,32 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 
 ## [Sin publicar]
 
+## [1.1.0] - 2026-10-31
+
+Pensada para quien vende impresiones: el PDF lleva los datos de cada encargo y la web arranca antes.
+
+### Añadido
+
+- **Notas de este presupuesto** («08 Presupuestos», junto al cliente): para lo que es solo de este encargo (color, plazo pactado, recogida). Salen en el PDF con el título «Notas», antes de las notas fijas del negocio, se guardan con «Guardar este presupuesto» o «Guardar lote» y vuelven al abrirlo. No se guardan solas ni van en el enlace para compartir.
+- **Numerar automáticamente** («07 Datos del negocio»): marcada por defecto, como hasta ahora (el número sube tras cada PDF). Sin marcar, el campo «Nº o referencia del presupuesto» es una referencia libre (por ejemplo, el nº de pedido del cliente) que se usa tal cual; si se deja vacía, el PDF sale sin número y el archivo se llama `presupuesto-AAAA-MM-DD.pdf`.
+- **Validez opcional**: con 0 días el PDF no lleva «Válido hasta» ni la nota de validez.
+- `npm run medir`: mide la carga de la web compilada en Chromium (escritorio, y móvil con CPU ×4 y red 4G lenta).
+
+### Cambiado
+
+- **La ficha aparece y responde antes**: la comprobación de WebGL (crear el primer contexto 3D bloquea la página mientras arranca la GPU) espera al primer pintado. Medido en Chromium sobre una Raspberry Pi 5, mediana de 5 cargas alternas: en móvil, DOMContentLoaded 1,96 s → 1,19 s, visor 3,13 s → 2,48 s y «interactiva» 3,24 s → 2,62 s; en escritorio, DOMContentLoaded 1,38 s → 0,44 s y tarea más larga 1,10 s → 0,73 s. Con la GPU sin arrancar, DOMContentLoaded pasa de 4,9 s a 0,5 s.
+- **El PDF se prepara antes**: el generador y las fuentes se piden a la vez (antes, en serie) y empiezan en cuanto pasas el puntero, enfocas o tocas «Descargar PDF» o «PDF del lote» (≈ 0,4 s menos tras el clic con red 4G lenta). Siguen sin descargarse si no se pide un PDF.
+- Si las notas no caben en la página, el PDF continúa en otra («Página n de N») en vez de pisar el pie.
+- Dependencias: three 0.187, eslint 10.14, typescript-eslint 8.72.1 y vitest 5.0.5.
+
+### Corregido
+
+- Si se cambiaba el número del presupuesto mientras se generaba el PDF, al terminar se sustituía por el siguiente del número anterior.
+
+### Seguridad
+
+- `npm audit` a 0: `minimatch` < 11.0.1 (GHSA-g3hv-75wg-m249, moderada, solo en las herramientas de desarrollo) se fuerza a la 11.0.3. TypeScript 7 y `@types/node` 26 se han vuelto a probar con Node 22.23: siguen aplazados (`typescript-eslint` aún pide TypeScript < 6.1; los tipos siguen la línea de Node del CI).
+
 ## [1.0.0] - 2026-10-26
 
 **Primera versión estable.** Reúne todo lo hecho desde la v0.7.0, la última publicada: las versiones 0.8.0, 0.9.0 y 0.10.0 no salieron como release y sus novedades llegan juntas ahora (el detalle está en sus entradas, más abajo). No queda nada a medias en la interfaz ni fallos conocidos de severidad media o alta.
@@ -221,6 +247,7 @@ Primera versión: el MVP.
 - **Documentación** (PR #4): guía de uso (`docs/USO.md`) y guía de contribución (`CONTRIBUTING.md`).
 
 [Sin publicar]: https://github.com/BertMarti/printquote/compare/v1.0.0...HEAD
+[1.1.0]: https://github.com/BertMarti/printquote/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/BertMarti/printquote/compare/v0.7.0...v1.0.0
 [0.10.0]: https://github.com/BertMarti/printquote/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/BertMarti/printquote/compare/v0.8.0...v0.9.0

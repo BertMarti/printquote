@@ -4,6 +4,7 @@ import { BATCH_MAX, computeBatch, makePart, type BatchPart } from './batch';
 import { computeQuote, wallThickness, type Quote } from './model';
 import { MATERIALS } from './materials';
 import { getPrinter } from './printers';
+import { cleanMultiline } from './business';
 import { normalizeSettings, type QuoteSettings } from './settings';
 
 /** Presupuestos que se guardan como máximo: protege el espacio de `localStorage` (≈ 1,1 kB por pieza: ≈ 27 kB un lote de 50; el máximo real depende del espacio libre). */
@@ -45,6 +46,7 @@ export interface HistoryEntry extends HistoryPart {
   /** Fecha y hora (ISO 8601, UTC). */
   readonly savedAt: string;
   readonly client: string;
+  readonly note?: string;
   readonly parts?: readonly HistoryPart[];
 }
 
@@ -56,11 +58,21 @@ export interface NewEntryInput {
   readonly quote: Quote;
   readonly now?: Date;
   readonly id?: string;
+  readonly note?: string;
 }
 
 /** Cliente en una sola línea y de longitud acotada. */
 function cleanClient(value: string): string {
   return value.replace(/\s+/g, ' ').trim().slice(0, CLIENT_MAX);
+}
+
+/** Notas de este presupuesto (como mucho este número de caracteres; admiten varias líneas). */
+export const NOTE_MAX = 300;
+
+/** `{ note }` limpia, o nada si está vacía o no es texto: así las entradas sin nota quedan como en la v1.0. */
+function noteField(value: unknown): { note?: string } {
+  const note = cleanMultiline(value, NOTE_MAX);
+  return note === '' ? {} : { note };
 }
 
 function newId(): string {
@@ -166,6 +178,7 @@ export function createEntry(input: NewEntryInput): HistoryEntry {
     id: input.id ?? newId(),
     savedAt: (input.now ?? new Date()).toISOString(),
     client: cleanClient(input.client),
+    ...noteField(input.note),
     ...toPart(input.fileName, input.stats, input.settings, input.quote),
   };
 }
@@ -175,6 +188,7 @@ export interface NewBatchEntryInput {
   readonly parts: readonly BatchPart[];
   readonly now?: Date;
   readonly id?: string;
+  readonly note?: string;
 }
 
 /** Entrada de un lote: cada pieza con sus ajustes y su resultado, y el agregado en el primer nivel (ver `HistoryEntry`). */
@@ -187,6 +201,7 @@ export function createBatchEntry(input: NewBatchEntryInput): HistoryEntry {
     id: input.id ?? newId(),
     savedAt: (input.now ?? new Date()).toISOString(),
     client: cleanClient(input.client),
+    ...noteField(input.note),
     fileName: input.parts.map((part) => part.fileName).join(', ').slice(0, FILE_NAME_MAX),
     volumeMm3: input.parts.reduce((acc, part) => acc + part.stats.volume, 0),
     size: { x: max('x'), y: max('y'), z: max('z') },
@@ -261,7 +276,8 @@ function normalizeEntry(raw: unknown): HistoryEntry | null {
   if (typeof id !== 'string' || id === '' || id.length > 100) return null;
   if (typeof savedAt !== 'string' || Number.isNaN(Date.parse(savedAt))) return null;
   if (typeof client !== 'string') return null;
-  const base = { id, savedAt, client: cleanClient(client), ...part };
+  // Una nota que no es texto se ignora (no descarta la entrada): las entradas de la v1.0 no la llevan.
+  const base = { id, savedAt, client: cleanClient(client), ...noteField(raw['note']), ...part };
   if (raw['parts'] === undefined) return base;
 
   const parts = normalizeParts(raw['parts']);

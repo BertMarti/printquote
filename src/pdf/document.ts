@@ -1,7 +1,8 @@
 import { getLang } from '../i18n';
 import { computeBatch, type BatchPart } from '../quote/batch';
 import type { BusinessProfile } from '../quote/business';
-import { validUntil } from '../quote/business';
+import { cleanMultiline, validUntil } from '../quote/business';
+import { NOTE_MAX } from '../quote/history';
 import { formatDuration, formatEuro, formatNumber } from '../quote/format';
 import { MATERIALS } from '../quote/materials';
 import type { Quote } from '../quote/model';
@@ -32,6 +33,7 @@ export interface PdfLabels {
   /** Título de la tabla cuando no se muestran los costes internos («Resumen»). */
   readonly summary: string;
   readonly client: string;
+  readonly quoteNotes: string;
   readonly weight: string;
   readonly time: string;
   readonly timeEstimate: string;
@@ -87,10 +89,14 @@ export interface QuoteDocument {
   /** Solo en un lote: la tabla de piezas (a todo el ancho y, si no cabe, en varias páginas). */
   readonly batch?: BatchTable;
   readonly notes: readonly string[];
+  readonly quoteNotes: readonly string[];
+  readonly quoteNotesTitle: string;
   readonly footer: string;
   /** «Página {n} de {total}», con los marcadores sin rellenar. */
   readonly pageOf: string;
   readonly metadata: { readonly title: string; readonly author: string; readonly language: string };
+  /** Nº o referencia para la cabecera; vacío si no hay (sin autonumeración y campo vacío): entonces `meta` no lo lleva. */
+  readonly numberText: string;
   readonly date: Date;
 }
 
@@ -104,6 +110,8 @@ export interface QuoteDocumentInput {
   readonly image: string | null;
   /** Nombre del cliente (opcional; el del bloque «Presupuestos»). */
   readonly client?: string;
+  /** Notas específicas de este presupuesto, no persistidas como datos del negocio. */
+  readonly quoteNotes?: string;
   readonly date?: Date;
   readonly labels?: PdfLabels;
 }
@@ -111,11 +119,9 @@ export interface QuoteDocumentInput {
 /** Nº, fecha, validez y, si lo hay, el cliente. */
 function metaRows(business: BusinessProfile, labels: PdfLabels, date: Date, client: string | undefined): PdfRow[] {
   const dateFormat = new Intl.DateTimeFormat(labels.dateLocale, { dateStyle: 'long' });
-  const rows: PdfRow[] = [
-    [labels.number, business.quoteNumber],
-    [labels.date, dateFormat.format(date)],
-    [labels.validUntil, dateFormat.format(validUntil(date, business.validityDays))],
-  ];
+  const rows: PdfRow[] = [[labels.date, dateFormat.format(date)]];
+  if (business.quoteNumber) rows.unshift([labels.number, business.quoteNumber]);
+  if (business.validityDays > 0) rows.push([labels.validUntil, dateFormat.format(validUntil(date, business.validityDays))]);
   const name = cleanClient(client);
   if (name) rows.push([labels.client, name]);
   return rows;
@@ -138,7 +144,16 @@ function notesOf(business: BusinessProfile, labels: PdfLabels): string[] {
     .map((line) => line.trim())
     .filter((line) => line !== '')
     .slice(0, NOTES_MAX_LINES);
-  return [...own, labels.noteEstimate, labels.noteValidity];
+  return [...own, labels.noteEstimate, ...(business.validityDays > 0 ? [labels.noteValidity] : [])];
+}
+
+/** Notas del presupuesto, limitadas para conservar una maqueta manejable. */
+function quoteNotesOf(value: string | undefined): string[] {
+  return cleanMultiline(value, NOTE_MAX)
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line !== '')
+    .slice(0, 4);
 }
 
 /** Líneas del emisor (NIF, dirección, teléfono, correo, web). */
@@ -208,9 +223,12 @@ export function buildQuoteDocument(input: QuoteDocumentInput): QuoteDocument {
     totalRows: taxRows(tax, labels),
     tax,
     notes: notesOf(business, labels),
+    quoteNotes: quoteNotesOf(input.quoteNotes),
+    quoteNotesTitle: labels.quoteNotes,
     footer: labels.footer,
     pageOf: labels.pageOf,
-    metadata: { title: `${labels.pdfTitle} ${business.quoteNumber}`, author: business.name, language: labels.language },
+    metadata: { title: business.quoteNumber ? `${labels.pdfTitle} ${business.quoteNumber}` : labels.pdfTitle, author: business.name, language: labels.language },
+    numberText: business.quoteNumber,
     date,
   };
 }
@@ -219,6 +237,7 @@ export interface BatchDocumentInput {
   readonly business: BusinessProfile;
   readonly parts: readonly BatchPart[];
   readonly client?: string;
+  readonly quoteNotes?: string;
   readonly date?: Date;
   readonly labels?: PdfLabels;
 }
@@ -275,9 +294,12 @@ export function buildBatchDocument(input: BatchDocumentInput): QuoteDocument {
     totalRows: taxRows(tax, labels),
     tax,
     notes: notesOf(business, labels),
+    quoteNotes: quoteNotesOf(input.quoteNotes),
+    quoteNotesTitle: labels.quoteNotes,
     footer: labels.footer,
     pageOf: labels.pageOf,
-    metadata: { title: `${labels.pdfTitle} ${business.quoteNumber}`, author: business.name, language: labels.language },
+    metadata: { title: business.quoteNumber ? `${labels.pdfTitle} ${business.quoteNumber}` : labels.pdfTitle, author: business.name, language: labels.language },
+    numberText: business.quoteNumber,
     date,
   };
 }

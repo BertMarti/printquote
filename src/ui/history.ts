@@ -41,6 +41,7 @@ const byId = <T extends HTMLElement>(id: string): T => {
 /** Bloque «08 Presupuestos»: guardar, listar, reabrir, borrar y exportar a CSV. Todo en `localStorage`. */
 export function setupHistory(host: HistoryHost): { render(): void; sync(): void } {
   const client = byId<HTMLInputElement>('in-client');
+  const note = byId<HTMLTextAreaElement>('in-quote-notes');
   const saveButton = byId<HTMLButtonElement>('history-save');
   const saveBatchButton = byId<HTMLButtonElement>('history-save-batch');
   const list = byId('history-list');
@@ -170,14 +171,14 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
   function save(): void {
     const current = host.current();
     if (!current) return;
-    const entry = createEntry({ fileName: current.fileName, client: client.value, stats: current.stats, settings: current.settings, quote: current.quote });
+    const entry = createEntry({ fileName: current.fileName, client: client.value, note: note.value, stats: current.stats, settings: current.settings, quote: current.quote });
     store(entry, entry.fileName);
   }
 
   function saveBatch(): void {
     const parts = host.batch();
     if (parts.length === 0) return;
-    store(createBatchEntry({ client: client.value, parts }), batchName(parts.length));
+    store(createBatchEntry({ client: client.value, note: note.value, parts }), batchName(parts.length));
   }
 
   /** Reabre un lote en el bloque 06. Con un lote en curso hace falta un segundo clic: se perdería. */
@@ -192,6 +193,7 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
     confirmingOpen = null;
     host.openBatch(lines);
     client.value = entry.client;
+    note.value = entry.note ?? '';
     render();
     // Las líneas se recalculan con el modelo actual: si el total ya no es el guardado, se dice.
     const total = computeBatch(lines).total;
@@ -212,6 +214,7 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
     const hasPart = host.current() !== null;
     host.applySettings(entry.settings);
     client.value = entry.client;
+    note.value = entry.note ?? '';
     host.announce(t(hasPart ? 'hist.opened.part' : 'hist.opened', { name: entry.fileName, total: formatEuro(entry.result.total) }));
   }
 

@@ -38,6 +38,12 @@ Trabajo de la rama `mejoras-2026-10-24` comprobado contra el código actual:
 - Repaso de calidad 1.0 con revisión cruzada (GPT-5.6 Luna) y comprobación de cada hallazgo: logotipo PNG con medidas enormes rechazado (bomba de descompresión en el PDF), aviso si lo importado no se puede guardar, historial sin importes negativos, y `docs/USO.md`/`SECURITY.md` fieles al PDF de 0.9 y a lo que se guarda en el navegador.
 - Sin issues abiertas, sin PRs de Dependabot y sin alertas abiertas.
 
+## Hecho el 31/10/2026 (fase 6, v1.1.0)
+
+- **Datos del presupuesto en el PDF** (idea «campo de cliente»: el cliente y las notas del negocio ya estaban desde la 0.9): autonumeración opcional («Numerar automáticamente»; sin ella, referencia libre que puede ir vacía), validez opcional (0 días), «Notas de este presupuesto» junto al cliente (en el PDF y en el historial, nunca en el enlace) y notas que pasan de página en vez de pisar el pie.
+- **Carga más ligera** (idea «coste del chunk del visor y del PDF»): medido con `npm run medir`. La comprobación de WebGL espera al primer pintado y el PDF (módulo y fuentes, a la vez) se precarga con la intención. Estudiado y descartado: recortar fontkit (570 kB del chunk del PDF, empaquetado en CommonJS sin tree-shaking; las fuentes estándar perderían griego y cirílico), WOFF2 (Pages ya sirve los TTF con gzip: 77 → 38 kB) y separar los idiomas (≈ 8 kB gzip).
+- Mantenimiento: `npm audit` a 0 (minimatch 11 por override, solo desarrollo), three 0.187 y parches; TypeScript 7 y `@types/node` 26 revisados (siguen aplazados, ver abajo).
+
 ## Después de la 1.0
 
 Nada de esto deja a medias lo que ve el usuario; son mejoras y comprobaciones que necesitan hardware, personas o más tiempo.
@@ -45,16 +51,16 @@ Nada de esto deja a medias lo que ve el usuario; son mejoras y comprobaciones qu
 1. Probar OBJ y 3MF reales procedentes de laminadores, además de los modelos construidos en `tests/`, y documentar cualquier diferencia reproducible.
 2. Probar con lector de pantalla real el campo de copias, los anuncios, la barra de progreso y las hojas de impresión en Firefox y Safari.
 3. Revisar la descarga del PDF y la hoja de impresión en distintos visores y en una impresora real.
-4. Volver a probar TypeScript 7 cuando `typescript-eslint` lo admita (quitar el `ignore` de `.github/dependabot.yml`).
+4. Volver a probar TypeScript 7 cuando `typescript-eslint` lo admita (quitar el `ignore` de `.github/dependabot.yml`). Revisado el 31/10/2026: `typescript-eslint` 8.72.1 sigue pidiendo `<6.1`.
 5. Subir `@types/node` a la vez que el mínimo de `engines` cuando se deje Node 22.
 6. Progreso más fino en 3MF (hoy salta de 10 % a 50 % durante la descompresión y la lectura del XML) y durante la ordenación de aristas.
 7. Ampliar la prueba de integración a móvil (390 px) y a un archivo grande con «Cancelar» (hoy se comprueba con un script aparte).
 8. Tope de vértices en OBJ y 3MF (hoy solo hay tope de triángulos y de tamaño de archivo): un archivo de 300 MB con millones de vértices y ninguna cara puede agotar la memoria del worker antes de decir «sin caras». Se recupera con el aviso `err.worker` (la página sigue funcionando), por eso es de severidad baja.
 9. Rechazar con un mensaje claro las piezas con medidas absurdas (coordenadas cerca del máximo de `float32`): hoy dan importes astronómicos pero finitos.
+10. Quitar el `overrides` de `minimatch` en `package.json` cuando ESLint y `typescript-eslint` dependan de `minimatch` 11 (lo pusimos por GHSA-g3hv-75wg-m249, moderada y solo de desarrollo; se comprobó que ESLint revisa los mismos 130 archivos con la 10 y con la 11).
 
 ## Ideas
 
 - Añadir una migración explícita del esquema del lote persistido cuando exista un cambio que la justifique.
 - Mejorar la triangulación de polígonos OBJ cóncavos muy grandes, cuyo caso actual tiene coste alto.
-- Estudiar el coste del chunk del visor y del PDF sin sacrificar la carga bajo demanda.
-- Añadir un campo de cliente al PDF si hay una necesidad de negocio concreta.
+- Datos de contacto del cliente (correo, teléfono) en el PDF si alguien lo pide; hoy solo el nombre y las notas de este presupuesto.

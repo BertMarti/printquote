@@ -301,9 +301,9 @@ El texto copiado y la hoja impresa muestran el total **sin IVA** (es la base imp
 
 El bloque **08 Presupuestos** (plegado por defecto; el número entre paréntesis es cuántos tienes guardados) recuerda tus presupuestos en este navegador, para repetirlos o llevarlos a una hoja de cálculo:
 
-1. Con una pieza cargada, escribe el **cliente** si quieres (opcional; aparece en el historial, en el CSV y en el PDF) y pulsa **Guardar este presupuesto** (o Intro en el campo del cliente).
+1. Con una pieza cargada, escribe el **cliente** y las **notas de este presupuesto** si quieres (ambos son opcionales; el cliente aparece en el historial, en el CSV y en el PDF) y pulsa **Guardar este presupuesto** (o Intro en el campo del cliente). Las notas sirven para este encargo concreto, por ejemplo el color, un plazo pactado o la forma de recogida.
 2. Cada presupuesto aparece en la lista con la pieza, la fecha, el cliente, el material y el total (sin IVA, tal como salió).
-3. **Abrir** (en una pieza) restaura todos los parámetros (material, precios, impresora, relleno, copias…) y el cliente. El archivo 3D **no se guarda**: si no hay pieza cargada, arrastra la pieza para recalcular; si ya hay una, se recalcula con ella (el total puede diferir del guardado si la pieza es otra).
+3. **Abrir** (en una pieza) restaura todos los parámetros (material, precios, impresora, relleno, copias…), el cliente y las notas de ese presupuesto. El archivo 3D **no se guarda**: si no hay pieza cargada, arrastra la pieza para recalcular; si ya hay una, se recalcula con ella (el total puede diferir del guardado si la pieza es otra).
 4. **Borrar** quita un presupuesto; **Borrar todos** pide confirmar con un segundo clic.
 5. **Exportar CSV** descarga `presupuestos-AAAA-MM-DD.csv` con una fila por presupuesto (un lote da **una fila por pieza**, con la misma fecha y cliente, así que la columna del total suma lo presupuestado) (fecha, cliente, pieza, volumen, medidas, material, impresora, relleno, perímetros, copias, peso, tiempo, costes, margen y total sin IVA). En español usa `;` y coma decimal (lo que abre bien Excel en español); en inglés, `,` y punto. Los textos que una hoja de cálculo podría tomar por fórmula (los que empiezan por `=`, `+`, `-` o `@`) llevan un apóstrofo delante para que no se ejecuten.
 
@@ -318,7 +318,7 @@ https://bertmarti.github.io/printquote/#v=1&mat=PETG&price=24&printer=bambu-a1&i
 ```
 
 - **Qué lleva el enlace y qué no.** Solo esos parámetros. **No** lleva el archivo 3D, el nombre de la pieza, el cliente, los datos del negocio (nombre, NIF, logotipo…) ni el precio de los otros materiales. Los parámetros van en el *hash* de la dirección (lo que hay tras `#`), que el navegador **no envía a ningún servidor**.
-- **Al abrir un enlace** se aplican los parámetros **sin guardarlos** en el navegador de quien lo abre: sus ajustes guardados no se pisan (hasta que edite un campo). Los precios de los materiales que el enlace no trae siguen siendo los suyos. Sin pieza cargada, el estado dice «Parámetros del enlace aplicados. Arrastra tu pieza para calcular el presupuesto.».
+- **Al abrir un enlace** se aplican los parámetros **sin guardarlos** en el navegador de quien lo abre: sus ajustes guardados no se pisan (hasta que edite un campo). Los precios de los materiales que el enlace no trae siguen siendo los suyos. El enlace tampoco lleva el cliente ni las notas de este presupuesto. Sin pieza cargada, el estado dice «Parámetros del enlace aplicados. Arrastra tu pieza para calcular el presupuesto.».
 - **Enlaces rotos o manipulados.** Lo que no se entiende se ignora y los valores fuera de rango se acotan a los límites de siempre; un enlace de otra versión del formato (`v` distinto de 1) o de más de 1000 caracteres se ignora entero.
 - **Con la pieza de ejemplo.** `#ejemplo` abre la pieza de ejemplo, y también se puede combinar: `#ejemplo&v=1&mat=ABS&cp=2`.
 
@@ -333,29 +333,29 @@ Para que el PDF lleve tu nombre y tus datos, rellena el bloque plegable **«07 �
 | Dirección | Admite varias líneas (Intro para saltar de línea) | 200 |
 | Teléfono, correo electrónico, web | Datos de contacto | 30, 80 y 80 |
 | Logotipo (opcional) | Una imagen PNG, JPEG o WebP de hasta 8 MB | ver abajo |
-| Nº del próximo presupuesto | Texto libre; por defecto, el año actual y `001` (por ejemplo `2026-001`) | 30 |
-| Validez del presupuesto | Días de validez a partir de hoy; por defecto 30 | entre 1 y 365 |
+| Nº o referencia del presupuesto | Con «Numerar automáticamente» (marcado por defecto), es el próximo número y sube al descargar cada PDF. Si quitas la marca, puedes escribir una referencia libre, como el número de pedido del cliente, y se usa tal cual sin subir | 30 |
+| Validez del presupuesto | Días de validez a partir de hoy; por defecto 30. Con **0 días**, el PDF no lleva fecha ni nota de validez | entre 0 y 365 |
 | IVA | Porcentaje; por defecto 21 %; se admiten hasta **2 decimales** (10,55 %) | entre 0 y 100 |
 
 Todos son opcionales: puedes descargar el PDF aunque no hayas rellenado nada. El botón **«Borrar los datos del negocio»** los elimina todos (y el logotipo). «Restablecer valores por defecto» no los toca: son independientes de los ajustes de la pieza.
 
 **Logotipo.** Se carga desde tu equipo: se reduce a un máximo de 400 píxeles de lado directamente en tu navegador, se guarda en él y se dibuja en el PDF. No se envía a ningún servidor. Si tu navegador no deja guardarlo, el programa lo avisa («…tendrás que subirlo de nuevo la próxima vez») y el PDF de esta sesión lo lleva igualmente. Con «Quitar logotipo» lo eliminas.
 
-**Numeración.** Al descargar cada PDF, el número del siguiente presupuesto **sube solo** y conserva los ceros: `2026-009` pasa a `2026-010` y `PQ7`, a `PQ8`. Si el número no lleva ninguna cifra, se le añade `-2`. Puedes cambiarlo a mano cuando quieras. printquote no comprueba duplicados ni guarda un historial.
+**Numeración y referencias.** La casilla **«Numerar automáticamente»** está marcada por defecto. En ese modo, al descargar cada PDF el número del siguiente presupuesto **sube solo** y conserva los ceros: `2026-009` pasa a `2026-010` y `PQ7`, a `PQ8`. Si el número no lleva ninguna cifra, se le añade `-2`. Si quitas la marca, el texto es una referencia libre: se usa tal cual en el PDF y no cambia al descargarlo. Puedes dejarlo vacío; en ese caso el PDF no lleva número y el archivo se llama `presupuesto-AAAA-MM-DD.pdf`. printquote no comprueba duplicados ni guarda un historial.
 
 ### Descargar el PDF
 
-Pulsa **«Descargar PDF»** (en su propia fila, debajo de «Copiar presupuesto» e «Imprimir»). El archivo se llama `presupuesto-2026-001.pdf` (con el número del presupuesto; en inglés, `quote-2026-001.pdf`) y se genera en tu navegador. La primera vez tarda un instante porque se descarga el generador de PDF.
+Pulsa **«Descargar PDF»** (en su propia fila, debajo de «Copiar presupuesto» e «Imprimir»). El archivo se llama `presupuesto-2026-001.pdf` (con el número o referencia; en inglés, `quote-2026-001.pdf`) o `presupuesto-AAAA-MM-DD.pdf` si no has puesto ninguno, y se genera en tu navegador. El PDF empieza a prepararse al pasar el puntero, tocar o enfocar el botón, así que tarda menos después del clic.
 
-El PDF de una pieza ocupa **una página A4** y contiene:
+El PDF de una pieza suele ocupar **una página A4** y contiene:
 
-1. Cabecera con el nombre y el logotipo del negocio, y el **número**, la **fecha** de hoy y la fecha hasta la que es **válido**.
+1. Cabecera con el nombre y el logotipo del negocio, y el **número o referencia** si lo has puesto, la **fecha** de hoy y, si la validez es mayor que cero, la fecha hasta la que es **válido**.
 2. Los datos del emisor: NIF/CIF, dirección, teléfono, correo y web.
 3. La vista 3D de la pieza y sus datos: archivo, dimensiones, volumen, material, relleno y perímetros.
 4. Un **Resumen** con el peso, el tiempo estimado, el precio por copia si hay varias copias, la base imponible, el IVA y el total con IVA.
-5. El cliente, si lo has escrito, y las notas del negocio, además de las notas de que el tiempo es una estimación y de la validez.
+5. El cliente y las **notas de este presupuesto**, si los has escrito. Después aparecen las notas fijas del negocio («Notas para el cliente») y los avisos de que el tiempo es una estimación y, si corresponde, de la validez.
 
-El PDF de un lote puede ocupar **varias páginas**. Incluye una tabla con todas las piezas, repite su cabecera cuando cambia de página y muestra «Página n de N». El IVA se calcula una sola vez sobre la suma del lote. No lleva vista 3D.
+El PDF de una pieza puede ocupar **varias páginas** si las notas no caben en una sola; el pie muestra «Página n de N». El PDF de un lote también puede ocupar varias páginas: incluye una tabla con todas las piezas, repite su cabecera cuando cambia de página y muestra «Página n de N». El IVA se calcula una sola vez sobre la suma del lote. No lleva vista 3D.
 
 Por defecto, el PDF no muestra tus costes internos. Si marcas **«Mostrar el desglose de costes en el PDF (material, energía y margen)»** en «07 Datos del negocio», el título «Resumen» pasa al desglose y aparecen el material, la energía, el subtotal, el margen y el precio por kilo, además del resto de datos.
 
@@ -367,9 +367,9 @@ El idioma del PDF es el que tengas activo en la interfaz.
 
 **Límites del PDF**:
 
-- **Alfabetos.** El PDF incrusta las fuentes Noto Sans y JetBrains Mono (licencia libre OFL), que cubren el latino (español, polaco, turco, rumano, checo…), el **griego** y el **cirílico**. Las letras latinas que faltan (vietnamita, por ejemplo) se transcriben sin marcas, y el resto (chino, japonés, árabe, emojis…) salen como «**?**». Los caracteres invisibles se eliminan. Las fuentes se descargan la primera vez que pulsas «Descargar PDF» (unos 230 kB) y hace falta conexión en ese momento.
+- **Alfabetos.** El PDF incrusta las fuentes Noto Sans y JetBrains Mono (licencia libre OFL), que cubren el latino (español, polaco, turco, rumano, checo…), el **griego** y el **cirílico**. Las letras latinas que faltan (vietnamita, por ejemplo) se transcriben sin marcas, y el resto (chino, japonés, árabe, emojis…) salen como «**?**». Los caracteres invisibles se eliminan. Las fuentes se descargan la primera vez que pulsas «Descargar PDF» o pasas el puntero por él (unos 230 kB) y hace falta conexión en ese momento.
 - **Dirección.** El bloque del emisor (NIF, dirección, teléfono, correo y web) ocupa como máximo **10 líneas** en el PDF; si tu dirección es tan larga que se pasa, lo que sobra se corta y la última línea acaba en «...». Escribe la dirección de forma breve, en pocas líneas. El formulario admite hasta 200 caracteres.
-- El PDF de una pieza es de un folio. El PDF del lote puede tener varios, con «Página n de N».
+- El PDF de una pieza suele ocupar un folio, pero puede pasar a otra página si las notas no caben. El PDF del lote puede tener varios, con «Página n de N».
 - Si algo falla al generarlo, verás «No se ha podido crear el PDF» y puedes usar **Imprimir** y guardar la hoja como PDF.
 
 ## 11. Cómo se calcula (con un ejemplo completo)
@@ -436,7 +436,7 @@ Y una vez imprimida la pieza, compara el peso real en una báscula con el de pri
 
 - El archivo (STL, OBJ o 3MF) se lee con las funciones de tu navegador y se procesa **en tu equipo**. No hay servidor que lo reciba: la web es estática.
 - No hay analítica, ni cookies, ni cuentas.
-- Se guarda en el almacenamiento local de tu navegador (`localStorage`), siempre en este navegador: los ajustes (material, precios, impresora, relleno, etc.), el idioma, los **datos del negocio** (incluido el logotipo ya reducido y el número del próximo presupuesto), tus perfiles de **«Mis impresoras» y «Mis materiales»**, el historial de presupuestos del bloque **08 Presupuestos**, el lote en curso y la marca de que ya has visto la bienvenida. El archivo 3D no se guarda; los presupuestos guardados sí (pieza, cliente, parámetros y resultado, nunca la geometría). Los **enlaces** para compartir solo llevan parámetros de cálculo (ver [Compartir los parámetros con un enlace](#compartir-los-parámetros-con-un-enlace)). Puedes borrar partes desde sus propios bloques, o abrir **«09 Tus datos»** y pulsar **«Borrar mis datos»**: elimina solo lo que printquote guarda con su prefijo y no los datos de otras webs.
+- Se guarda en el almacenamiento local de tu navegador (`localStorage`), siempre en este navegador: los ajustes (material, precios, impresora, relleno, etc.), el idioma, los **datos del negocio** (incluido el logotipo ya reducido y el número o referencia del próximo presupuesto), tus perfiles de **«Mis impresoras» y «Mis materiales»**, el historial de presupuestos del bloque **08 Presupuestos**, el lote en curso y la marca de que ya has visto la bienvenida. El archivo 3D no se guarda; los presupuestos guardados sí (pieza, cliente, notas de ese presupuesto, parámetros y resultado, nunca la geometría). Las notas de este presupuesto solo se guardan dentro de cada presupuesto guardado. Los **enlaces** para compartir solo llevan parámetros de cálculo (ver [Compartir los parámetros con un enlace](#compartir-los-parámetros-con-un-enlace)). Puedes borrar partes desde sus propios bloques, o abrir **«09 Tus datos»** y pulsar **«Borrar mis datos»**: elimina solo lo que printquote guarda con su prefijo y no los datos de otras webs.
 - Al pulsar «Copiar presupuesto», «Imprimir» o «Descargar PDF», el texto, la hoja o el PDF se quedan en tu equipo; printquote no envía nada (el PDF se genera en tu navegador).
 
 ### Tus datos: llevar, importar y borrar lo guardado
@@ -505,6 +505,10 @@ El modelo aproxima las paredes (superficie × grosor) y no cuenta soportes, bals
 ### El total de varias copias no es exactamente N veces el de una
 
 Por el redondeo a céntimos línea a línea. La diferencia es de uno o dos céntimos como mucho (mira la [sección 9](#9-copias)).
+
+### ¿Puedo poner mi propia referencia en vez del número automático?
+
+Sí. En **«07 Datos del negocio»**, desmarca **«Numerar automáticamente»** y escribe la referencia que quieras, por ejemplo el número de pedido del cliente. Se usará tal cual en el PDF y no cambiará al descargarlo. Si dejas el campo vacío, el PDF saldrá sin número y el archivo llevará la fecha.
 
 ### He puesto un número y se ha cambiado solo
 

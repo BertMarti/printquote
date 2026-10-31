@@ -20,14 +20,16 @@ Web que calcula el presupuesto de una pieza de impresión 3D: arrastras un STL, 
 - Probar el build como en Pages: `npm run preview` → <http://localhost:4173/printquote/>
 - Prueba de integración del build en Chrome/Chromium (CSP, Trusted Types, worker, visor, PDF, service worker): `npm run build && npm run test:integracion` (`CHROME=/ruta` si no lo encuentra; en la Raspberry Pi tarda ~1 min y va con `nice`). También corre en el CI (ubuntu).
 - Despliegue: automático con `.github/workflows/deploy.yml` al entrar en `main` (o `workflow_dispatch`).
+- Medir la carga (tiempos en Chromium con CPU limitada, sin dependencias): `npm run build && npm run medir`.
 - Capturas del README/Open Graph: `node scripts/captura.mjs` con la web en marcha (Chrome; en Node 20, `node --experimental-websocket`).
 
 ## Estructura
 - `src/stl/` lectores STL (binario y ASCII), OBJ y 3MF, geometría (volumen, área, caja) y `limits.ts` (topes comunes: 300 MB y 6 300 000 triángulos). Se leen en un Web Worker (`stl.worker.ts` + `analyzer.ts`, cancelable, con progreso `src/stl/progress.ts` hacia la barra `#load-progress` y el botón «Cancelar»).
 - `scripts/` plugins de Vite (`pwa-plugin.ts`, `csp-plugin.ts`), capturas (`captura.mjs`, `chrome.mjs`) y la pieza de ejemplo.
 - `src/quote/` modelo de coste (material, relleno, tiempo, energía, margen) y lote de piezas (`batch.ts`: suma líneas de `computeQuote`; no tiene fórmula propia).
-- `src/pdf/` presupuesto en PDF: contenido puro en `document.ts` (`buildQuoteDocument`, `buildBatchDocument`) y dibujo con pdf-lib en `render.ts`; un lote lleva `batch` (tabla de piezas a todo el ancho) y el dibujo pasa de página y numera («Página n de N»).
-- `src/viewer/` visor three.js.
+- `src/pdf/` presupuesto en PDF: contenido puro en `document.ts` (`buildQuoteDocument`, `buildBatchDocument`) y dibujo con pdf-lib en `render.ts`; un lote lleva `batch` (tabla de piezas a todo el ancho) y el dibujo pasa de página y numera («Página n de N»). Desde 1.1: `numberText` vacío = sin fila «Nº» (autonumeración desactivada y campo vacío), validez 0 = sin «Válido hasta» ni su nota, y `quoteNotes` (notas de este presupuesto, del campo `#in-quote-notes` del bloque 08; máx. 4 líneas) antes de las notas del negocio; las notas que no caben pasan de página.
+- Datos del negocio (`src/quote/business.ts`): `autoNumber` (por defecto `true`; si es `false`, `quoteNumber` es una referencia libre que puede ir vacía y no sube tras el PDF; tampoco sube si se cambió durante la generación). El historial guarda `note?` (opcional, retrocompatible; `cleanMultiline`, `NOTE_MAX` 300) y nunca va en el enlace.
+- `src/viewer/` visor three.js. La comprobación de WebGL (`supportsWebGL`) y el `import()` del visor esperan al primer pintado (`afterFirstPaint` en `app.ts`): el primer contexto WebGL bloquea la página mientras arranca el proceso de la GPU. El chunk del PDF y las fuentes se piden a la vez y se precargan con la intención (`preloadPdf`: `pointerenter`/`focus`/`touchstart` en los botones de PDF); nunca en el arranque ni en el precaché del SW.
 - `src/ui/` panel y controles.
 - `src/ui/batch.ts` bloque «06 Lote» (instantáneas por pieza, persistidas; recibe un `BatchHost`, no importa `app.ts`). El bloque 07 es «Datos del negocio», el 08 «Presupuestos» y el 09 «Tus datos» (`src/ui/data-ui.ts`: exportar/importar y «Borrar mis datos»). Perfiles propios en `src/ui/profiles-ui.ts` (bloques 02 y 03).
 - `src/ui/demo.ts` modo demo: guion `DEMO_STEPS` en datos y su control; no importa `app.ts`, recibe un `DemoHost` (ver «Modo demo»).
