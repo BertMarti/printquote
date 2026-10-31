@@ -153,7 +153,7 @@ export async function renderQuotePdf(doc: QuoteDocument, fontBytes?: FontBytes):
 
   // ── Cabecera: logotipo o marca + nombre, y a la derecha el número ──
   let top = MARGIN;
-  const numberText = doc.meta[0]?.[1] ?? '';
+  const numberText = doc.numberText;
   const numberSize = Math.min(16, Math.max(9, 190 / (Math.max(numberText.length, 1) * 0.6)));
   const rightBlockW = 200;
 
@@ -190,7 +190,7 @@ export async function renderQuotePdf(doc: QuoteDocument, fontBytes?: FontBytes):
 
   // ── Fecha, validez ──
   top += 16;
-  const metaRows = doc.meta.slice(1);
+  const metaRows = doc.numberText ? doc.meta.slice(1) : doc.meta;
   const metaColW = CONTENT_W / Math.max(metaRows.length, 1);
   metaRows.forEach(([label, value], i) => {
     const x = MARGIN + i * metaColW;
@@ -267,13 +267,28 @@ export async function renderQuotePdf(doc: QuoteDocument, fontBytes?: FontBytes):
   }
 
   let notes = top + 4;
-  for (const note of doc.notes) {
-    for (const line of draw.wrap(note, fonts.sans, 8, COLUMN_W)) {
-      draw.text(line, MARGIN, notes + 7, { font: fonts.sans, size: 8, color: MUTED });
-      notes += 11;
+  // Notas de este presupuesto (con título, en tinta) y, detrás, las del negocio y las fijas (en gris). Lo que no quepa
+  // pasa a otra página: nunca pisa el pie.
+  const drawNotes = (items: readonly string[], size: number, color: typeof INK, title?: string): void => {
+    if (title) {
+      if (notes + 22 > BOTTOM) notes = newPage();
+      notes = draw.title(title, MARGIN, notes, COLUMN_W);
     }
-    notes += 5;
+    const lineH = size + 3;
+    for (const note of items) {
+      for (const line of draw.wrap(note, fonts.sans, size, COLUMN_W)) {
+        if (notes + lineH > BOTTOM) notes = newPage();
+        draw.text(line, MARGIN, notes + size - 1, { font: fonts.sans, size, color });
+        notes += lineH;
+      }
+      notes += 5;
+    }
+  };
+  if (doc.quoteNotes.length > 0) {
+    drawNotes(doc.quoteNotes, 9, INK, doc.quoteNotesTitle);
+    notes += 6;
   }
+  drawNotes(doc.notes, 8, MUTED);
 
   // ── Pie (en cada página; con varias, también «Página n de N») ──
   const footerTop = PAGE_H - MARGIN + 6;

@@ -723,6 +723,8 @@ export function startApp(demoScale = 1): void {
   const bizInputs = bizText.map(([id, key]) => [byId<HTMLInputElement | HTMLTextAreaElement>(id), key] as const);
   const notesInput = byId<HTMLTextAreaElement>('in-biz-notes');
   const costsInput = byId<HTMLInputElement>('in-biz-costs');
+  const autoNumberInput = byId<HTMLInputElement>('in-biz-autonumber');
+  const numberHint = byId('hint-number');
   const logoInput = byId<HTMLInputElement>('in-biz-logo');
   const logoPreview = byId('logo-preview');
   const logoImg = byId<HTMLImageElement>('logo-img');
@@ -745,6 +747,8 @@ export function startApp(demoScale = 1): void {
     vatField.set(business.vatPercent);
     notesInput.value = business.notes;
     costsInput.checked = business.pdfShowCosts;
+    autoNumberInput.checked = business.autoNumber;
+    numberHint.textContent = t(business.autoNumber ? 'biz.number.hint' : 'biz.number.hint.fixed');
     logoPreview.hidden = business.logo === null;
     if (business.logo) logoImg.src = business.logo;
     else logoImg.removeAttribute('src');
@@ -757,6 +761,10 @@ export function startApp(demoScale = 1): void {
   }
   notesInput.addEventListener('input', () => updateBusiness({ notes: notesInput.value }));
   costsInput.addEventListener('change', () => updateBusiness({ pdfShowCosts: costsInput.checked }));
+  autoNumberInput.addEventListener('change', () => {
+    updateBusiness({ autoNumber: autoNumberInput.checked });
+    syncBusiness();
+  });
 
   const validityField = new NumberField({
     input: byId<HTMLInputElement>('in-biz-validity'),
@@ -808,7 +816,12 @@ export function startApp(demoScale = 1): void {
   });
   byId('settings-form').addEventListener('submit', (event) => event.preventDefault());
 
-  const pdfFileName = (): string => `${t('pdf.title').toLowerCase()}-${business.quoteNumber.replace(/[^A-Za-z0-9._-]+/g, '-')}.pdf`;
+  const pdfFileName = (issuer: BusinessProfile): string => {
+    const date = new Date();
+    const day = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const suffix = issuer.quoteNumber ? issuer.quoteNumber.replace(/[^A-Za-z0-9._-]+/g, '-') : day;
+    return `${t('pdf.title').toLowerCase()}-${suffix}.pdf`;
+  };
 
   // pdf-lib y fontkit (~1,1 MB; ~500 kB gzip) y las fuentes (~110 kB gzip) solo se descargan cuando hacen falta, y
   // a la vez: antes las fuentes esperaban a que llegara y se ejecutara el módulo. Empiezan ya con la intención (pasar
@@ -844,12 +857,16 @@ export function startApp(demoScale = 1): void {
       try {
         const [{ renderQuotePdf }, fonts] = await preloadPdf();
         const bytes = await renderQuotePdf(build(), fonts);
-        const name = pdfFileName();
+        const name = pdfFileName(issuer);
         download(new Blob([bytes as BlobPart], { type: 'application/pdf' }), name);
-        // El número sube solo tras descargar: el siguiente presupuesto ya sale con el nuevo.
-        updateBusiness({ quoteNumber: nextQuoteNumber(issuer.quoteNumber) });
-        syncBusiness();
-        announce(t('pdf.done', { name, next: business.quoteNumber }));
+        if (issuer.autoNumber) {
+          // El número sube solo tras descargar: el siguiente presupuesto ya sale con el nuevo.
+          updateBusiness({ quoteNumber: nextQuoteNumber(issuer.quoteNumber) });
+          syncBusiness();
+          announce(t('pdf.done', { name, next: business.quoteNumber }));
+        } else {
+          announce(t('pdf.done.fixed', { name }));
+        }
       } catch (error) {
         console.error(error);
         // Sin conexión (o sin las fuentes) es un fallo distinto de un error al dibujar el documento.
@@ -877,6 +894,7 @@ export function startApp(demoScale = 1): void {
         quote: current.quote,
         image: viewer ? viewer.snapshot() : null,
         client: byId<HTMLInputElement>('in-client').value,
+        quoteNotes: byId<HTMLTextAreaElement>('in-quote-notes').value,
       }),
     );
   });
@@ -885,7 +903,7 @@ export function startApp(demoScale = 1): void {
     if (parts.length === 0 || pdfBusy) return;
     const issuer = business;
     const client = byId<HTMLInputElement>('in-client').value;
-    runPdf(batchPdfButton, 'batch.pdf', issuer, () => buildBatchDocument({ business: issuer, parts, client }));
+    runPdf(batchPdfButton, 'batch.pdf', issuer, () => buildBatchDocument({ business: issuer, parts, client, quoteNotes: byId<HTMLTextAreaElement>('in-quote-notes').value }));
   });
 
   // ── Historial de presupuestos ──

@@ -15,6 +15,8 @@ export interface BusinessProfile {
   readonly logo: string | null;
   /** Número del próximo presupuesto; sube solo tras descargar cada PDF. */
   readonly quoteNumber: string;
+  /** Si sube automáticamente el número tras descargar un PDF. */
+  readonly autoNumber: boolean;
   /** Días de validez del presupuesto. */
   readonly validityDays: number;
   readonly vatPercent: number;
@@ -40,7 +42,7 @@ export const BUSINESS_MAX = {
 } as const;
 
 export const BUSINESS_LIMITS = {
-  validityDays: { min: 1, max: 365 },
+  validityDays: { min: 0, max: 365 },
   vatPercent: { min: 0, max: 100 },
 } as const;
 
@@ -63,6 +65,7 @@ export const DEFAULT_BUSINESS: BusinessProfile = {
   web: '',
   logo: null,
   quoteNumber: firstQuoteNumber(),
+  autoNumber: true,
   validityDays: DEFAULT_VALIDITY_DAYS,
   vatPercent: DEFAULT_VAT_PERCENT,
   notes: '',
@@ -84,6 +87,11 @@ function cleanText(value: unknown, max: number, multiline = false): string {
   return value.replace(/\r\n?/g, '\n').replace(control, ' ').trim().slice(0, max);
 }
 
+/** Limpia texto multilínea de formularios y datos persistidos. */
+export function cleanMultiline(value: unknown, max: number): string {
+  return cleanText(value, max, true);
+}
+
 function cleanNumber(value: unknown, fallback: number, min: number, max: number): number {
   return typeof value === 'number' && Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
 }
@@ -91,6 +99,7 @@ function cleanNumber(value: unknown, fallback: number, min: number, max: number)
 /** Convierte cualquier valor (p. ej. lo leído de localStorage) en datos de negocio válidos. */
 export function normalizeBusiness(input: unknown): BusinessProfile {
   const source = (typeof input === 'object' && input !== null ? input : {}) as Record<string, unknown>;
+  const autoNumber = source.autoNumber !== false;
   const quoteNumber = cleanText(source.quoteNumber, BUSINESS_MAX.quoteNumber);
   return {
     name: cleanText(source.name, BUSINESS_MAX.name),
@@ -100,7 +109,8 @@ export function normalizeBusiness(input: unknown): BusinessProfile {
     email: cleanText(source.email, BUSINESS_MAX.email),
     web: cleanText(source.web, BUSINESS_MAX.web),
     logo: isValidLogo(source.logo) ? source.logo : null,
-    quoteNumber: quoteNumber === '' ? DEFAULT_BUSINESS.quoteNumber : quoteNumber,
+    quoteNumber: quoteNumber === '' && autoNumber ? DEFAULT_BUSINESS.quoteNumber : quoteNumber,
+    autoNumber,
     validityDays: Math.round(
       cleanNumber(source.validityDays, DEFAULT_VALIDITY_DAYS, BUSINESS_LIMITS.validityDays.min, BUSINESS_LIMITS.validityDays.max),
     ),
