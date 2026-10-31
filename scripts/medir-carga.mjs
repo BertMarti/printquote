@@ -215,7 +215,8 @@ try {
         ` · TBT ${ms(m('tbt'))} · tarea más larga ${ms(m('longest'))}`,
     );
   }
-  for (const intent of [0, 500]) {
+  // MEDIR_SIN_PDF=1 se salta el PDF (para comparar solo la carga, p. ej. alternando dos builds).
+  for (const intent of process.env.MEDIR_SIN_PDF ? [] : [0, 500]) {
     const pdfRuns = [];
     for (let i = 0; i < RUNS; i++) pdfRuns.push(await pdfClick(SCENARIOS.movil, intent));
     const label = intent ? `puntero ${intent} ms antes → archivo` : 'clic → archivo';

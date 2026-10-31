@@ -1,7 +1,7 @@
 {
   "name": "printquote",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Presupuesta una impresión 3D en el navegador a partir de un STL.",
   "type": "module",
   "license": "MIT",
@@ -19,6 +19,7 @@
     "test:watch": "vitest",
     "sample": "node scripts/generate-sample.mjs",
     "test:integracion": "node scripts/integracion.mjs",
+    "medir": "node scripts/medir-carga.mjs",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tests"
   },
   "dependencies": {
