@@ -315,14 +315,16 @@
                 <p class="field-note" id="logo-status" aria-live="polite">PNG, JPEG o WebP. Se reduce y se queda en este navegador.</p>
               </div>
               <div class="field field--text">
-                <label for="in-biz-number" data-i18n="biz.number">Nº del próximo presupuesto</label>
+                <label for="in-biz-number" data-i18n="biz.number">Nº o referencia del presupuesto</label>
                 <input id="in-biz-number" type="text" maxlength="30" autocomplete="off" spellcheck="false" aria-describedby="hint-number" />
+                <label class="check-field"><input id="in-biz-autonumber" type="checkbox" aria-describedby="hint-number" /><span data-i18n="biz.autoNumber">Numerar automáticamente</span></label>
                 <p class="field-note" id="hint-number" data-i18n="biz.number.hint">Sube solo al descargar cada PDF.</p>
               </div>
               <div class="field">
                 <label for="in-biz-validity"><span data-i18n="biz.validity">Validez del presupuesto</span> <span class="sr-only" data-i18n="biz.validity.sr">en días</span></label>
-                <div class="input-unit"><input id="in-biz-validity" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" aria-describedby="err-validity" /><span class="unit" aria-hidden="true" data-i18n="unit.days">días</span></div>
+                <div class="input-unit"><input id="in-biz-validity" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" aria-describedby="err-validity hint-validity" /><span class="unit" aria-hidden="true" data-i18n="unit.days">días</span></div>
                 <p class="field-error" id="err-validity" aria-live="polite"></p>
+                <p class="field-note" id="hint-validity" data-i18n="biz.validity.hint">0 días: el PDF sale sin fecha de validez.</p>
               </div>
               <div class="field field--text"><label for="in-biz-notes" data-i18n="biz.notes">Notas para el cliente</label><textarea id="in-biz-notes" rows="3" maxlength="300" placeholder="Plazo de entrega: 3 días laborables. Pago por transferencia." data-i18n-attr="placeholder:biz.notes.placeholder"></textarea></div>
               <label class="check-field"><input id="in-biz-costs" type="checkbox" /><span data-i18n="biz.showCosts">Mostrar el desglose de costes en el PDF (material, energía y margen)</span></label>
@@ -342,6 +344,10 @@
               <div class="field field--text">
                 <label for="in-client"><span data-i18n="hist.client">Cliente</span> <span class="sub" data-i18n="biz.optional">(opcional)</span></label>
                 <input id="in-client" type="text" maxlength="80" autocomplete="off" spellcheck="false" />
+              </div>
+              <div class="field field--text">
+                <label for="in-quote-notes"><span data-i18n="hist.quoteNotes">Notas de este presupuesto</span> <span class="sub" data-i18n="biz.optional">(opcional)</span></label>
+                <textarea id="in-quote-notes" rows="2" maxlength="300" placeholder="Color rojo. Recogida en el taller el viernes." data-i18n-attr="placeholder:hist.quoteNotes.placeholder"></textarea>
               </div>
               <div class="history-actions">
                 <button type="button" class="button" id="history-save" data-i18n="hist.save" disabled>Guardar este presupuesto</button>

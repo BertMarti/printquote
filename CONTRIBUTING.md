@@ -4,7 +4,7 @@ Gracias por querer ayudar. Esta guía es breve; las reglas completas del proyect
 
 ## Requisitos
 
-- **Node 22.12 o superior** (el CI usa Node 22) y **npm**.
+- **Node 20.19 o superior** (se recomienda 22.12, la versión del CI y de `.nvmrc`; `npm run dev` y `npm run build` lo comprueban con `scripts/comprobar-node.mjs`) y **npm**.
 - Un navegador moderno con WebGL para probar el visor.
 
 ```bash

@@ -51,8 +51,10 @@ El archivo 3D se lee y se procesa en tu propio dispositivo: no se sube a ningún
 
 1. Abre **«07 Datos del negocio»** y rellena nombre, NIF, contacto y, si quieres, el logotipo y unas **notas para el cliente** (plazo de entrega, forma de pago…).
 2. Carga la pieza y ajusta material, relleno y copias.
-3. Escribe el nombre del cliente en **«08 Presupuestos»** (opcional).
+3. Escribe el nombre del cliente y, si quieres, las notas de este encargo en **«08 Presupuestos»** (opcional).
 4. Pulsa **«Descargar PDF»**. Tu cliente verá peso, tiempo estimado, precio por copia, IVA y total; **no** verá tus costes ni tu margen, salvo que marques «Mostrar el desglose de costes en el PDF».
+
+El número del presupuesto se incrementa automáticamente al descargar cada PDF, o puedes desmarcar **«Numerar automáticamente»** y usar una referencia propia, como un número de pedido. También puedes añadir **notas de este presupuesto** (color, plazo o recogida), que aparecen en el PDF junto al cliente y se conservan al guardar y reabrirlo. Con 0 días de validez, el PDF no muestra fecha ni nota de validez. Además, el PDF empieza a prepararse en cuanto pasas el puntero por el botón (o lo tocas), así tarda menos en descargarse.
 
 ## Cómo calcula (en sencillo)
 

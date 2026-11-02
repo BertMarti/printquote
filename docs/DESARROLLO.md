@@ -84,6 +84,7 @@ npm run dev        # http://localhost:5173/printquote/
 | `npm run build` | Comprueba tipos y genera `dist/`. |
 | `npm run preview` | Sirve la compilación local. |
 | `npm run sample` | Regenera la pieza de ejemplo. |
+| `npm run medir` | Tras `npm run build`, mide la carga en Chrome/Chromium sin cabeza (escritorio, y móvil con CPU ×4 y red 4G lenta; primer pintado, DOMContentLoaded, visor, «interactiva», TBT y el PDF tras el clic). `npm run medir -- dist 5` repite 5 veces. Es una medida, no una prueba. |
 
 ## Stack
 

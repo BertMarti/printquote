@@ -1,6 +1,7 @@
 import { browserLanguages, detectLang, getLang, LANGS, onLangChange, setLang, t, type Key, type Lang } from '../i18n';
 import { applyStaticTranslations } from '../i18n/dom';
 import { buildBatchDocument, buildQuoteDocument, type QuoteDocument } from '../pdf/document';
+import { loadFonts, type FontBytes } from '../pdf/fonts';
 import { formatDuration, formatEuro, formatNumber } from '../quote/format';
 import { BUSINESS_LIMITS, nextQuoteNumber, normalizeBusiness, type BusinessProfile } from '../quote/business';
 import { isMaterialId, MATERIALS } from '../quote/materials';
@@ -56,6 +57,22 @@ function byId<T extends HTMLElement = HTMLElement>(id: string): T {
   const node = document.getElementById(id);
   if (!node) throw new Error(`Falta el elemento #${id} en index.html`);
   return node as T;
+}
+
+/**
+ * Llama a `fn` justo después del primer pintado (el siguiente fotograma y una tarea más), para que lo pesado no
+ * retrase la primera vista de la ficha. Sin `requestAnimationFrame` (o en una pestaña oculta, que no pinta), con un
+ * temporizador de respaldo.
+ */
+function afterFirstPaint(fn: () => void): void {
+  let done = false;
+  const once = (): void => {
+    if (done) return;
+    done = true;
+    fn();
+  };
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => window.setTimeout(once, 0));
+  window.setTimeout(once, 1000);
 }
 
 function readTheme(): ViewerTheme {
@@ -177,6 +194,8 @@ export function startApp(demoScale = 1): void {
   let loadTicket = 0;
   /** Archivo que se está leyendo (para volver a rotular el indicador si cambia el idioma). */
   let loadingName: string | null = null;
+  /** ¿Se ha empezado a abrir alguna pieza? (el aviso «Sin vista 3D» llega tras el primer pintado y no debe tapar nada). */
+  let loadStarted = false;
   let loadingTimer = 0;
   let loadingProgress = 0;
 
@@ -194,10 +213,18 @@ export function startApp(demoScale = 1): void {
   };
 
   // ── Visor ──
-  // three.js (~500 kB) se descarga aparte, después de pintar la interfaz: el panel
+  // three.js (~560 kB) se descarga aparte, después de pintar la interfaz: el panel
   // y el presupuesto funcionan desde el primer momento aunque el visor tarde.
+  // También la comprobación de WebGL espera al primer pintado: el primer contexto WebGL arranca el proceso
+  // de la GPU y bloquea la página mientras tanto (unos 3 s en una Raspberry Pi con SwiftShader, decenas de
+  // milisegundos en un móvil); hecha antes, retrasaba el primer pintado de la ficha (ver docs/DESARROLLO.md).
   const noViewer = (): void => showNotice(() => [t('viewer.none.title'), t('viewer.none.text')]);
-  if (supportsWebGL()) {
+  afterFirstPaint(() => {
+    if (!supportsWebGL()) {
+      // Como antes de esperar al pintado: abrir una pieza quita el aviso; si ya se ha empezado a abrir una, no se pone.
+      if (!loadStarted) noViewer();
+      return;
+    }
     import('../viewer/viewer')
       .then(({ Viewer }) => {
         const container = byId('viewer');
@@ -213,9 +240,7 @@ export function startApp(demoScale = 1): void {
         viewer = null;
         noViewer();
       });
-  } else {
-    noViewer();
-  }
+  });
   /** Etiquetas del visor en el idioma activo (solo si el visor ya existe: es cuando se hace enfocable). */
   function applyViewerLabels(): void {
     const container = byId('viewer');
@@ -487,6 +512,7 @@ export function startApp(demoScale = 1): void {
   /** Devuelve `true` si la pieza quedó cargada (no si falló o llegó otra petición después). */
   async function loadBuffer(fileName: string, getBuffer: () => Promise<ArrayBuffer>): Promise<boolean> {
     const ticket = ++loadTicket;
+    loadStarted = true;
     hideNotice();
     stage.classList.add('is-loading');
     stage.setAttribute('aria-busy', 'true');
@@ -697,6 +723,8 @@ export function startApp(demoScale = 1): void {
   const bizInputs = bizText.map(([id, key]) => [byId<HTMLInputElement | HTMLTextAreaElement>(id), key] as const);
   const notesInput = byId<HTMLTextAreaElement>('in-biz-notes');
   const costsInput = byId<HTMLInputElement>('in-biz-costs');
+  const autoNumberInput = byId<HTMLInputElement>('in-biz-autonumber');
+  const numberHint = byId('hint-number');
   const logoInput = byId<HTMLInputElement>('in-biz-logo');
   const logoPreview = byId('logo-preview');
   const logoImg = byId<HTMLImageElement>('logo-img');
@@ -719,6 +747,8 @@ export function startApp(demoScale = 1): void {
     vatField.set(business.vatPercent);
     notesInput.value = business.notes;
     costsInput.checked = business.pdfShowCosts;
+    autoNumberInput.checked = business.autoNumber;
+    numberHint.textContent = t(business.autoNumber ? 'biz.number.hint' : 'biz.number.hint.fixed');
     logoPreview.hidden = business.logo === null;
     if (business.logo) logoImg.src = business.logo;
     else logoImg.removeAttribute('src');
@@ -731,6 +761,10 @@ export function startApp(demoScale = 1): void {
   }
   notesInput.addEventListener('input', () => updateBusiness({ notes: notesInput.value }));
   costsInput.addEventListener('change', () => updateBusiness({ pdfShowCosts: costsInput.checked }));
+  autoNumberInput.addEventListener('change', () => {
+    updateBusiness({ autoNumber: autoNumberInput.checked });
+    syncBusiness();
+  });
 
   const validityField = new NumberField({
     input: byId<HTMLInputElement>('in-biz-validity'),
@@ -782,7 +816,35 @@ export function startApp(demoScale = 1): void {
   });
   byId('settings-form').addEventListener('submit', (event) => event.preventDefault());
 
-  const pdfFileName = (): string => `${t('pdf.title').toLowerCase()}-${business.quoteNumber.replace(/[^A-Za-z0-9._-]+/g, '-')}.pdf`;
+  const pdfFileName = (issuer: BusinessProfile): string => {
+    const date = new Date();
+    const day = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const suffix = issuer.quoteNumber ? issuer.quoteNumber.replace(/[^A-Za-z0-9._-]+/g, '-') : day;
+    return `${t('pdf.title').toLowerCase()}-${suffix}.pdf`;
+  };
+
+  // pdf-lib y fontkit (~1,1 MB; ~500 kB gzip) y las fuentes (~110 kB gzip) solo se descargan cuando hacen falta, y
+  // a la vez: antes las fuentes esperaban a que llegara y se ejecutara el módulo. Empiezan ya con la intención (pasar
+  // el puntero, enfocar o tocar un botón de PDF), así el clic se encuentra parte del camino hecho.
+  let pdfModule: Promise<typeof import('../pdf/render')> | null = null;
+  const preloadPdf = (): Promise<[typeof import('../pdf/render'), FontBytes]> => {
+    pdfModule ??= import('../pdf/render').catch((error: unknown) => {
+      pdfModule = null; // sin conexión: que el siguiente intento lo vuelva a pedir
+      throw error;
+    });
+    return Promise.all([pdfModule, loadFonts()]);
+  };
+  for (const button of [pdfButton, batchPdfButton]) {
+    for (const type of ['pointerenter', 'focus', 'touchstart'] as const) {
+      button.addEventListener(
+        type,
+        () => {
+          if (!button.disabled) void preloadPdf().catch(() => undefined);
+        },
+        { passive: true },
+      );
+    }
+  }
 
   /** Genera y descarga un PDF (el de la pieza o el del lote): comparten el estado de «ocupado», el aviso de fallo y el nº. */
   const runPdf = (trigger: HTMLButtonElement, idleKey: Key, issuer: BusinessProfile, build: () => QuoteDocument): void => {
@@ -793,15 +855,19 @@ export function startApp(demoScale = 1): void {
     announce(t('pdf.generating.announce'));
     void (async () => {
       try {
-        // pdf-lib y fontkit (~1,1 MB; ~500 kB gzip) y las fuentes solo se descargan la primera vez que se pide un PDF.
-        const { renderQuotePdf } = await import('../pdf/render');
-        const bytes = await renderQuotePdf(build());
-        const name = pdfFileName();
+        const [{ renderQuotePdf }, fonts] = await preloadPdf();
+        const bytes = await renderQuotePdf(build(), fonts);
+        const name = pdfFileName(issuer);
         download(new Blob([bytes as BlobPart], { type: 'application/pdf' }), name);
-        // El número sube solo tras descargar: el siguiente presupuesto ya sale con el nuevo.
-        updateBusiness({ quoteNumber: nextQuoteNumber(issuer.quoteNumber) });
-        syncBusiness();
-        announce(t('pdf.done', { name, next: business.quoteNumber }));
+        // El número sube solo tras descargar: el siguiente presupuesto ya sale con el nuevo. Si mientras se generaba
+        // se ha cambiado el número o se ha quitado la autonumeración, manda lo que se ha escrito.
+        if (issuer.autoNumber && business.autoNumber && business.quoteNumber === issuer.quoteNumber) {
+          updateBusiness({ quoteNumber: nextQuoteNumber(issuer.quoteNumber) });
+          syncBusiness();
+          announce(t('pdf.done', { name, next: business.quoteNumber }));
+        } else {
+          announce(t('pdf.done.fixed', { name }));
+        }
       } catch (error) {
         console.error(error);
         // Sin conexión (o sin las fuentes) es un fallo distinto de un error al dibujar el documento.
@@ -829,6 +895,7 @@ export function startApp(demoScale = 1): void {
         quote: current.quote,
         image: viewer ? viewer.snapshot() : null,
         client: byId<HTMLInputElement>('in-client').value,
+        quoteNotes: byId<HTMLTextAreaElement>('in-quote-notes').value,
       }),
     );
   });
@@ -837,7 +904,7 @@ export function startApp(demoScale = 1): void {
     if (parts.length === 0 || pdfBusy) return;
     const issuer = business;
     const client = byId<HTMLInputElement>('in-client').value;
-    runPdf(batchPdfButton, 'batch.pdf', issuer, () => buildBatchDocument({ business: issuer, parts, client }));
+    runPdf(batchPdfButton, 'batch.pdf', issuer, () => buildBatchDocument({ business: issuer, parts, client, quoteNotes: byId<HTMLTextAreaElement>('in-quote-notes').value }));
   });
 
   // ── Historial de presupuestos ──
