@@ -17,7 +17,7 @@ Pensada para quien vende impresiones: el PDF lleva los datos de cada encargo y l
 
 ### Cambiado
 
-- **La ficha aparece y responde antes**: la comprobación de WebGL (crear el primer contexto 3D bloquea la página mientras arranca la GPU) espera al primer pintado. Medido en Chromium sobre una Raspberry Pi 5, mediana de 5 cargas alternas: en móvil, DOMContentLoaded 1,96 s → 1,19 s, visor 3,13 s → 2,48 s y «interactiva» 3,24 s → 2,62 s; en escritorio, DOMContentLoaded 1,38 s → 0,44 s y tarea más larga 1,10 s → 0,73 s. Con la GPU sin arrancar, DOMContentLoaded pasa de 4,9 s a 0,5 s.
+- **La ficha aparece y responde antes**: la comprobación de WebGL (crear el primer contexto 3D bloquea la página mientras arranca la GPU) espera al primer pintado. Medido en Chromium sobre una Raspberry Pi 5, mediana de 5 cargas alternas: en móvil, DOMContentLoaded 1,96 s → 1,19 s, visor 3,13 s → 2,48 s y «interactiva» 3,24 s → 2,62 s; en escritorio, DOMContentLoaded 1,38 s → 0,44 s y tarea más larga 1,10 s → 0,73 s. Con la GPU sin arrancar, DOMContentLoaded pasa de 4,9 s a 0,5 s. El bloqueo total es el mismo: la tarea de WebGL solo cambia de sitio (ahora va después del primer pintado), por eso el tiempo bloqueado (TBT) en móvil sube de 362 ms a 1011 ms.
 - **El PDF se prepara antes**: el generador y las fuentes se piden a la vez (antes, en serie) y empiezan en cuanto pasas el puntero, enfocas o tocas «Descargar PDF» o «PDF del lote» (≈ 0,4 s menos tras el clic con red 4G lenta). Siguen sin descargarse si no se pide un PDF.
 - Si las notas no caben en la página, el PDF continúa en otra («Página n de N») en vez de pisar el pie.
 - Dependencias: three 0.187, eslint 10.14, typescript-eslint 8.72.1 y vitest 5.0.5.

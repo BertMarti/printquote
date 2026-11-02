@@ -271,8 +271,9 @@ export async function renderQuotePdf(doc: QuoteDocument, fontBytes?: FontBytes):
   // pasa a otra página: nunca pisa el pie.
   const drawNotes = (items: readonly string[], size: number, color: typeof INK, title?: string): void => {
     if (title) {
-      if (notes + 22 > BOTTOM) notes = newPage();
-      notes = draw.title(title, MARGIN, notes, COLUMN_W);
+      if (notes + 25 > BOTTOM) notes = newPage();
+      // Un poco de aire entre la regla del título y la primera línea.
+      notes = draw.title(title, MARGIN, notes, COLUMN_W) + 3;
     }
     const lineH = size + 3;
     for (const note of items) {

@@ -147,13 +147,12 @@ function notesOf(business: BusinessProfile, labels: PdfLabels): string[] {
   return [...own, labels.noteEstimate, ...(business.validityDays > 0 ? [labels.noteValidity] : [])];
 }
 
-/** Notas del presupuesto, limitadas para conservar una maqueta manejable. */
+/** Notas de este presupuesto: todas sus líneas no vacías (los `NOTE_MAX` caracteres ya las acotan; lo que no quepa pasa de página). */
 function quoteNotesOf(value: string | undefined): string[] {
   return cleanMultiline(value, NOTE_MAX)
     .split('\n')
     .map((line) => line.trim())
-    .filter((line) => line !== '')
-    .slice(0, 4);
+    .filter((line) => line !== '');
 }
 
 /** Líneas del emisor (NIF, dirección, teléfono, correo, web). */

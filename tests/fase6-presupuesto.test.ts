@@ -46,7 +46,7 @@ describe('presupuesto 1.1', () => {
     expect(doc.metadata.title).toBe('3D print quote');
     expect(doc.numberText).toBe('');
     expect(doc.notes).not.toContain(pdfLabels('en').noteValidity);
-    expect(doc.quoteNotes).toEqual(['uno', 'dos', 'tres', 'cuatro']);
+    expect(doc.quoteNotes).toEqual(['uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis']);
     expect(buildQuoteDocument({ business: { ...business, quoteNumber: '', validityDays: 0 }, fileName: 'x', stats, settings: DEFAULT_SETTINGS, quote, image: null }).quoteNotes).toEqual([]);
   });
 
@@ -64,7 +64,9 @@ describe('presupuesto 1.1', () => {
     });
     const bytes = await renderQuotePdf(doc, testFonts);
     expect(new TextDecoder().decode(bytes.slice(0, 5))).toBe('%PDF-');
-    expect((await PDFDocument.load(bytes)).getPageCount()).toBe(1);
+    // Las 20 líneas de notas de este presupuesto se conservan; las que no caben pasan a la página 2.
+    expect(doc.quoteNotes).toHaveLength(20);
+    expect((await PDFDocument.load(bytes)).getPageCount()).toBe(2);
   });
 
   it('con todo vacío el PDF sale igual que antes (una página, con Nº si hay autonumeración)', async () => {
@@ -74,6 +76,15 @@ describe('presupuesto 1.1', () => {
     expect(doc.quoteNotes).toEqual([]);
     const bytes = await renderQuotePdf(doc, testFonts);
     expect((await PDFDocument.load(bytes)).getPageCount()).toBe(1);
+  });
+
+  it('ninguna línea de las notas de este presupuesto se pierde (40 líneas cortas)', async () => {
+    const notes = Array.from({ length: 40 }, (_, i) => `n${i + 1}`).join('\n');
+    const doc = buildQuoteDocument({ business, fileName: 'cubo.stl', stats, settings: DEFAULT_SETTINGS, quote, image: null, quoteNotes: notes });
+    expect(doc.quoteNotes).toHaveLength(40);
+    expect(doc.quoteNotes.at(-1)).toBe('n40');
+    const bytes = await renderQuotePdf(doc, testFonts);
+    expect((await PDFDocument.load(bytes)).getPageCount()).toBe(2);
   });
 
   it('las notas que no caben pasan a otra página (no pisan el pie)', async () => {
