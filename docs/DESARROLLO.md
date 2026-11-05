@@ -162,7 +162,7 @@ printquote se ha construido con un equipo de agentes de IA que trabaja por ramas
 - **PDF y fuentes:** el contenido se calcula en funciones puras y el dibujo carga `pdf-lib`, fontkit y las fuentes solo al pedir el PDF. Noto Sans y JetBrains Mono cubren latino, griego y cirílico; otros alfabetos no cubiertos aparecen como `?`.
 - **Historial:** guarda presupuestos y lotes, restaura sus parámetros y exporta CSV con protección contra inyección de fórmulas.
 - **Historial y almacenamiento:** admite hasta 100 presupuestos, con un límite práctico condicionado por el almacenamiento del navegador. No guarda geometría; un lote puede conservar hasta 50 piezas.
-- **Compartir:** codifica material, precios, impresora, relleno, caudal, energía, margen, copias y cama en el hash de la URL; no incluye archivo, pieza, cliente ni datos del negocio, y al abrirlo no pisa lo guardado.
+- **Compartir:** codifica material, precios, impresora, relleno, caudal, energía, margen, copias y cama en el hash de la URL; no incluye archivo, pieza, cliente (ni su correo o teléfono) ni datos del negocio, y al abrirlo no pisa lo guardado.
 - **Idiomas:** interfaz, avisos, errores, notas de perfiles, números, fechas, texto copiado, hoja y PDF en español e inglés; la moneda siempre es el euro.
 - **PWA:** aplicación instalable con service worker propio, precaché de la interfaz y la pieza de ejemplo, caché bajo demanda del visor y el PDF, y actualización versionada.
 - **Demo:** recorrido guiado de unos 13 segundos que carga la pieza de ejemplo, gira la cámara, cambia material y relleno, restaura los ajustes y no escribe en almacenamiento ni en la URL. Se detiene con interacción y ofrece pasos manuales cuando se prefiere reducir movimiento.

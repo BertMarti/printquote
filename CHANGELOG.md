@@ -4,6 +4,29 @@ Todos los cambios relevantes de printquote se anotan aquí. El formato sigue [Ke
 
 ## [Sin publicar]
 
+## [1.2.0] - 2026-11-02
+
+Más datos del cliente en el PDF y OBJ con caras cóncavas grandes bien calculados.
+
+### Añadido
+
+- **Correo y teléfono del cliente** («08 Presupuestos», junto al cliente; opcionales). Salen en el PDF de la pieza y del lote, bajo la fecha y el cliente, solo si se rellenan (un correo largo se parte en dos líneas en vez de cortarse). Si el formato parece raro se avisa bajo el campo, pero nunca se impide guardar ni descargar. Se guardan con el presupuesto (y vuelven al abrirlo) salvo que se desmarque **«Guardar el correo y el teléfono con el presupuesto»**; la casilla se recuerda. Un aviso recuerda que son datos personales del cliente y se quedan en el dispositivo; nunca van en el enlace para compartir.
+- Columnas «Correo» y «Teléfono» en el CSV del historial, tras «Cliente» (con la misma protección contra fórmulas: un teléfono que empieza por `+` lleva un apóstrofo delante).
+
+### Cambiado
+
+- **Caras cóncavas de los OBJ, también las enormes**: hasta la 1.1, las caras de más de 200 vértices se dividían en abanico, que da mal la superficie, el peso y la vista 3D si son cóncavas (la tapa de un engranaje, un perfil con ranuras, un texto), y salía un aviso. Ahora se dividen bien hasta 100 000 vértices por cara con un recorte de orejas nuevo (lista enlazada, cola de candidatas y rejilla de esquinas entrantes; sin dependencias), que da las mismas áreas y volúmenes que el de la 1.1. Medido en una Raspberry Pi 5, cara de 2000 vértices: espiral 4,7 s → 5 ms, engranaje 0,73 s → 26 ms, peine 0,69 s → 4 ms; 100 000 vértices: 0,2–2 s según la forma (con la 1.1, 5000 vértices ya costaban de 5 a 60 s). El aviso queda solo para una cara cóncava de más de 100 000 vértices o tan enrevesada que no se pueda dividir en un tiempo razonable.
+- El texto bajo «Copiar enlace» dice que el enlace nunca lleva los datos del cliente (antes, «el cliente»).
+- Dependencias: vite 8.3.6, vitest 5.1.0, globals 17.14 y minimatch 11.0.4 (override).
+
+### Compatibilidad
+
+- Los datos guardados con la 1.1 se leen igual y sin avisos: historial (también los lotes guardados), lote en curso (`printquote:lote:v1`) y datos del negocio (sin la preferencia nueva = guardar el contacto). Hay una prueba con datos generados por el código de la v1.1.0. No hizo falta migrar el esquema: el correo y el teléfono son campos opcionales del historial.
+
+### Seguridad
+
+- `npm audit`: 0 vulnerabilidades. Sin alertas ni PRs de Dependabot abiertas. TypeScript 7.0.2 sigue aplazado (`typescript-eslint` 8.72.1 pide TypeScript < 6.1) y `@types/node` sigue en la línea 22 del CI; el override de `minimatch` sigue haciendo falta (ESLint 10.14 aún depende de la 10).
+
 ## [1.1.0] - 2026-10-31
 
 Pensada para quien vende impresiones: el PDF lleva los datos de cada encargo y la web arranca antes.
@@ -246,7 +269,8 @@ Primera versión: el MVP.
 - **Revisión de QA** (PR #2): parser ASCII byte a byte, soldado de vértices con tolerancia, lectura en un Web Worker, three.js cargado bajo demanda, regiones vivas accesibles, Open Graph y tests de interfaz (57 → 132 tests).
 - **Documentación** (PR #4): guía de uso (`docs/USO.md`) y guía de contribución (`CONTRIBUTING.md`).
 
-[Sin publicar]: https://github.com/BertMarti/printquote/compare/v1.0.0...HEAD
+[Sin publicar]: https://github.com/BertMarti/printquote/compare/v1.1.0...HEAD
+[1.2.0]: https://github.com/BertMarti/printquote/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/BertMarti/printquote/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/BertMarti/printquote/compare/v0.7.0...v1.0.0
 [0.10.0]: https://github.com/BertMarti/printquote/compare/v0.9.0...v0.10.0
