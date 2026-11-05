@@ -1149,7 +1149,13 @@ input {
 .history-contact-fields {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 0 12px;
+}
+
+/* Dentro de la rejilla, el segundo campo también es «el último de su tipo»: los dos llevan la línea de separación. */
+.history-contact-fields > .field {
+  align-content: start; /* con un aviso bajo el correo, el teléfono no baja al centro */
+  border-bottom: 1px solid var(--line);
 }
 
 .history-list {

@@ -198,17 +198,21 @@ export async function renderQuotePdf(doc: QuoteDocument, fontBytes?: FontBytes):
     draw.text(value, x, top + 15, { font: fonts.mono, size: 10.5, maxWidth: metaColW - 10 });
   });
   top += 34;
+  // ── Contacto del cliente (solo si lo hay): el correo ocupa dos tercios y el teléfono va bajo la tercera columna ──
   if (doc.contact.length > 0) {
-    const contactW = CONTENT_W / doc.contact.length;
-    const heights = doc.contact.map(([, value]) => Math.max(1, draw.wrap(value, fonts.sans, 10, contactW - 10).length));
+    const widths = doc.contact.length === 2 ? [(CONTENT_W * 2) / 3, CONTENT_W / 3] : [CONTENT_W];
+    let x = MARGIN;
+    let lines = 1;
     doc.contact.forEach(([label, value], i) => {
-      const x = MARGIN + i * contactW;
+      const width = widths[i] ?? CONTENT_W;
       draw.text(label.toLocaleUpperCase(doc.metadata.language), x, top, { font: fonts.sans, size: 7.5, color: MUTED });
-      draw.wrap(value, fonts.sans, 10, contactW - 10).forEach((line, lineIndex) => {
-        draw.text(line, x, top + 15 + lineIndex * 12, { font: fonts.sans, size: 10, maxWidth: contactW - 10 });
-      });
+      // Un correo largo se parte (nunca se corta con «…»): como mucho 100 caracteres, caben en dos líneas.
+      const wrapped = draw.wrap(value, fonts.sans, 10, width - 10);
+      wrapped.forEach((line, k) => draw.text(line, x, top + 15 + k * 12, { font: fonts.sans, size: 10, maxWidth: width - 10 }));
+      lines = Math.max(lines, wrapped.length);
+      x += width;
     });
-    top += Math.max(...heights) * 12 + 22;
+    top += 22 + lines * 12;
   }
   draw.rule(top, MARGIN, MARGIN + CONTENT_W, 0.5, LINE);
   top += 22;
