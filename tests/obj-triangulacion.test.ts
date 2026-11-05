@@ -186,4 +186,16 @@ describe('triangulación de polígonos cóncavos grandes (1.2)', () => {
     expect(stats.surfaceArea / (2 * shoelace(points) + perimeter(points) * 5)).toBeCloseTo(1, 5);
     expect(parseObj(encode(prismObjText(points, 5))).triangleCount).toBe(2 * (points.length - 2) + 2 * points.length);
   });
+
+  it('una cara cóncava escrita antes que sus vértices (índices hacia delante) también se divide bien', async () => {
+    const points = star(300);
+    const lines = prismObjText(points, 5).trimEnd().split('\n');
+    const faces = lines.filter((line) => line.startsWith('f '));
+    const vertices = lines.filter((line) => line.startsWith('v '));
+    const { stats, mesh } = await analyzeModel(encode(`${[...faces, ...vertices].join('\n')}\n`), 'al-reves.obj');
+    expect(mesh.largePolygons).toBe(0);
+    expect(stats.surfaceArea / (2 * shoelace(points) + perimeter(points) * 5)).toBeCloseTo(1, 5);
+    expect(stats.volume / (shoelace(points) * 5)).toBeCloseTo(1, 5);
+    expect(stats.openEdges).toBe(0);
+  });
 });

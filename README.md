@@ -72,7 +72,7 @@ No. Se procesa en tu navegador y nunca sale de tu dispositivo.
 
 ### ¿Qué formatos admite?
 
-STL binario o ASCII, OBJ y 3MF. En OBJ, las caras de muchos lados se dividen bien en triángulos aunque sean cóncavas (por ejemplo, la tapa de un engranaje con miles de dientes).
+STL binario o ASCII, OBJ y 3MF. En OBJ, las caras de muchos lados se dividen bien en triángulos aunque sean cóncavas, como la tapa de un engranaje con miles de dientes (hasta 100 000 vértices por cara; si alguna no se puede, la ficha te avisa).
 
 ### Mi archivo es muy grande y tarda. ¿Puedo pararlo?
 

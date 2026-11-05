@@ -16,6 +16,7 @@ Más datos del cliente en el PDF y OBJ con caras cóncavas grandes bien calculad
 ### Cambiado
 
 - **Caras cóncavas de los OBJ, también las enormes**: hasta la 1.1, las caras de más de 200 vértices se dividían en abanico, que da mal la superficie, el peso y la vista 3D si son cóncavas (la tapa de un engranaje, un perfil con ranuras, un texto), y salía un aviso. Ahora se dividen bien hasta 100 000 vértices por cara con un recorte de orejas nuevo (lista enlazada, cola de candidatas y rejilla de esquinas entrantes; sin dependencias), que da las mismas áreas y volúmenes que el de la 1.1. Medido en una Raspberry Pi 5, cara de 2000 vértices: espiral 4,7 s → 5 ms, engranaje 0,73 s → 26 ms, peine 0,69 s → 4 ms; 100 000 vértices: 0,2–2 s según la forma (con la 1.1, 5000 vértices ya costaban de 5 a 60 s). El aviso queda solo para una cara cóncava de más de 100 000 vértices o tan enrevesada que no se pueda dividir en un tiempo razonable.
+- Las caras de un OBJ que nombran vértices escritos más abajo en el archivo (lo permite el formato) se dividen al final de la lectura, con todos los vértices ya leídos: antes iban siempre en abanico, aunque fueran cóncavas, y sin aviso.
 - El texto bajo «Copiar enlace» dice que el enlace nunca lleva los datos del cliente (antes, «el cliente»).
 - Dependencias: vite 8.3.6, vitest 5.1.0, globals 17.14 y minimatch 11.0.4 (override).
 

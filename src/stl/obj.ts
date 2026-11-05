@@ -60,7 +60,22 @@ export function parseObj(data: ArrayBuffer | Uint8Array, onProgress?: ProgressFn
   let vertexCount = 0;
   let triangleCount = 0;
   let largePolygons = 0;
+  // Caras que nombran vértices que aún no se han leído (índices positivos hacia delante, que el formato permite): se
+  // triangulan al final, cuando ya están todos, para poder mirar si son cóncavas. Índices seguidos y dónde acaba cada cara.
+  const pendingIndices = new Growable((n) => new Int32Array(n), 64);
+  const pendingEnds = new Growable((n) => new Int32Array(n), 16);
+  let pendingTriangles = 0;
   let lineNumber = 0;
+
+  const addFace = (face: readonly number[]): void => {
+    const exact = triangulate(face, vertices.data, vertexCount, (a, b, c) => {
+      faceIndices.push(a);
+      faceIndices.push(b);
+      faceIndices.push(c);
+      triangleCount++;
+    });
+    if (!exact) largePolygons++;
+  };
 
   const fail = (code: ErrorKey, params: Params = {}): never => {
     throw new ModelParseError(code, { line: lineNumber, ...params });
@@ -134,17 +149,22 @@ export function parseObj(data: ArrayBuffer | Uint8Array, onProgress?: ProgressFn
         face.push(absolute);
       }
       // Una cara de n vértices da n − 2 triángulos: se corta antes de reservar memoria para ellos.
-      if (triangleCount + face.length - 2 > MAX_TRIANGLES) {
+      if (triangleCount + pendingTriangles + face.length - 2 > MAX_TRIANGLES) {
         fail('err.tooManyTriangles', { max: MAX_TRIANGLES_TEXT });
       }
-      const exact = triangulate(face, vertices.data, vertexCount, (a, b, c) => {
-        faceIndices.push(a);
-        faceIndices.push(b);
-        faceIndices.push(c);
-        triangleCount++;
-      });
-      if (!exact) largePolygons++;
+      if (face.some((v) => v >= vertexCount)) {
+        for (const v of face) pendingIndices.push(v);
+        pendingEnds.push(pendingIndices.length);
+        pendingTriangles += face.length - 2;
+      } else {
+        addFace(face);
+      }
     }
+  }
+  for (let k = 0, start = 0; k < pendingEnds.length; k++) {
+    const end = pendingEnds.data[k] ?? start;
+    addFace(Array.from(pendingIndices.data.subarray(start, end)));
+    start = end;
   }
 
   if (vertexCount === 0) throw new ModelParseError('err.obj.noVertices');
