@@ -198,6 +198,18 @@ export async function renderQuotePdf(doc: QuoteDocument, fontBytes?: FontBytes):
     draw.text(value, x, top + 15, { font: fonts.mono, size: 10.5, maxWidth: metaColW - 10 });
   });
   top += 34;
+  if (doc.contact.length > 0) {
+    const contactW = CONTENT_W / doc.contact.length;
+    const heights = doc.contact.map(([, value]) => Math.max(1, draw.wrap(value, fonts.sans, 10, contactW - 10).length));
+    doc.contact.forEach(([label, value], i) => {
+      const x = MARGIN + i * contactW;
+      draw.text(label.toLocaleUpperCase(doc.metadata.language), x, top, { font: fonts.sans, size: 7.5, color: MUTED });
+      draw.wrap(value, fonts.sans, 10, contactW - 10).forEach((line, lineIndex) => {
+        draw.text(line, x, top + 15 + lineIndex * 12, { font: fonts.sans, size: 10, maxWidth: contactW - 10 });
+      });
+    });
+    top += Math.max(...heights) * 12 + 22;
+  }
   draw.rule(top, MARGIN, MARGIN + CONTENT_W, 0.5, LINE);
   top += 22;
 

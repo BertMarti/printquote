@@ -1146,6 +1146,12 @@ input {
   margin-top: 8px;
 }
 
+.history-contact-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
 .history-list {
   list-style: none;
   margin: 16px 0 0;
@@ -1339,6 +1345,10 @@ input {
 
 .field--text .field-note {
   margin-top: 2px;
+}
+
+.field--text input[aria-invalid='true'] {
+  border-bottom-color: var(--accent);
 }
 
 .logo-preview {
@@ -1695,6 +1705,11 @@ input {
   .stage-legend,
   .stage-hint {
     display: none;
+  }
+
+  .history-contact-fields {
+    grid-template-columns: 1fr;
+    gap: 0;
   }
 }
 

@@ -146,23 +146,23 @@ describe('historyToCsv', () => {
     const [header, row, end] = csv.slice(1).split('\r\n');
     expect(end).toBe('');
     expect(header).toBe(
-      'Fecha;Cliente;Pieza;Volumen (cm³);X (mm);Y (mm);Z (mm);Material;Impresora;Relleno (%);Perímetros;Copias;Peso (g);Tiempo (h);Coste de material (€);Coste de energía (€);Margen (€);Total sin IVA (€)',
+      'Fecha;Cliente;Correo;Teléfono;Pieza;Volumen (cm³);X (mm);Y (mm);Z (mm);Material;Impresora;Relleno (%);Perímetros;Copias;Peso (g);Tiempo (h);Coste de material (€);Coste de energía (€);Margen (€);Total sin IVA (€)',
     );
     const cells = (row ?? '').split(';');
-    expect(cells).toHaveLength(18);
-    expect(cells.slice(0, 3)).toEqual(['2026-10-01 14:05', 'Ana', 'cubo.stl']);
-    expect(cells[3]).toBe('8,00');
-    expect(cells.slice(4, 7)).toEqual(['20,0', '20,0', '20,0']);
-    expect(cells.slice(7, 9)).toEqual(['PETG', 'Bambu Lab A1']);
-    expect(cells.slice(9, 12)).toEqual(['20', '2', '2']);
+    expect(cells).toHaveLength(20);
+    expect(cells.slice(0, 5)).toEqual(['2026-10-01 14:05', 'Ana', '', '', 'cubo.stl']); // sin correo ni teléfono
+    expect(cells[5]).toBe('8,00');
+    expect(cells.slice(6, 9)).toEqual(['20,0', '20,0', '20,0']);
+    expect(cells.slice(9, 11)).toEqual(['PETG', 'Bambu Lab A1']);
+    expect(cells.slice(11, 14)).toEqual(['20', '2', '2']);
     expect(row).not.toMatch(/\d\.\d/); // ningún punto decimal
   });
 
   it('en inglés: «,» como separador, punto decimal y cabecera en inglés', () => {
     const csv = historyToCsv([entry()], 'en');
     const [header, row] = csv.slice(1).split('\r\n');
-    expect(header?.startsWith('Date,Client,Part,Volume (cm³),X (mm)')).toBe(true);
-    expect(row?.startsWith('2026-10-01 14:05,Ana,cubo.stl,8.00,20.0,20.0,20.0,PLA,Custom,')).toBe(true);
+    expect(header?.startsWith('Date,Client,Email,Phone,Part,Volume (cm³),X (mm)')).toBe(true);
+    expect(row?.startsWith('2026-10-01 14:05,Ana,,,cubo.stl,8.00,20.0,20.0,20.0,PLA,Custom,')).toBe(true);
     expect(header).toContain('Total excl. VAT (€)');
   });
 
