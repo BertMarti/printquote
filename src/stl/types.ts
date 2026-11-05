@@ -9,7 +9,7 @@ export interface Mesh {
   readonly positions: Float32Array;
   readonly triangleCount: number;
   readonly format: MeshFormat;
-  /** Solo OBJ: polígonos de más de 200 vértices, triangulados en abanico aunque fueran cóncavos. */
+  /** Solo OBJ: polígonos cóncavos que se han tenido que triangular en abanico (más de 100 000 vértices o demasiado enrevesados). */
   readonly largePolygons?: number;
 }
 

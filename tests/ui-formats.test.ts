@@ -3,15 +3,16 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { startApp } from '../src/ui/app';
-import { binaryStl, cubeTriangles, discObj } from './helpers/mesh';
+import { MAX_EAR_CLIPPING } from '../src/stl/triangulate';
+import { binaryStl, cubeTriangles, discObj, starFaceObj } from './helpers/mesh';
 import { cube3mf } from './helpers/zip';
 
 const html = readFileSync(join(process.cwd(), 'index.html'), 'utf8');
 const body = (html.match(/<body>([\s\S]*)<\/body>/)?.[1] ?? '').replace(/<script[\s\S]*?<\/script>/g, '');
 const $ = <T extends HTMLElement = HTMLElement>(id: string): T => document.getElementById(id) as T;
 
-async function until(check: () => boolean): Promise<void> {
-  for (let i = 0; i < 400 && !check(); i++) await new Promise((r) => setTimeout(r, 5));
+async function until(check: () => boolean, tries = 400): Promise<void> {
+  for (let i = 0; i < tries && !check(); i++) await new Promise((r) => setTimeout(r, 5));
   expect(check()).toBe(true);
 }
 
@@ -54,17 +55,23 @@ describe('carga de STL, OBJ y 3MF en la interfaz', () => {
     expect($('warnings').children).toHaveLength(0);
   });
 
-  it('un OBJ con polígonos de más de 200 vértices muestra un aviso en la lista de avisos, en cada idioma', async () => {
-    openFile(new File([discObj(250)], 'disco.obj'));
-    await until(() => $('out-total').textContent !== '—');
+  it('un OBJ con un polígono cóncavo de más de 100 000 vértices muestra un aviso en la lista de avisos, en cada idioma', async () => {
+    openFile(new File([starFaceObj(MAX_EAR_CLIPPING + 2)], 'estrella.obj'));
+    await until(() => $('out-total').textContent !== '—', 2000);
     const warnings = $('warnings');
-    expect(warnings.children).toHaveLength(1);
-    expect(warnings.textContent).toMatch(/polígonos de más de 200 vértices \(2\)/);
+    // Una cara suelta (sin tapa ni laterales): también avisa de malla abierta.
+    expect(warnings.textContent).toMatch(/polígonos cóncavos que no se han podido dividir bien en triángulos \(1\)/);
     expect(warnings.getAttribute('aria-live')).toBe('polite');
     document.querySelector<HTMLButtonElement>('button[data-lang="en"]')?.click();
-    await until(() => /polygons with more than 200 vertices \(2\)/.test(warnings.textContent ?? ''));
+    await until(() => /concave polygons that could not be split into triangles properly \(1\)/.test(warnings.textContent ?? ''));
     document.querySelector<HTMLButtonElement>('button[data-lang="es"]')?.click();
-    await until(() => /polígonos de más de 200/.test(warnings.textContent ?? ''));
+    await until(() => /polígonos cóncavos que no se han podido/.test(warnings.textContent ?? ''));
+  });
+
+  it('un OBJ con polígonos convexos o cóncavos de más de 200 vértices ya no avisa (desde la 1.2 se dividen bien)', async () => {
+    openFile(new File([discObj(250)], 'disco.obj'));
+    await until(() => $('out-total').textContent !== '—');
+    expect($('warnings').children).toHaveLength(0);
   });
 
   it('un OBJ normal no muestra el aviso', async () => {

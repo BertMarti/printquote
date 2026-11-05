@@ -259,7 +259,7 @@ export const en: Record<Key, string> = {
   'warn.tiny':
     'The part is only {size} mm along its longest side. printquote assumes the model is in millimetres: if it was exported in metres or inches, change the units when exporting.',
   'warn.bigPolygons':
-    'The OBJ has polygons with more than 200 vertices ({count}). They are split as a fan, which is only right if they are convex: if any is concave, the surface area, weight and 3D view may be wrong. Export the model again with triangulated faces.',
+    'The OBJ has concave polygons that could not be split into triangles properly ({count}): they have more than 100,000 vertices or are too convoluted. They were split as a fan, so the surface area, weight and 3D view may be wrong. Export the model again with triangulated faces.',
   'warn.tooBig': 'The part ({size} mm) does not fit on the {bed} mm bed, even when rotated.',
 
   // ── Copied text and print sheet ──

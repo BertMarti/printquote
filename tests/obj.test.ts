@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { analyzeModel } from '../src/stl/analyze';
 import { computeStats, meshWarnings } from '../src/stl/geometry';
 import { ModelParseError } from '../src/stl/errors';
-import { parseObj } from '../src/stl/obj';
-import { cubeTriangles, discObj, encode } from './helpers/mesh';
+import { MAX_EAR_CLIPPING, parseObj } from '../src/stl/obj';
+import { cubeTriangles, discObj, encode, starFaceObj } from './helpers/mesh';
 
 /** Cubo de lado 20 como OBJ con caras cuadradas y normales hacia fuera. */
 const CUBE_QUADS = `# cubo de 20 mm
@@ -130,18 +130,30 @@ function prismObj(outline: ReadonlyArray<readonly [number, number]>, h: number, 
 
 const U_SHAPE: ReadonlyArray<readonly [number, number]> = [[0, 0], [3, 0], [3, 2], [2, 2], [2, 1], [1, 1], [1, 2], [0, 2]]; // área 5
 
-describe('OBJ con polígonos de más de 200 vértices', () => {
-  it('cuenta los polígonos que se triangulan en abanico sin poder comprobar si son cóncavos', () => {
-    expect(parseObj(encode(discObj(200))).largePolygons).toBe(0); // 200 todavía se trata bien
-    expect(parseObj(encode(discObj(201))).largePolygons).toBe(2); // las dos bases
+/** Una cara cuadrada con `side` vértices por lado (coordenadas enteras, exactas en float32): convexa, con colineales. */
+function squareFaceObj(side: number): string {
+  const points: string[] = [];
+  for (let i = 0; i < side; i++) points.push(`v ${i} 0 0`);
+  for (let i = 0; i < side; i++) points.push(`v ${side} ${i} 0`);
+  for (let i = 0; i < side; i++) points.push(`v ${side - i} ${side} 0`);
+  for (let i = 0; i < side; i++) points.push(`v 0 ${side - i} 0`);
+  return `${points.join('\n')}\nf ${points.map((_, i) => i + 1).join(' ')}\n`;
+}
+
+describe('OBJ con polígonos enormes', () => {
+  it('solo cuenta los cóncavos que se han tenido que dividir en abanico (más de MAX_EAR_CLIPPING vértices)', () => {
+    expect(parseObj(encode(discObj(201))).largePolygons).toBe(0); // hasta la 1.1, 2: los de más de 200 iban en abanico
+    expect(parseObj(encode(squareFaceObj(MAX_EAR_CLIPPING / 4 + 1))).largePolygons).toBe(0); // convexo: el abanico es correcto
+    expect(parseObj(encode(starFaceObj(MAX_EAR_CLIPPING + 2))).largePolygons).toBe(1);
+    expect(parseObj(encode(starFaceObj(MAX_EAR_CLIPPING))).largePolygons).toBe(0);
     expect(parseObj(encode(CUBE_QUADS)).largePolygons).toBe(0);
   });
 
   it('el aviso sale de meshWarnings solo si los hay, y no cambia el resto de avisos', async () => {
-    const big = await analyzeModel(encode(discObj(250)), 'disco.obj');
-    expect(big.mesh.largePolygons).toBe(2);
-    expect(meshWarnings(big.stats, undefined, big.mesh.largePolygons)).toEqual(['big-polygons']);
-    const small = await analyzeModel(encode(discObj(40)), 'disco.obj');
+    const big = await analyzeModel(encode(starFaceObj(MAX_EAR_CLIPPING + 2)), 'estrella.obj');
+    expect(big.mesh.largePolygons).toBe(1);
+    expect(meshWarnings(big.stats, undefined, big.mesh.largePolygons)).toContain('big-polygons');
+    const small = await analyzeModel(encode(discObj(250)), 'disco.obj');
     expect(meshWarnings(small.stats, undefined, small.mesh.largePolygons)).toEqual([]);
     expect(meshWarnings(small.stats)).toEqual([]);
   });

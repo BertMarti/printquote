@@ -85,3 +85,15 @@ export function discObj(sides: number): string {
   }
   return lines.join('\n');
 }
+
+/** Una sola cara en estrella de `n` vértices (radios alternos 50 y 30) en el plano XY: cóncava y sin cerrar. */
+export function starFaceObj(n: number): string {
+  const lines: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const angle = (2 * Math.PI * i) / n;
+    const r = i % 2 === 0 ? 50 : 30;
+    lines.push(`v ${(r * Math.cos(angle)).toFixed(6)} ${(r * Math.sin(angle)).toFixed(6)} 0`);
+  }
+  lines.push(`f ${Array.from({ length: n }, (_, i) => i + 1).join(' ')}`);
+  return lines.join('\n') + '\n';
+}
