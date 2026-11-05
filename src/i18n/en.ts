@@ -259,7 +259,7 @@ export const en: Record<Key, string> = {
   'warn.tiny':
     'The part is only {size} mm along its longest side. printquote assumes the model is in millimetres: if it was exported in metres or inches, change the units when exporting.',
   'warn.bigPolygons':
-    'The OBJ has polygons with more than 200 vertices ({count}). They are split as a fan, which is only right if they are convex: if any is concave, the surface area, weight and 3D view may be wrong. Export the model again with triangulated faces.',
+    'The OBJ has concave polygons that could not be split into triangles properly ({count}): they have more than 100,000 vertices or are too convoluted. They were split as a fan, so the surface area, weight and 3D view may be wrong. Export the model again with triangulated faces.',
   'warn.tooBig': 'The part ({size} mm) does not fit on the {bed} mm bed, even when rotated.',
 
   // ── Copied text and print sheet ──
@@ -319,6 +319,8 @@ export const en: Record<Key, string> = {
   'pdf.breakdown': 'Breakdown',
   'pdf.summary': 'Summary',
   'pdf.client': 'Client',
+  'pdf.email': 'Email',
+  'pdf.phone': 'Phone',
   'pdf.quoteNotes': 'Notes',
   'pdf.weight': 'Total weight',
   'pdf.time': 'Total time',
@@ -352,6 +354,8 @@ export const en: Record<Key, string> = {
   'hist.intro':
     'Save each quote in this browser to repeat or export it. The 3D file and your business details are not saved, and nothing is sent to any server.',
   'hist.client': 'Client',
+  'hist.email': 'Email',
+  'hist.phone': 'Phone',
   'hist.quoteNotes': 'Notes for this quote',
   'hist.quoteNotes.placeholder': 'Red colour. Collection from the workshop on Friday.',
   'hist.save': 'Save this quote',
@@ -360,6 +364,10 @@ export const en: Record<Key, string> = {
   'hist.save.failed.title': 'Could not save',
   'hist.save.failed': 'The browser does not allow writing (out of space or private mode?). What you had saved is still there.',
   'hist.saveBatch': 'Save batch',
+  'hist.contactSave': 'Save the email and phone with the quote',
+  'hist.contact.note': 'Your client’s email and phone are personal data: they stay on this device (with the quote if you tick the box) and only appear in the PDF if you fill them in. They never travel in the link.',
+  'hist.email.invalid': 'Check the email: it needs an @ and a domain.',
+  'hist.phone.invalid': 'Check the phone: use only numbers, spaces, +, hyphens or brackets.',
   'hist.batch.meta': 'Batch of {n} parts',
   'hist.batch.meta.one': 'Batch of 1 part',
   'hist.batch.name': 'batch of {n} parts',
@@ -421,7 +429,7 @@ export const en: Record<Key, string> = {
   'share.copy': 'Copy link',
   'share.copied': 'Link copied',
   'share.copyFailed': 'Could not copy the link',
-  'share.note': 'The link carries only the settings (material, prices, printer…), never the 3D file or the client.',
+  'share.note': 'The link carries only the settings (material, prices, printer…), never the 3D file or client data.',
   'share.applied': 'Link settings applied. Drop your part to calculate the quote.',
   'share.applied.part': 'Link settings applied to the loaded part.',
   'summary.shared': 'Link settings applied. Drop your part to calculate the quote.',
@@ -429,6 +437,8 @@ export const en: Record<Key, string> = {
   // ── History CSV header ──
   'csv.date': 'Date',
   'csv.client': 'Client',
+  'csv.email': 'Email',
+  'csv.phone': 'Phone',
   'csv.part': 'Part',
   'csv.volume': 'Volume (cm³)',
   'csv.x': 'X (mm)',

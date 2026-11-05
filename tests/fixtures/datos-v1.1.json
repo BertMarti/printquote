@@ -1,0 +1,286 @@
+{
+  "note": "Datos guardados por printquote 1.1.0 (generados con el código de la etiqueta v1.1.0): no editar a mano.",
+  "printquote:historial:v1": [
+    {
+      "id": "lote-1-1",
+      "savedAt": "2026-10-31T10:00:00.000Z",
+      "client": "Taller Ejemplo",
+      "note": "Color rojo",
+      "fileName": "soporte.stl, tapa.stl",
+      "volumeMm3": 37791,
+      "size": {
+        "x": 31,
+        "y": 31,
+        "z": 31
+      },
+      "triangles": 24,
+      "settings": {
+        "material": "PLA",
+        "printerId": "custom",
+        "pricePerKg": {
+          "PLA": 20,
+          "PETG": 24,
+          "ABS": 22,
+          "TPU": 35
+        },
+        "infillPercent": 20,
+        "perimeters": 2,
+        "lineWidth": 0.45,
+        "flowRate": 8,
+        "overheadMinutes": 5,
+        "powerWatts": 120,
+        "energyPrice": 0.15,
+        "marginPercent": 30,
+        "copies": 1,
+        "bedX": 220,
+        "bedY": 220,
+        "bedZ": 250
+      },
+      "result": {
+        "weightGrams": 55.484097600000005,
+        "hours": 1.9363500000000002,
+        "materialCost": 1.31,
+        "energyCost": 0.03,
+        "marginAmount": 0.4,
+        "subtotal": 1.34,
+        "total": 1.74
+      },
+      "parts": [
+        {
+          "fileName": "soporte.stl",
+          "volumeMm3": 8000,
+          "size": {
+            "x": 20,
+            "y": 20,
+            "z": 20
+          },
+          "triangles": 12,
+          "surfaceMm2": 2400,
+          "settings": {
+            "material": "PLA",
+            "printerId": "custom",
+            "pricePerKg": {
+              "PLA": 20,
+              "PETG": 24,
+              "ABS": 22,
+              "TPU": 35
+            },
+            "infillPercent": 20,
+            "perimeters": 2,
+            "lineWidth": 0.45,
+            "flowRate": 8,
+            "overheadMinutes": 5,
+            "powerWatts": 120,
+            "energyPrice": 0.15,
+            "marginPercent": 30,
+            "copies": 1,
+            "bedX": 220,
+            "bedY": 220,
+            "bedZ": 250
+          },
+          "result": {
+            "weightGrams": 4.12672,
+            "hours": 0.1988888888888889,
+            "materialCost": 0.08,
+            "energyCost": 0,
+            "marginAmount": 0.02,
+            "subtotal": 0.08,
+            "total": 0.1
+          }
+        },
+        {
+          "fileName": "tapa.stl",
+          "volumeMm3": 29791,
+          "size": {
+            "x": 31,
+            "y": 31,
+            "z": 31
+          },
+          "triangles": 12,
+          "surfaceMm2": 5766,
+          "settings": {
+            "material": "PETG",
+            "printerId": "custom",
+            "pricePerKg": {
+              "PLA": 20,
+              "PETG": 24,
+              "ABS": 22,
+              "TPU": 35
+            },
+            "infillPercent": 20,
+            "perimeters": 2,
+            "lineWidth": 0.45,
+            "flowRate": 8,
+            "overheadMinutes": 5,
+            "powerWatts": 120,
+            "energyPrice": 0.15,
+            "marginPercent": 30,
+            "copies": 4,
+            "bedX": 220,
+            "bedY": 220,
+            "bedZ": 250
+          },
+          "result": {
+            "weightGrams": 51.35737760000001,
+            "hours": 1.7374611111111113,
+            "materialCost": 1.23,
+            "energyCost": 0.03,
+            "marginAmount": 0.38,
+            "subtotal": 1.26,
+            "total": 1.64
+          }
+        }
+      ]
+    },
+    {
+      "id": "pieza-1-1",
+      "savedAt": "2026-10-31T10:00:00.000Z",
+      "client": "Ana Ejemplo",
+      "note": "Recogida el viernes",
+      "fileName": "cubo.stl",
+      "volumeMm3": 8000,
+      "size": {
+        "x": 20,
+        "y": 20,
+        "z": 20
+      },
+      "triangles": 12,
+      "surfaceMm2": 2400,
+      "settings": {
+        "material": "PLA",
+        "printerId": "custom",
+        "pricePerKg": {
+          "PLA": 20,
+          "PETG": 24,
+          "ABS": 22,
+          "TPU": 35
+        },
+        "infillPercent": 20,
+        "perimeters": 2,
+        "lineWidth": 0.45,
+        "flowRate": 8,
+        "overheadMinutes": 5,
+        "powerWatts": 120,
+        "energyPrice": 0.15,
+        "marginPercent": 30,
+        "copies": 1,
+        "bedX": 220,
+        "bedY": 220,
+        "bedZ": 250
+      },
+      "result": {
+        "weightGrams": 4.12672,
+        "hours": 0.1988888888888889,
+        "materialCost": 0.08,
+        "energyCost": 0,
+        "marginAmount": 0.02,
+        "subtotal": 0.08,
+        "total": 0.1
+      }
+    }
+  ],
+  "printquote:lote:v1": {
+    "v": 1,
+    "parts": [
+      {
+        "fileName": "soporte.stl",
+        "volumeMm3": 8000,
+        "size": {
+          "x": 20,
+          "y": 20,
+          "z": 20
+        },
+        "triangles": 12,
+        "surfaceMm2": 2400,
+        "settings": {
+          "material": "PLA",
+          "printerId": "custom",
+          "pricePerKg": {
+            "PLA": 20,
+            "PETG": 24,
+            "ABS": 22,
+            "TPU": 35
+          },
+          "infillPercent": 20,
+          "perimeters": 2,
+          "lineWidth": 0.45,
+          "flowRate": 8,
+          "overheadMinutes": 5,
+          "powerWatts": 120,
+          "energyPrice": 0.15,
+          "marginPercent": 30,
+          "copies": 1,
+          "bedX": 220,
+          "bedY": 220,
+          "bedZ": 250
+        },
+        "result": {
+          "weightGrams": 4.12672,
+          "hours": 0.1988888888888889,
+          "materialCost": 0.08,
+          "energyCost": 0,
+          "marginAmount": 0.02,
+          "subtotal": 0.08,
+          "total": 0.1
+        }
+      },
+      {
+        "fileName": "tapa.stl",
+        "volumeMm3": 29791,
+        "size": {
+          "x": 31,
+          "y": 31,
+          "z": 31
+        },
+        "triangles": 12,
+        "surfaceMm2": 5766,
+        "settings": {
+          "material": "PETG",
+          "printerId": "custom",
+          "pricePerKg": {
+            "PLA": 20,
+            "PETG": 24,
+            "ABS": 22,
+            "TPU": 35
+          },
+          "infillPercent": 20,
+          "perimeters": 2,
+          "lineWidth": 0.45,
+          "flowRate": 8,
+          "overheadMinutes": 5,
+          "powerWatts": 120,
+          "energyPrice": 0.15,
+          "marginPercent": 30,
+          "copies": 4,
+          "bedX": 220,
+          "bedY": 220,
+          "bedZ": 250
+        },
+        "result": {
+          "weightGrams": 51.35737760000001,
+          "hours": 1.7374611111111113,
+          "materialCost": 1.23,
+          "energyCost": 0.03,
+          "marginAmount": 0.38,
+          "subtotal": 1.26,
+          "total": 1.64
+        }
+      }
+    ]
+  },
+  "printquote:negocio:v1": {
+    "name": "Taller Ejemplo",
+    "taxId": "",
+    "address": "",
+    "phone": "",
+    "email": "",
+    "web": "",
+    "logo": null,
+    "quoteNumber": "2026-007",
+    "autoNumber": true,
+    "validityDays": 30,
+    "vatPercent": 21,
+    "notes": "",
+    "pdfShowCosts": false
+  }
+}

@@ -1,7 +1,13 @@
 # MEMORY.md · printquote
-Última actualización: 2026-10-31 por Claude (jefe del repo en la fase 6, rama `v1.1-2026-10-31`)
+Última actualización: 2026-11-02 por Claude (jefe del repo en la fase 7, rama `v1.2-2026-11-02`)
 
 ## Estado actual
+
+### v1.2.0 (fase 7, 02/11/2026, rama `v1.2-2026-11-02`, PR sin fusionar; release y etiqueta las crea el orquestador)
+- **Contacto del cliente**: `#in-client-email`/`#in-client-phone` (bloque 08), validación suave en `src/quote/contact.ts` (correo `x@y.z`; teléfono `[0-9 +().-]`, un `+` solo al principio, 6–20 cifras), aviso en `#err-client-*` con `aria-invalid`, que se rehace en `render()` del historial (abrir, cambiar de idioma). `HistoryEntry.email?`/`phone?` opcionales (`EMAIL_MAX` 100, `PHONE_MAX` 40); solo se guardan con `#in-contact-save` marcada (`BusinessProfile.saveContact`, por defecto `true`, en `printquote:negocio:v1`). PDF: `doc.contact` en una franja bajo la de fecha/cliente, sans 10 pt y partido con `draw.wrap` (un correo nunca se corta con «…»). CSV: «Correo» y «Teléfono» tras «Cliente» (un `+34…` lleva apóstrofo por la protección de fórmulas: es intencionado).
+- **Triangulación OBJ**: `src/stl/triangulate.ts` sustituye al recorte de orejas O(n³) con tope de 200. Probado y descartado por medida: curva Z de earcut (las orejas largas de un engranaje recorrían ¼ de los puntos), rejilla cuadrada (un peine largo y plano quedaba en celdas alargadas: ahora GX × GY con la forma de la caja), caja entera de la oreja (ahora solo las celdas que toca, fila a fila), montículo por tamaño de oreja (peor que la cola con el «salto» de earcut) y volver a mirar el vecino anterior en vez de saltar (abanicos de triángulos finos: engranaje 10× más lento). Solo se buscan esquinas entrantes o colineales (en un polígono simple basta) y, en cuanto no queda ninguna entrante, abanico. Menos de 64 vértices: se miran todos los puntos, como en la 1.1. `largePolygons` ya no cuenta los polígonos grandes convexos ni los cóncavos de ≤ 100 000 vértices (cambio de texto de `warn.bigPolygons`).
+- **Compatibilidad**: `tests/fixtures/datos-v1.1.json` lo generó el código de v1.1.0 (worktree temporal de la etiqueta); no editarlo a mano. La «migración explícita del esquema del lote» no hizo falta (ver PLAN).
+- **Mantenimiento**: parches de vite/vitest/globals/minimatch; `npm audit` 0; TypeScript 7.0.2 sigue bloqueado por `typescript-eslint` 8.72.1.
 
 ### v1.1.0 (fase 6, 31/10/2026, rama `v1.1-2026-10-31`, PR sin fusionar; release y etiqueta las crea el orquestador)
 - **Datos del presupuesto**: el cliente y las notas del negocio ya existían (0.9). Nuevo: `BusinessProfile.autoNumber` (por defecto `true`; `false` → `quoteNumber` libre, puede ir vacío y no sube), validez mínima 0 (sin «Válido hasta» ni `noteValidity`), `#in-quote-notes` en el bloque 08 → `quoteNotes` del PDF (todas sus líneas, acotadas por `NOTE_MAX`; título `pdf.quoteNotes` con 3 pt de aire tras la regla) y `HistoryEntry.note?` (opcional, `cleanMultiline`, `NOTE_MAX` 300; una nota que no es texto se ignora sin descartar la entrada). Los datos de la v1.0 se leen sin avisos (sin `autoNumber` = `true`). El número solo sube si la autonumeración sigue activa y no se cambió mientras se generaba el PDF (hallazgo de la revisión cruzada). Notas que no caben → `newPage()`.
@@ -245,13 +251,13 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-10-24 (Claude): `scripts/chrome.mjs` usa el `WebSocket` global (Node 22, como pide `engines`); con Node 20 hay que lanzarlo con `node --experimental-websocket`.
 
 ## Siguiente paso
-1. Orquestador/Alberto: revisar y fusionar la PR de `v1.1-2026-10-31` y publicar la release v1.1.0 (texto en el informe). El despliegue a Pages es automático al entrar en `main`. La hoja de ruta está en `PLAN.md`.
+1. Orquestador/Alberto: revisar y fusionar la PR de `v1.2-2026-11-02` y publicar la release v1.2.0 (texto en el informe). El despliegue a Pages es automático al entrar en `main`. La hoja de ruta está en `PLAN.md`.
 2. Pendiente de una persona (no automatizable aquí): probar con lector de pantalla real (NVDA/VoiceOver) el campo de copias del lote y los anuncios, y la hoja de impresión (de una pieza y de un lote) en Firefox y Safari y en una impresora real.
 3. Pendiente de una persona: releer `docs/USO.md` con calma y probar la calibración con su laminador real; los valores de partida (caudal, potencia) son orientativos.
-4. Ideas sin hacer: migración de esquema del lote persistido (si cambia se descarta). (Los lotes de v0.6 se abren desde 0.10.0.)
+4. Ideas sin hacer: migración de esquema del lote en curso (revisada en 1.2: aún no hace falta) y recordar cliente/contacto/notas del lote en curso al recargar. (Los lotes de v0.6 se abren desde 0.10.0.)
 
 ## Problemas conocidos
-- OBJ: polígonos cóncavos de más de 200 vértices siguen en abanico (recorte de orejas es O(n³)); desde #19 se avisa, pero no se corrigen.
+- OBJ: desde 1.2 solo van en abanico (con aviso) las caras cóncavas de más de 100 000 vértices o las que agotan el presupuesto de `triangulate`; las que se cruzan a sí mismas se cortan a la fuerza sin aviso, como en la 1.1. Triangulación probada con formas construidas, no con exportaciones reales de CAD.
 - PDF: chino, japonés, árabe y emojis siguen saliendo como «?» (las fuentes cubren latino, griego y cirílico). Tope de 6 300 000 triángulos en todos los formatos (`src/stl/limits.ts`, desde 0.8.0; antes solo 3MF, #20); una malla justo por debajo aún puede ser pesada en equipos modestos (si se agota la memoria se avisa con `err.tooComplex` o `err.worker`; el tope del `Map` de V8 se quitó en 0.9.0).
 - Sin revisar por falta de tiempo: descarga del PDF y hoja de impresión con lector real, foco de teclado del resumen de «Datos del negocio» a ojo, anuncio al pasar a «Personalizada» al editar un campo.
 - El chunk del visor pesa ~560 kB (139 kB gzip) por three.js y el del PDF ~1,1 MB (507 kB gzip, pdf-lib + fontkit); ambos se cargan aparte con `import()` y `chunkSizeWarningLimit` está en 1200 kB.
@@ -303,3 +309,4 @@ Documentación en la rama `agent/docs` (PR contra `agent/qa`, se fusiona despué
 - 2026-10-26 Claude Opus 5.5 (jefe) con GPT-5.6 Luna y Zen (fase3-2026-10-25): Trusted Types, prueba de integración en Chrome (local y CI), progreso del análisis con «Cancelar», lotes de v0.6 con «Abrir», capturas regeneradas, versión 0.10.0. PR #68 sin fusionar.
 - 2026-10-26 Claude Opus 5.5 (jefe) con GPT-5.6 Luna (v1-2026-10-26): versión 1.0.0 (colofón y pie del PDF con la versión), logotipo PNG con medidas enormes rechazado, aviso al importar sin poder guardar, historial sin importes negativos, USO/SECURITY fieles, CHANGELOG 1.0.0 y PLAN «Después de la 1.0». PR sin fusionar.
 - 2026-10-31 Claude Opus 5.5 (jefe) con GPT-5.6 Luna (v1.1-2026-10-31): versión 1.1.0: autonumeración y validez opcionales, notas de este presupuesto (PDF e historial), notas que pasan de página, WebGL tras el primer pintado, precarga del PDF con la intención, `npm run medir`, `npm audit` a 0. PR sin fusionar.
+- 2026-11-02 Claude Opus 5.5 (jefe) con GPT-5.6 Luna (v1.2-2026-11-02): versión 1.2.0: correo y teléfono del cliente (PDF, historial con casilla para no guardarlos, CSV), triangulación nueva de caras OBJ cóncavas (sin tope de 200), prueba de datos de la 1.1, parches de dependencias. PR sin fusionar.

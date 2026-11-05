@@ -22,6 +22,8 @@ export function pdfLabels(lang: Lang): PdfLabels {
     breakdown: t('pdf.breakdown'),
     summary: t('pdf.summary'),
     client: t('pdf.client'),
+    email: t('pdf.email'),
+    phone: t('pdf.phone'),
     quoteNotes: t('pdf.quoteNotes'),
     weight: t('pdf.weight'),
     time: t('pdf.time'),

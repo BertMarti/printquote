@@ -27,6 +27,8 @@ export interface BusinessProfile {
    * peso, tiempo estimado, precio por copia, IVA y total, pero no los costes ni el margen del negocio.
    */
   readonly pdfShowCosts: boolean;
+  /** Si se guardan el correo y teléfono del cliente en el historial. */
+  readonly saveContact: boolean;
 }
 
 /** Longitudes máximas de los textos (el PDF es de una sola página). */
@@ -70,6 +72,7 @@ export const DEFAULT_BUSINESS: BusinessProfile = {
   vatPercent: DEFAULT_VAT_PERCENT,
   notes: '',
   pdfShowCosts: false,
+  saveContact: true,
 };
 
 const LOGO_DATA_URL = /^data:image\/(png|jpeg);base64,[A-Za-z0-9+/]+=*$/;
@@ -119,6 +122,7 @@ export function normalizeBusiness(input: unknown): BusinessProfile {
       Math.round(cleanNumber(source.vatPercent, DEFAULT_VAT_PERCENT, BUSINESS_LIMITS.vatPercent.min, BUSINESS_LIMITS.vatPercent.max) * 100) / 100,
     notes: cleanText(source.notes, BUSINESS_MAX.notes, true),
     pdfShowCosts: source.pdfShowCosts === true,
+    saveContact: source.saveContact !== false,
   };
 }
 

@@ -6,10 +6,13 @@ import { MATERIALS } from './materials';
 import { getPrinter } from './printers';
 import { cleanMultiline } from './business';
 import { normalizeSettings, type QuoteSettings } from './settings';
+import { cleanContact } from './contact';
 
 /** Presupuestos que se guardan como máximo: protege el espacio de `localStorage` (≈ 1,1 kB por pieza: ≈ 27 kB un lote de 50; el máximo real depende del espacio libre). */
 export const HISTORY_MAX = 100;
 export const CLIENT_MAX = 80;
+export const EMAIL_MAX = 100;
+export const PHONE_MAX = 40;
 const FILE_NAME_MAX = 200;
 
 /** Resultado tal como salió al guardar: no se recalcula al abrirlo (la fórmula puede cambiar con las versiones). */
@@ -47,6 +50,8 @@ export interface HistoryEntry extends HistoryPart {
   readonly savedAt: string;
   readonly client: string;
   readonly note?: string;
+  readonly email?: string;
+  readonly phone?: string;
   readonly parts?: readonly HistoryPart[];
 }
 
@@ -59,6 +64,8 @@ export interface NewEntryInput {
   readonly now?: Date;
   readonly id?: string;
   readonly note?: string;
+  readonly email?: string;
+  readonly phone?: string;
 }
 
 /** Cliente en una sola línea y de longitud acotada. */
@@ -73,6 +80,12 @@ export const NOTE_MAX = 300;
 function noteField(value: unknown): { note?: string } {
   const note = cleanMultiline(value, NOTE_MAX);
   return note === '' ? {} : { note };
+}
+
+function contactFields(email: unknown, phone: unknown): { email?: string; phone?: string } {
+  const cleanEmail = cleanContact(email, EMAIL_MAX);
+  const cleanPhone = cleanContact(phone, PHONE_MAX);
+  return { ...(cleanEmail ? { email: cleanEmail } : {}), ...(cleanPhone ? { phone: cleanPhone } : {}) };
 }
 
 function newId(): string {
@@ -179,6 +192,7 @@ export function createEntry(input: NewEntryInput): HistoryEntry {
     savedAt: (input.now ?? new Date()).toISOString(),
     client: cleanClient(input.client),
     ...noteField(input.note),
+    ...contactFields(input.email, input.phone),
     ...toPart(input.fileName, input.stats, input.settings, input.quote),
   };
 }
@@ -189,6 +203,8 @@ export interface NewBatchEntryInput {
   readonly now?: Date;
   readonly id?: string;
   readonly note?: string;
+  readonly email?: string;
+  readonly phone?: string;
 }
 
 /** Entrada de un lote: cada pieza con sus ajustes y su resultado, y el agregado en el primer nivel (ver `HistoryEntry`). */
@@ -202,6 +218,7 @@ export function createBatchEntry(input: NewBatchEntryInput): HistoryEntry {
     savedAt: (input.now ?? new Date()).toISOString(),
     client: cleanClient(input.client),
     ...noteField(input.note),
+    ...contactFields(input.email, input.phone),
     fileName: input.parts.map((part) => part.fileName).join(', ').slice(0, FILE_NAME_MAX),
     volumeMm3: input.parts.reduce((acc, part) => acc + part.stats.volume, 0),
     size: { x: max('x'), y: max('y'), z: max('z') },
@@ -277,7 +294,7 @@ function normalizeEntry(raw: unknown): HistoryEntry | null {
   if (typeof savedAt !== 'string' || Number.isNaN(Date.parse(savedAt))) return null;
   if (typeof client !== 'string') return null;
   // Una nota que no es texto se ignora (no descarta la entrada): las entradas de la v1.0 no la llevan.
-  const base = { id, savedAt, client: cleanClient(client), ...noteField(raw['note']), ...part };
+  const base = { id, savedAt, client: cleanClient(client), ...noteField(raw['note']), ...contactFields(raw['email'], raw['phone']), ...part };
   if (raw['parts'] === undefined) return base;
 
   const parts = normalizeParts(raw['parts']);
@@ -315,7 +332,7 @@ export function normalizeHistory(raw: unknown): HistoryEntry[] {
 // ── CSV ──
 
 const COLUMNS: readonly Key[] = [
-  'csv.date', 'csv.client', 'csv.part', 'csv.volume', 'csv.x', 'csv.y', 'csv.z', 'csv.material', 'csv.printer',
+  'csv.date', 'csv.client', 'csv.email', 'csv.phone', 'csv.part', 'csv.volume', 'csv.x', 'csv.y', 'csv.z', 'csv.material', 'csv.printer',
   'csv.infill', 'csv.perimeters', 'csv.copies', 'csv.weight', 'csv.time', 'csv.materialCost', 'csv.energyCost',
   'csv.margin', 'csv.total',
 ];
@@ -358,6 +375,8 @@ export function historyToCsv(entries: readonly HistoryEntry[], lang: Lang): stri
       return [
         localDate(entry.savedAt),
         text(entry.client),
+        text(entry.email ?? ''),
+        text(entry.phone ?? ''),
         text(piece.fileName),
         decimal(piece.volumeMm3 / 1000, 2),
         decimal(size.x, 1),

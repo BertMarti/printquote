@@ -226,8 +226,8 @@ const TINY_PART_MM = 1;
  * - `inverted`: volumen con signo negativo (normales hacia dentro).
  * - `too-big`: no cabe en la cama ni girándola 90° sobre Z.
  * - `tiny`: la dimensión mayor mide menos de 1 mm (¿exportada en metros o pulgadas?).
- * - `big-polygons`: el OBJ trae polígonos de más de 200 vértices (`Mesh.largePolygons`), triangulados
- *   en abanico: si son cóncavos, la superficie y el visor salen mal.
+ * - `big-polygons`: el OBJ trae polígonos cóncavos que se han triangulado en abanico (`Mesh.largePolygons`: más de
+ *   100 000 vértices o presupuesto de `triangulate` agotado): la superficie y el visor pueden salir mal.
  */
 export function meshWarnings(stats: MeshStats, bed: Vec3 = DEFAULT_BED, largePolygons = 0): MeshWarning[] {
   const warnings: MeshWarning[] = [];

@@ -748,6 +748,7 @@ export function startApp(demoScale = 1): void {
     notesInput.value = business.notes;
     costsInput.checked = business.pdfShowCosts;
     autoNumberInput.checked = business.autoNumber;
+    byId<HTMLInputElement>('in-contact-save').checked = business.saveContact;
     numberHint.textContent = t(business.autoNumber ? 'biz.number.hint' : 'biz.number.hint.fixed');
     logoPreview.hidden = business.logo === null;
     if (business.logo) logoImg.src = business.logo;
@@ -895,6 +896,8 @@ export function startApp(demoScale = 1): void {
         quote: current.quote,
         image: viewer ? viewer.snapshot() : null,
         client: byId<HTMLInputElement>('in-client').value,
+        email: byId<HTMLInputElement>('in-client-email').value,
+        phone: byId<HTMLInputElement>('in-client-phone').value,
         quoteNotes: byId<HTMLTextAreaElement>('in-quote-notes').value,
       }),
     );
@@ -904,7 +907,7 @@ export function startApp(demoScale = 1): void {
     if (parts.length === 0 || pdfBusy) return;
     const issuer = business;
     const client = byId<HTMLInputElement>('in-client').value;
-    runPdf(batchPdfButton, 'batch.pdf', issuer, () => buildBatchDocument({ business: issuer, parts, client, quoteNotes: byId<HTMLTextAreaElement>('in-quote-notes').value }));
+    runPdf(batchPdfButton, 'batch.pdf', issuer, () => buildBatchDocument({ business: issuer, parts, client, email: byId<HTMLInputElement>('in-client-email').value, phone: byId<HTMLInputElement>('in-client-phone').value, quoteNotes: byId<HTMLTextAreaElement>('in-quote-notes').value }));
   });
 
   // ── Historial de presupuestos ──
@@ -916,6 +919,8 @@ export function startApp(demoScale = 1): void {
     announce,
     showNotice: (title, message) => showNotice(() => [title, message]),
     download,
+    contactSave: () => business.saveContact,
+    setContactSave: (value) => { updateBusiness({ saveContact: value }); },
   });
 
   // ── Lote ──

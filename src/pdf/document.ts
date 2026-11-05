@@ -2,7 +2,8 @@ import { getLang } from '../i18n';
 import { computeBatch, type BatchPart } from '../quote/batch';
 import type { BusinessProfile } from '../quote/business';
 import { cleanMultiline, validUntil } from '../quote/business';
-import { NOTE_MAX } from '../quote/history';
+import { EMAIL_MAX, NOTE_MAX, PHONE_MAX } from '../quote/history';
+import { cleanContact } from '../quote/contact';
 import { formatDuration, formatEuro, formatNumber } from '../quote/format';
 import { MATERIALS } from '../quote/materials';
 import type { Quote } from '../quote/model';
@@ -33,6 +34,8 @@ export interface PdfLabels {
   /** Título de la tabla cuando no se muestran los costes internos («Resumen»). */
   readonly summary: string;
   readonly client: string;
+  readonly email: string;
+  readonly phone: string;
   readonly quoteNotes: string;
   readonly weight: string;
   readonly time: string;
@@ -75,6 +78,7 @@ export interface QuoteDocument {
   readonly logo: string | null;
   /** Nº, fecha y validez. */
   readonly meta: readonly PdfRow[];
+  readonly contact: readonly PdfRow[];
   readonly issuerTitle: string;
   /** Líneas del emisor (NIF, dirección, teléfono, correo, web). */
   readonly issuerLines: readonly string[];
@@ -110,6 +114,8 @@ export interface QuoteDocumentInput {
   readonly image: string | null;
   /** Nombre del cliente (opcional; el del bloque «Presupuestos»). */
   readonly client?: string;
+  readonly email?: string;
+  readonly phone?: string;
   /** Notas específicas de este presupuesto, no persistidas como datos del negocio. */
   readonly quoteNotes?: string;
   readonly date?: Date;
@@ -131,6 +137,15 @@ function metaRows(business: BusinessProfile, labels: PdfLabels, date: Date, clie
 function cleanClient(value: string | undefined): string {
   // eslint-disable-next-line no-control-regex
   return (value ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+}
+
+function contactRows(labels: PdfLabels, email: string | undefined, phone: string | undefined): PdfRow[] {
+  const rows: PdfRow[] = [];
+  const cleanEmail = cleanContact(email, EMAIL_MAX);
+  const cleanPhone = cleanContact(phone, PHONE_MAX);
+  if (cleanEmail) rows.push([labels.email, cleanEmail]);
+  if (cleanPhone) rows.push([labels.phone, cleanPhone]);
+  return rows;
 }
 
 /** Líneas de notas del negocio que caben en el PDF sin pisar el pie. */
@@ -206,6 +221,7 @@ export function buildQuoteDocument(input: QuoteDocumentInput): QuoteDocument {
     businessName: business.name || labels.noBusinessName,
     logo: business.logo,
     meta: metaRows(business, labels, date, input.client),
+    contact: contactRows(labels, input.email, input.phone),
     issuerTitle: labels.issuer,
     issuerLines: issuerLinesOf(business, labels),
     pieceTitle: labels.piece,
@@ -236,6 +252,8 @@ export interface BatchDocumentInput {
   readonly business: BusinessProfile;
   readonly parts: readonly BatchPart[];
   readonly client?: string;
+  readonly email?: string;
+  readonly phone?: string;
   readonly quoteNotes?: string;
   readonly date?: Date;
   readonly labels?: PdfLabels;
@@ -258,6 +276,7 @@ export function buildBatchDocument(input: BatchDocumentInput): QuoteDocument {
     businessName: business.name || labels.noBusinessName,
     logo: business.logo,
     meta: metaRows(business, labels, date, input.client),
+    contact: contactRows(labels, input.email, input.phone),
     issuerTitle: labels.issuer,
     issuerLines: issuerLinesOf(business, labels),
     pieceTitle: labels.parts,
