@@ -1,4 +1,5 @@
-import { getLang, getLocale, t } from '../i18n';
+import { getLang, getLocale, t, type Key } from '../i18n';
+import { isValidEmail, isValidPhone } from '../quote/contact';
 import { computeBatch, type BatchPart } from '../quote/batch';
 import { formatEuro } from '../quote/format';
 import {
@@ -7,9 +8,11 @@ import {
   partSurface,
   createBatchEntry,
   createEntry,
+  countWithContact,
   HISTORY_MAX,
   historyToCsv,
   removeEntry,
+  withoutContact,
   type HistoryEntry,
 } from '../quote/history';
 import type { Quote } from '../quote/model';
@@ -30,6 +33,8 @@ export interface HistoryHost {
   announce(message: string): void;
   showNotice(title: string, message: string): void;
   download(blob: Blob, fileName: string): void;
+  contactSave(): boolean;
+  setContactSave(value: boolean): void;
 }
 
 const byId = <T extends HTMLElement>(id: string): T => {
@@ -41,6 +46,15 @@ const byId = <T extends HTMLElement>(id: string): T => {
 /** Bloque «08 Presupuestos»: guardar, listar, reabrir, borrar y exportar a CSV. Todo en `localStorage`. */
 export function setupHistory(host: HistoryHost): { render(): void; sync(): void } {
   const client = byId<HTMLInputElement>('in-client');
+  const email = byId<HTMLInputElement>('in-client-email');
+  const phone = byId<HTMLInputElement>('in-client-phone');
+  const saveContact = byId<HTMLInputElement>('in-contact-save');
+  const emailError = byId('err-client-email');
+  const purge = byId('contact-purge');
+  const purgeText = byId('contact-purge-text');
+  const purgeYes = byId<HTMLButtonElement>('contact-purge-yes');
+  const purgeNo = byId<HTMLButtonElement>('contact-purge-no');
+  const phoneError = byId('err-client-phone');
   const note = byId<HTMLTextAreaElement>('in-quote-notes');
   const saveButton = byId<HTMLButtonElement>('history-save');
   const saveBatchButton = byId<HTMLButtonElement>('history-save-batch');
@@ -52,6 +66,7 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
   const cancelButton = byId<HTMLButtonElement>('history-cancel');
 
   let entries = loadHistory();
+  saveContact.checked = host.contactSave();
   let confirmingClear = false;
   /** Entrada de lote cuyo «Abrir» espera confirmación (hay un lote en curso que se reemplazaría). */
   let confirmingOpen: string | null = null;
@@ -136,6 +151,8 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
   }
 
   function render(): void {
+    recheckContact(); // también al cambiar de idioma: el aviso se vuelve a escribir en el nuevo
+    if (!purge.hidden) syncPurge();
     rendering = true;
     list.replaceChildren(...entries.map(row));
     rendering = false;
@@ -171,14 +188,16 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
   function save(): void {
     const current = host.current();
     if (!current) return;
-    const entry = createEntry({ fileName: current.fileName, client: client.value, note: note.value, stats: current.stats, settings: current.settings, quote: current.quote });
+    const contact = saveContact.checked ? { email: email.value, phone: phone.value } : {};
+    const entry = createEntry({ fileName: current.fileName, client: client.value, note: note.value, ...contact, stats: current.stats, settings: current.settings, quote: current.quote });
     store(entry, entry.fileName);
   }
 
   function saveBatch(): void {
     const parts = host.batch();
     if (parts.length === 0) return;
-    store(createBatchEntry({ client: client.value, note: note.value, parts }), batchName(parts.length));
+    const contact = saveContact.checked ? { email: email.value, phone: phone.value } : {};
+    store(createBatchEntry({ client: client.value, note: note.value, ...contact, parts }), batchName(parts.length));
   }
 
   /** Reabre un lote en el bloque 06. Con un lote en curso hace falta un segundo clic: se perdería. */
@@ -194,6 +213,8 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
     host.openBatch(lines);
     client.value = entry.client;
     note.value = entry.note ?? '';
+    email.value = entry.email ?? '';
+    phone.value = entry.phone ?? '';
     render();
     // Las líneas se recalculan con el modelo actual: si el total ya no es el guardado, se dice.
     const total = computeBatch(lines).total;
@@ -215,6 +236,9 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
     host.applySettings(entry.settings);
     client.value = entry.client;
     note.value = entry.note ?? '';
+    email.value = entry.email ?? '';
+    phone.value = entry.phone ?? '';
+    recheckContact();
     host.announce(t(hasPart ? 'hist.opened.part' : 'hist.opened', { name: entry.fileName, total: formatEuro(entry.result.total) }));
   }
 
@@ -240,6 +264,73 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
 
   saveButton.addEventListener('click', save);
   saveBatchButton.addEventListener('click', saveBatch);
+  /** Pregunta (al desmarcar la casilla) si se quita el contacto de los presupuestos ya guardados; el texto, en el idioma activo. */
+  function syncPurge(): void {
+    const n = countWithContact(entries);
+    if (saveContact.checked || n === 0) {
+      purge.hidden = true;
+      return;
+    }
+    purgeText.textContent = n === 1 ? t('hist.contactPurge.one') : t('hist.contactPurge', { n });
+  }
+  saveContact.addEventListener('change', () => {
+    host.setContactSave(saveContact.checked);
+    const ask = !saveContact.checked && countWithContact(entries) > 0;
+    purge.hidden = !ask;
+    syncPurge();
+    if (ask) purgeYes.focus();
+  });
+  purgeYes.addEventListener('click', () => {
+    const n = countWithContact(entries);
+    const next = withoutContact(entries);
+    if (!saveHistory(next)) {
+      host.showNotice(t('hist.save.failed.title'), t('hist.save.failed'));
+      return;
+    }
+    entries = next;
+    purge.hidden = true;
+    render();
+    saveContact.focus();
+    host.announce(n === 1 ? t('hist.contactPurged.one') : t('hist.contactPurged', { n }));
+  });
+  purgeNo.addEventListener('click', () => {
+    purge.hidden = true;
+    saveContact.focus();
+  });
+  const validate = (input: HTMLInputElement, error: HTMLElement, valid: (value: string) => boolean, key: Key): void => {
+    if (input.value === '' || valid(input.value)) {
+      input.removeAttribute('aria-invalid');
+      error.textContent = '';
+    } else {
+      input.setAttribute('aria-invalid', 'true');
+      error.textContent = t(key);
+    }
+  };
+  let emailWarned = false;
+  let phoneWarned = false;
+  email.addEventListener('input', () => {
+    if (emailWarned) validate(email, emailError, isValidEmail, 'hist.email.invalid');
+  });
+  phone.addEventListener('input', () => {
+    if (phoneWarned) validate(phone, phoneError, isValidPhone, 'hist.phone.invalid');
+  });
+  const checkEmail = (): void => {
+    emailWarned = true;
+    validate(email, emailError, isValidEmail, 'hist.email.invalid');
+  };
+  const checkPhone = (): void => {
+    phoneWarned = true;
+    validate(phone, phoneError, isValidPhone, 'hist.phone.invalid');
+  };
+  /** Rehace los avisos que ya se mostraron (valores nuevos al abrir un presupuesto, otro idioma). Nunca bloquea nada. */
+  function recheckContact(): void {
+    if (emailWarned) validate(email, emailError, isValidEmail, 'hist.email.invalid');
+    if (phoneWarned) validate(phone, phoneError, isValidPhone, 'hist.phone.invalid');
+  }
+  email.addEventListener('blur', checkEmail);
+  email.addEventListener('change', checkEmail);
+  phone.addEventListener('blur', checkPhone);
+  phone.addEventListener('change', checkPhone);
   client.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
       event.preventDefault();

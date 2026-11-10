@@ -1146,6 +1146,18 @@ input {
   margin-top: 8px;
 }
 
+.history-contact-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 12px;
+}
+
+/* Dentro de la rejilla, el segundo campo también es «el último de su tipo»: los dos llevan la línea de separación. */
+.history-contact-fields > .field {
+  align-content: start; /* con un aviso bajo el correo, el teléfono no baja al centro */
+  border-bottom: 1px solid var(--line);
+}
+
 .history-list {
   list-style: none;
   margin: 16px 0 0;
@@ -1339,6 +1351,10 @@ input {
 
 .field--text .field-note {
   margin-top: 2px;
+}
+
+.field--text input[aria-invalid='true'] {
+  border-bottom-color: var(--accent);
 }
 
 .logo-preview {
@@ -1696,6 +1712,11 @@ input {
   .stage-hint {
     display: none;
   }
+
+  .history-contact-fields {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
 }
 
 /* Dianas de 44 px con puntero táctil o en pantallas estrechas. La densidad de la ficha se queda en escritorio con ratón. */
@@ -1973,4 +1994,15 @@ input {
     font-size: 8pt;
     color: #555;
   }
+}
+
+/* Pregunta al desmarcar «Guardar el correo y el teléfono»: ¿quitarlos también de los ya guardados? */
+.contact-purge {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-left: 2px solid var(--accent);
+}
+
+.contact-purge .history-actions {
+  margin-top: 6px;
 }

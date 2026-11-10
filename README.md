@@ -36,7 +36,7 @@ printquote calcula un presupuesto aproximado para imprimir una pieza 3D: peso, t
 - Guardar **tus impresoras y tus materiales** con nombre («Mis impresoras», «Mis materiales») y aplicarlos con un clic.
 - Exportar tus ajustes a un archivo y llevarlos a otro navegador u ordenador («09 Tus datos»).
 - Presupuestar un lote de varias piezas y modificar sus copias.
-- Descargar un PDF para tu cliente con los datos del negocio, el nombre del cliente, tus condiciones y el IVA.
+- Descargar un PDF para tu cliente con los datos del negocio, el nombre del cliente (y, si quieres, su correo y su teléfono), tus condiciones y el IVA.
 - Guardar presupuestos, reabrirlos y exportar el historial a CSV.
 - Compartir la configuración con un enlace, sin compartir el modelo.
 - Usar la interfaz en español o inglés.
@@ -51,10 +51,12 @@ El archivo 3D se lee y se procesa en tu propio dispositivo: no se sube a ningún
 
 1. Abre **«07 Datos del negocio»** y rellena nombre, NIF, contacto y, si quieres, el logotipo y unas **notas para el cliente** (plazo de entrega, forma de pago…).
 2. Carga la pieza y ajusta material, relleno y copias.
-3. Escribe el nombre del cliente y, si quieres, las notas de este encargo en **«08 Presupuestos»** (opcional).
+3. Escribe el nombre del cliente y, si quieres, su correo, su teléfono y las notas de este encargo en **«08 Presupuestos»** (todo opcional).
 4. Pulsa **«Descargar PDF»**. Tu cliente verá peso, tiempo estimado, precio por copia, IVA y total; **no** verá tus costes ni tu margen, salvo que marques «Mostrar el desglose de costes en el PDF».
 
-El número del presupuesto se incrementa automáticamente al descargar cada PDF, o puedes desmarcar **«Numerar automáticamente»** y usar una referencia propia, como un número de pedido. También puedes añadir **notas de este presupuesto** (color, plazo o recogida), que aparecen en el PDF junto al cliente y se conservan al guardar y reabrirlo. Con 0 días de validez, el PDF no muestra fecha ni nota de validez. Además, el PDF empieza a prepararse en cuanto pasas el puntero por el botón (o lo tocas), así tarda menos en descargarse.
+El número del presupuesto se incrementa automáticamente al descargar cada PDF, o puedes desmarcar **«Numerar automáticamente»** y usar una referencia propia, como un número de pedido. También puedes añadir **notas de este presupuesto** (color, plazo o recogida), que aparecen en el PDF junto al cliente y se conservan al guardar y reabrirlo. Con 0 días de validez, el PDF no muestra fecha ni nota de validez.
+
+El **correo y el teléfono del cliente** salen en el PDF solo si los rellenas. Si el formato parece raro verás un aviso, pero nunca te impide guardar ni descargar. Son datos personales de tu cliente: se quedan en tu dispositivo y no viajan en el enlace para compartir. Se guardan con el presupuesto salvo que desmarques **«Guardar el correo y el teléfono con el presupuesto»**. Además, el PDF empieza a prepararse en cuanto pasas el puntero por el botón (o lo tocas), así tarda menos en descargarse.
 
 ## Cómo calcula (en sencillo)
 
@@ -70,7 +72,7 @@ No. Se procesa en tu navegador y nunca sale de tu dispositivo.
 
 ### ¿Qué formatos admite?
 
-STL binario o ASCII, OBJ y 3MF.
+STL binario o ASCII, OBJ y 3MF. En OBJ, las caras de muchos lados se dividen bien en triángulos aunque sean cóncavas, como la tapa de un engranaje con miles de dientes (hasta 100 000 vértices por cara, en milésimas o pocos segundos si la cara no se cruza a sí misma; si alguna no se puede, la ficha te avisa).
 
 ### Mi archivo es muy grande y tarda. ¿Puedo pararlo?
 

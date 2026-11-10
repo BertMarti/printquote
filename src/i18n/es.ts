@@ -265,7 +265,7 @@ export const es = {
   'warn.tiny':
     'La pieza mide solo {size} mm en su lado mayor. printquote asume que el modelo está en milímetros: si se exportó en metros o pulgadas, cambia las unidades al exportar.',
   'warn.bigPolygons':
-    'El OBJ tiene polígonos de más de 200 vértices ({count}). Se dividen en abanico, que solo es correcto si son convexos: si alguno es cóncavo, la superficie, el peso y la vista 3D pueden salir mal. Vuelve a exportar el modelo con caras triangulares.',
+    'El OBJ tiene polígonos cóncavos que no se han podido dividir bien en triángulos ({count}): tienen más de 100 000 vértices o son demasiado enrevesados. Se han dividido en abanico, así que la superficie, el peso y la vista 3D pueden salir mal. Vuelve a exportar el modelo con caras triangulares.',
   'warn.tooBig': 'La pieza ({size} mm) no cabe en la cama de {bed} mm, ni siquiera girándola.',
 
   // ── Texto para copiar y hoja de impresión ──
@@ -325,6 +325,8 @@ export const es = {
   'pdf.breakdown': 'Desglose',
   'pdf.summary': 'Resumen',
   'pdf.client': 'Cliente',
+  'pdf.email': 'Correo',
+  'pdf.phone': 'Teléfono',
   'pdf.quoteNotes': 'Notas',
   'pdf.weight': 'Peso total',
   'pdf.time': 'Tiempo total',
@@ -358,6 +360,8 @@ export const es = {
   'hist.intro':
     'Guarda cada presupuesto en este navegador para repetirlo o exportarlo. No se guarda el archivo 3D ni los datos del negocio, y no se envía nada a ningún servidor.',
   'hist.client': 'Cliente',
+  'hist.email': 'Correo',
+  'hist.phone': 'Teléfono',
   'hist.quoteNotes': 'Notas de este presupuesto',
   'hist.quoteNotes.placeholder': 'Color rojo. Recogida en el taller el viernes.',
   'hist.save': 'Guardar este presupuesto',
@@ -366,6 +370,16 @@ export const es = {
   'hist.save.failed.title': 'No se ha podido guardar',
   'hist.save.failed': 'El navegador no deja escribir (¿sin espacio o en modo privado?). Lo que ya tenías guardado sigue ahí.',
   'hist.saveBatch': 'Guardar lote',
+  'hist.contactSave': 'Guardar el correo y el teléfono con el presupuesto',
+  'hist.contact.note': 'El correo y el teléfono son datos personales de tu cliente: se quedan en este dispositivo (con el presupuesto, si marcas la casilla) y solo salen en el PDF si los rellenas. No viajan en el enlace. Desmarcar la casilla vale para lo que guardes desde ahora: para los ya guardados, te preguntará si quieres quitarlos también.',
+  'hist.contactPurge': '¿Quitar también el correo y el teléfono de los {n} presupuestos ya guardados que los tienen?',
+  'hist.contactPurge.one': '¿Quitar también el correo y el teléfono del presupuesto ya guardado que los tiene?',
+  'hist.contactPurge.yes': 'Quitarlos',
+  'hist.contactPurge.no': 'Dejarlos',
+  'hist.contactPurged': 'Correo y teléfono quitados de {n} presupuestos guardados.',
+  'hist.contactPurged.one': 'Correo y teléfono quitados de 1 presupuesto guardado.',
+  'hist.email.invalid': 'Revisa el correo: falta la @ o el dominio.',
+  'hist.phone.invalid': 'Revisa el teléfono: usa solo números, espacios, +, guiones o paréntesis.',
   'hist.batch.meta': 'Lote de {n} piezas',
   'hist.batch.meta.one': 'Lote de 1 pieza',
   'hist.batch.name': 'lote de {n} piezas',
@@ -427,7 +441,7 @@ export const es = {
   'share.copy': 'Copiar enlace',
   'share.copied': 'Enlace copiado',
   'share.copyFailed': 'No se ha podido copiar el enlace',
-  'share.note': 'El enlace lleva solo los parámetros (material, precios, impresora…), nunca el archivo 3D ni el cliente.',
+  'share.note': 'El enlace lleva solo los parámetros (material, precios, impresora…), nunca el archivo 3D ni los datos del cliente.',
   'share.applied': 'Parámetros del enlace aplicados. Arrastra tu pieza para calcular el presupuesto.',
   'share.applied.part': 'Parámetros del enlace aplicados a la pieza cargada.',
   'summary.shared': 'Parámetros del enlace aplicados. Arrastra tu pieza para calcular el presupuesto.',
@@ -435,6 +449,8 @@ export const es = {
   // ── Cabecera del CSV del historial ──
   'csv.date': 'Fecha',
   'csv.client': 'Cliente',
+  'csv.email': 'Correo',
+  'csv.phone': 'Teléfono',
   'csv.part': 'Pieza',
   'csv.volume': 'Volumen (cm³)',
   'csv.x': 'X (mm)',

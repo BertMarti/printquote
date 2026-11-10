@@ -187,7 +187,7 @@ describe('historial de presupuestos en la interfaz', () => {
     if (!blob) throw new Error('no se creó el archivo');
     expect(blob.type).toMatch(/text\/csv/);
     const text = await blob.text();
-    expect(text.startsWith('\uFEFFFecha;Cliente;Pieza;')).toBe(true);
+    expect(text.startsWith('\uFEFFFecha;Cliente;Correo;Teléfono;Pieza;')).toBe(true);
     const lines = text.slice(1).split('\r\n');
     expect(lines).toHaveLength(3); // cabecera, una fila y el final
     expect(lines[1]).toContain('"Ana; ""la del taller"""');
@@ -200,7 +200,7 @@ describe('historial de presupuestos en la interfaz', () => {
     document.querySelector<HTMLButtonElement>('button[data-lang="en"]')?.click();
     button('history-export').click();
     const text = await (created[0] as Blob).text();
-    expect(text.startsWith('\uFEFFDate,Client,Part,')).toBe(true);
+    expect(text.startsWith('\uFEFFDate,Client,Email,Phone,Part,')).toBe(true);
     expect(text).toContain('Custom,');
     document.querySelector<HTMLButtonElement>('button[data-lang="es"]')?.click();
   });

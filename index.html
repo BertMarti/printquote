@@ -345,6 +345,27 @@
                 <label for="in-client"><span data-i18n="hist.client">Cliente</span> <span class="sub" data-i18n="biz.optional">(opcional)</span></label>
                 <input id="in-client" type="text" maxlength="80" autocomplete="off" spellcheck="false" />
               </div>
+              <div class="history-contact-fields">
+                <div class="field field--text">
+                  <label for="in-client-email"><span data-i18n="hist.email">Correo</span> <span class="sub" data-i18n="biz.optional">(opcional)</span></label>
+                  <input id="in-client-email" type="email" inputmode="email" autocomplete="off" spellcheck="false" maxlength="100" aria-describedby="err-client-email" />
+                  <p class="field-note field-error" id="err-client-email" aria-live="polite"></p>
+                </div>
+                <div class="field field--text">
+                  <label for="in-client-phone"><span data-i18n="hist.phone">Teléfono</span> <span class="sub" data-i18n="biz.optional">(opcional)</span></label>
+                  <input id="in-client-phone" type="tel" inputmode="tel" autocomplete="off" maxlength="40" aria-describedby="err-client-phone" />
+                  <p class="field-note field-error" id="err-client-phone" aria-live="polite"></p>
+                </div>
+              </div>
+              <label class="check-field"><input id="in-contact-save" type="checkbox" checked aria-describedby="hist-contact-note" /><span data-i18n="hist.contactSave">Guardar el correo y el teléfono con el presupuesto</span></label>
+              <div class="contact-purge" id="contact-purge" role="group" aria-labelledby="contact-purge-text" hidden>
+                <p class="caption caption--plain" id="contact-purge-text" aria-live="polite"></p>
+                <div class="history-actions">
+                  <button type="button" class="button" id="contact-purge-yes" data-i18n="hist.contactPurge.yes">Quitarlos</button>
+                  <button type="button" class="button button--ghost" id="contact-purge-no" data-i18n="hist.contactPurge.no">Dejarlos</button>
+                </div>
+              </div>
+              <p class="caption field-note history-note" id="hist-contact-note" data-i18n="hist.contact.note">El correo y el teléfono son datos personales de tu cliente: se quedan en este dispositivo (con el presupuesto, si marcas la casilla) y solo salen en el PDF si los rellenas. No viajan en el enlace. Desmarcar la casilla vale para lo que guardes desde ahora: para los ya guardados, te preguntará si quieres quitarlos también.</p>
               <div class="field field--text">
                 <label for="in-quote-notes"><span data-i18n="hist.quoteNotes">Notas de este presupuesto</span> <span class="sub" data-i18n="biz.optional">(opcional)</span></label>
                 <textarea id="in-quote-notes" rows="2" maxlength="300" placeholder="Color rojo. Recogida en el taller el viernes." data-i18n-attr="placeholder:hist.quoteNotes.placeholder"></textarea>
@@ -354,7 +375,7 @@
                 <button type="button" class="button" id="history-save-batch" data-i18n="hist.saveBatch" disabled>Guardar lote</button>
                 <button type="button" class="button" id="share-copy" data-i18n="share.copy">Copiar enlace</button>
               </div>
-              <p class="caption field-note history-note" data-i18n="share.note">El enlace lleva solo los parámetros (material, precios, impresora…), nunca el archivo 3D ni el cliente.</p>
+              <p class="caption field-note history-note" data-i18n="share.note">El enlace lleva solo los parámetros (material, precios, impresora…), nunca el archivo 3D ni los datos del cliente.</p>
               <ul class="history-list" id="history-list" aria-label="Presupuestos guardados" data-i18n-attr="aria-label:hist.list.label"></ul>
               <p class="caption field-note history-empty" id="history-empty" data-i18n="hist.empty">Aún no hay presupuestos guardados.</p>
               <div class="history-footer">

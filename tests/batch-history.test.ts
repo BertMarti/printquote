@@ -95,11 +95,11 @@ describe('CSV con lotes', () => {
     const lines = split(historyToCsv([e], 'en'));
     expect(lines).toHaveLength(1 + 3 + 1); // cabecera, 3 piezas, salto final
     const rows = lines.slice(1, 4).map((line) => line.split(','));
-    expect(rows.map((r) => r[2])).toEqual(['a.stl', 'b.stl', 'c.stl']);
+    expect(rows.map((r) => r[4])).toEqual(['a.stl', 'b.stl', 'c.stl']); // tras fecha, cliente, correo y teléfono
     for (const r of rows) expect(r[1]).toBe('Ana');
-    expect(rows[1]?.[7]).toBe('PETG');
-    expect(rows[1]?.[11]).toBe('4'); // copias de esa pieza
-    const total = rows.reduce((acc, r) => acc + Number(r[17]), 0);
+    expect(rows[1]?.[9]).toBe('PETG');
+    expect(rows[1]?.[13]).toBe('4'); // copias de esa pieza
+    const total = rows.reduce((acc, r) => acc + Number(r[19]), 0);
     expect(total).toBeCloseTo(e.result.total, 2);
   });
 

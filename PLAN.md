@@ -44,6 +44,13 @@ Trabajo de la rama `mejoras-2026-10-24` comprobado contra el código actual:
 - **Carga más ligera** (idea «coste del chunk del visor y del PDF»): medido con `npm run medir`. La comprobación de WebGL espera al primer pintado y el PDF (módulo y fuentes, a la vez) se precarga con la intención. Estudiado y descartado: recortar fontkit (570 kB del chunk del PDF, empaquetado en CommonJS sin tree-shaking; las fuentes estándar perderían griego y cirílico), WOFF2 (Pages ya sirve los TTF con gzip: 77 → 38 kB) y separar los idiomas (≈ 8 kB gzip).
 - Mantenimiento: `npm audit` a 0 (minimatch 11 por override, solo desarrollo), three 0.187 y parches; TypeScript 7 y `@types/node` 26 revisados (siguen aplazados, ver abajo).
 
+## Hecho el 02/11/2026 (fase 7, v1.2.0)
+
+- **Correo y teléfono del cliente en el PDF** (idea «datos de contacto del cliente»): opcionales, validación que solo avisa, en el PDF solo si se rellenan, guardados con el presupuesto en el historial salvo que se desmarque la casilla (preferencia `saveContact` en el negocio), aviso de datos personales, columnas en el CSV y nunca en el enlace.
+- **Triangulación de polígonos OBJ cóncavos grandes** (idea «triangulación de polígonos cóncavos muy grandes»): `src/stl/triangulate.ts`, recorte de orejas con lista enlazada, cola de candidatas y rejilla de esquinas entrantes; sin tope de 200 vértices (ahora 100 000 y presupuesto de pasos por cara), mismas áreas que la 1.1. Pruebas con miles de vértices comparadas con la implementación anterior.
+- **Migración explícita del esquema del lote persistido** (idea): revisada y **no hace falta** todavía. El campo nuevo (contacto) es opcional y va en el historial, no en `printquote:lote:v1`; hay una prueba con datos reales de la 1.1 (historial con lote, lote en curso y negocio). Se queda en «Ideas» por si un cambio futuro del lote en curso la justifica.
+- Mantenimiento: `npm audit` a 0, parches de vite/globals/minimatch (vitest fijado a `~5.0.5`: la 5.1 no informa de los fallos con Node 20.19), Dependabot sin PRs ni alertas; TypeScript 7.0.2 y `@types/node` 26 siguen aplazados (puntos 4 y 5).
+
 ## Después de la 1.0
 
 Nada de esto deja a medias lo que ve el usuario; son mejoras y comprobaciones que necesitan hardware, personas o más tiempo.
@@ -51,16 +58,18 @@ Nada de esto deja a medias lo que ve el usuario; son mejoras y comprobaciones qu
 1. Probar OBJ y 3MF reales procedentes de laminadores, además de los modelos construidos en `tests/`, y documentar cualquier diferencia reproducible.
 2. Probar con lector de pantalla real el campo de copias, los anuncios, la barra de progreso y las hojas de impresión en Firefox y Safari.
 3. Revisar la descarga del PDF y la hoja de impresión en distintos visores y en una impresora real.
-4. Volver a probar TypeScript 7 cuando `typescript-eslint` lo admita (quitar el `ignore` de `.github/dependabot.yml`). Revisado el 31/10/2026: `typescript-eslint` 8.72.1 sigue pidiendo `<6.1`.
+4. Volver a probar TypeScript 7 cuando `typescript-eslint` lo admita (quitar el `ignore` de `.github/dependabot.yml`). Revisado el 02/11/2026: TypeScript 7.0.2 publicado, pero `typescript-eslint` 8.72.1 sigue pidiendo `<6.1`.
 5. Subir `@types/node` a la vez que el mínimo de `engines` cuando se deje Node 22.
 6. Progreso más fino en 3MF (hoy salta de 10 % a 50 % durante la descompresión y la lectura del XML) y durante la ordenación de aristas.
 7. Ampliar la prueba de integración a móvil (390 px) y a un archivo grande con «Cancelar» (hoy se comprueba con un script aparte).
 8. Tope de vértices en OBJ y 3MF (hoy solo hay tope de triángulos y de tamaño de archivo): un archivo de 300 MB con millones de vértices y ninguna cara puede agotar la memoria del worker antes de decir «sin caras». Se recupera con el aviso `err.worker` (la página sigue funcionando), por eso es de severidad baja.
 9. Rechazar con un mensaje claro las piezas con medidas absurdas (coordenadas cerca del máximo de `float32`): hoy dan importes astronómicos pero finitos.
-10. Quitar el `overrides` de `minimatch` en `package.json` cuando ESLint y `typescript-eslint` dependan de `minimatch` 11 (lo pusimos por GHSA-g3hv-75wg-m249, moderada y solo de desarrollo; se comprobó que ESLint revisa los mismos 130 archivos con la 10 y con la 11).
+10. Quitar el `overrides` de `minimatch` en `package.json` cuando ESLint y `typescript-eslint` dependan de `minimatch` 11 (lo pusimos por GHSA-g3hv-75wg-m249, moderada y solo de desarrollo; se comprobó que ESLint revisa los mismos 130 archivos con la 10 y con la 11). Revisado el 02/11/2026: ESLint 10.14 sigue pidiendo `^10.2.6`.
+11. Probar la triangulación con caras cóncavas reales de laminadores y programas de CAD (hoy, formas construidas en `tests/helpers/polygons.ts`) y, si alguna agota el presupuesto de pasos, revisar `budgetFor`.
+12. Validación del teléfono por país (hoy solo se mira que tenga de 6 a 20 cifras y caracteres razonables) si alguien lo pide.
+13. Quitar el fijado de vitest (`~5.0.5`) y su `ignore` en Dependabot cuando la Pi tenga Node ≥ 22.12 (vitest 5.1 usa `Map.groupBy` al informar de un fallo).
 
 ## Ideas
 
-- Añadir una migración explícita del esquema del lote persistido cuando exista un cambio que la justifique.
-- Mejorar la triangulación de polígonos OBJ cóncavos muy grandes, cuyo caso actual tiene coste alto.
-- Datos de contacto del cliente (correo, teléfono) en el PDF si alguien lo pide; hoy solo el nombre y las notas de este presupuesto.
+- Añadir una migración explícita del esquema del lote en curso (`printquote:lote:v1`) cuando exista un cambio que la justifique (revisado en la 1.2: el contacto no lo necesitaba).
+- Recordar el cliente, su contacto y las notas del lote en curso al recargar la página (hoy se recuperan al guardar el lote en el historial y abrirlo); sería el primer cambio que justifique esa migración.

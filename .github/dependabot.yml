@@ -14,14 +14,18 @@ updates:
     ignore:
       # @types/node sigue la línea de Node con la que se prueba (22; engines admite >=20.19). Los tipos de un
       # Node más nuevo dejarían usar APIs que no existen en 22 sin que tsc avise. Se sube a la vez que el CI.
-      # Revisado el 31/10/2026: @types/node 26 compila, pero se mantiene por ese motivo.
+      # Revisado el 02/11/2026 (1.2): @types/node 26 compila, pero se mantiene por ese motivo.
       - dependency-name: '@types/node'
         update-types: ['version-update:semver-major']
       # TypeScript 7: typescript-eslint 8 exige typescript <6.1 y npm ci falla (PR #64 cerrada el 24/10/2026).
-      # Quitar esta regla cuando typescript-eslint admita TS 7. Revisado el 31/10/2026: typescript-eslint 8.72.1
+      # Quitar esta regla cuando typescript-eslint admita TS 7. Revisado el 02/11/2026 (1.2, TS 7.0.2): typescript-eslint 8.72.1
       # sigue pidiendo typescript >=4.8.4 <6.1.0.
       - dependency-name: 'typescript'
         update-types: ['version-update:semver-major']
+      # vitest 5.1 usa Map.groupBy en el informe de errores: con Node 20.19 (el de la Pi y el mínimo de engines) un
+      # test que falla tumba el informe y no se ve el fallo. Fijado a ~5.0.5 (02/11/2026) hasta Node ≥ 22.12 en la Pi.
+      - dependency-name: 'vitest'
+        update-types: ['version-update:semver-minor', 'version-update:semver-major']
     commit-message:
       prefix: 'chore(deps)'
 
