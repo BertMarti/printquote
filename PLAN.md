@@ -49,7 +49,7 @@ Trabajo de la rama `mejoras-2026-10-24` comprobado contra el código actual:
 - **Correo y teléfono del cliente en el PDF** (idea «datos de contacto del cliente»): opcionales, validación que solo avisa, en el PDF solo si se rellenan, guardados con el presupuesto en el historial salvo que se desmarque la casilla (preferencia `saveContact` en el negocio), aviso de datos personales, columnas en el CSV y nunca en el enlace.
 - **Triangulación de polígonos OBJ cóncavos grandes** (idea «triangulación de polígonos cóncavos muy grandes»): `src/stl/triangulate.ts`, recorte de orejas con lista enlazada, cola de candidatas y rejilla de esquinas entrantes; sin tope de 200 vértices (ahora 100 000 y presupuesto de pasos por cara), mismas áreas que la 1.1. Pruebas con miles de vértices comparadas con la implementación anterior.
 - **Migración explícita del esquema del lote persistido** (idea): revisada y **no hace falta** todavía. El campo nuevo (contacto) es opcional y va en el historial, no en `printquote:lote:v1`; hay una prueba con datos reales de la 1.1 (historial con lote, lote en curso y negocio). Se queda en «Ideas» por si un cambio futuro del lote en curso la justifica.
-- Mantenimiento: `npm audit` a 0, parches de vite/vitest/globals/minimatch, Dependabot sin PRs ni alertas; TypeScript 7.0.2 y `@types/node` 26 siguen aplazados (puntos 4 y 5).
+- Mantenimiento: `npm audit` a 0, parches de vite/globals/minimatch (vitest fijado a `~5.0.5`: la 5.1 no informa de los fallos con Node 20.19), Dependabot sin PRs ni alertas; TypeScript 7.0.2 y `@types/node` 26 siguen aplazados (puntos 4 y 5).
 
 ## Después de la 1.0
 
@@ -67,6 +67,7 @@ Nada de esto deja a medias lo que ve el usuario; son mejoras y comprobaciones qu
 10. Quitar el `overrides` de `minimatch` en `package.json` cuando ESLint y `typescript-eslint` dependan de `minimatch` 11 (lo pusimos por GHSA-g3hv-75wg-m249, moderada y solo de desarrollo; se comprobó que ESLint revisa los mismos 130 archivos con la 10 y con la 11). Revisado el 02/11/2026: ESLint 10.14 sigue pidiendo `^10.2.6`.
 11. Probar la triangulación con caras cóncavas reales de laminadores y programas de CAD (hoy, formas construidas en `tests/helpers/polygons.ts`) y, si alguna agota el presupuesto de pasos, revisar `budgetFor`.
 12. Validación del teléfono por país (hoy solo se mira que tenga de 6 a 20 cifras y caracteres razonables) si alguien lo pide.
+13. Quitar el fijado de vitest (`~5.0.5`) y su `ignore` en Dependabot cuando la Pi tenga Node ≥ 22.12 (vitest 5.1 usa `Map.groupBy` al informar de un fallo).
 
 ## Ideas
 

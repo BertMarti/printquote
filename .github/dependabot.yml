@@ -22,6 +22,10 @@ updates:
       # sigue pidiendo typescript >=4.8.4 <6.1.0.
       - dependency-name: 'typescript'
         update-types: ['version-update:semver-major']
+      # vitest 5.1 usa Map.groupBy en el informe de errores: con Node 20.19 (el de la Pi y el mínimo de engines) un
+      # test que falla tumba el informe y no se ve el fallo. Fijado a ~5.0.5 (02/11/2026) hasta Node ≥ 22.12 en la Pi.
+      - dependency-name: 'vitest'
+        update-types: ['version-update:semver-minor', 'version-update:semver-major']
     commit-message:
       prefix: 'chore(deps)'
 

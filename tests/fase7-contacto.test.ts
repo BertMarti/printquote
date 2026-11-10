@@ -5,7 +5,7 @@ import { renderQuotePdf } from '../src/pdf/render';
 import { DEFAULT_BUSINESS, normalizeBusiness } from '../src/quote/business';
 import { isValidEmail, isValidPhone } from '../src/quote/contact';
 import { makePart } from '../src/quote/batch';
-import { createEntry, EMAIL_MAX, historyToCsv, normalizeHistory, PHONE_MAX } from '../src/quote/history';
+import { countWithContact, createEntry, EMAIL_MAX, historyToCsv, normalizeHistory, PHONE_MAX, withoutContact } from '../src/quote/history';
 import { computeQuote } from '../src/quote/model';
 import { DEFAULT_SETTINGS } from '../src/quote/settings';
 import { computeStats } from '../src/stl/geometry';
@@ -74,5 +74,16 @@ describe('contacto del cliente', () => {
     });
     const pdf = await renderQuotePdf(doc, testFonts);
     expect((await PDFDocument.load(pdf)).getPageCount()).toBe(1);
+  });
+
+  it('countWithContact y withoutContact: quita solo el correo y el teléfono', () => {
+    const withBoth = createEntry({ fileName: 'a.stl', client: 'Ana', note: 'n', email: 'a@b.es', phone: '600123456', stats, settings: DEFAULT_SETTINGS, quote, id: 'a' });
+    const onlyPhone = createEntry({ fileName: 'b.stl', client: '', phone: '600123456', stats, settings: DEFAULT_SETTINGS, quote, id: 'b' });
+    const none = createEntry({ fileName: 'c.stl', client: '', stats, settings: DEFAULT_SETTINGS, quote, id: 'c' });
+    expect(countWithContact([withBoth, onlyPhone, none])).toBe(2);
+    const clean = withoutContact([withBoth, onlyPhone, none]);
+    expect(countWithContact(clean)).toBe(0);
+    expect(clean[0]).toEqual((({ email: _e, phone: _p, ...rest }) => rest)(withBoth));
+    expect(clean[2]).toBe(none);
   });
 });

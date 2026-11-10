@@ -243,6 +243,22 @@ export function addEntry(list: readonly HistoryEntry[], entry: HistoryEntry): { 
   return { entries: all.slice(0, HISTORY_MAX), dropped: Math.max(0, all.length - HISTORY_MAX) };
 }
 
+/** Presupuestos guardados que llevan correo o teléfono del cliente. */
+export function countWithContact(list: readonly HistoryEntry[]): number {
+  return list.filter((entry) => entry.email !== undefined || entry.phone !== undefined).length;
+}
+
+/** El historial sin el correo ni el teléfono de ningún presupuesto (el resto, igual). */
+export function withoutContact(list: readonly HistoryEntry[]): HistoryEntry[] {
+  return list.map((entry) => {
+    if (entry.email === undefined && entry.phone === undefined) return entry;
+    const rest: { -readonly [K in keyof HistoryEntry]?: HistoryEntry[K] } = { ...entry };
+    delete rest.email;
+    delete rest.phone;
+    return rest as HistoryEntry;
+  });
+}
+
 export function removeEntry(list: readonly HistoryEntry[], id: string): HistoryEntry[] {
   return list.filter((entry) => entry.id !== id);
 }

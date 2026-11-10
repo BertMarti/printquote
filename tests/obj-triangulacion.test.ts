@@ -176,7 +176,7 @@ describe('triangulación de polígonos cóncavos grandes (1.2)', () => {
     const fresh = run('new', points, { steps: 1000 });
     expect(fresh.exact).toBe(false);
     expect(fresh.triangles).toHaveLength(points.length - 2);
-    expect(budgetFor(points.length)).toBeGreaterThan(1000 * points.length);
+    expect(budgetFor(points.length)).toBeGreaterThan(300 * points.length); // las caras simples de estas pruebas gastan < 175 por vértice
   });
 
   it('un OBJ con una cara cóncava de 20 000 vértices ya no avisa y su superficie es la correcta', async () => {
@@ -197,5 +197,21 @@ describe('triangulación de polígonos cóncavos grandes (1.2)', () => {
     expect(stats.surfaceArea / (2 * shoelace(points) + perimeter(points) * 5)).toBeCloseTo(1, 5);
     expect(stats.volume / (shoelace(points) * 5)).toBeCloseTo(1, 5);
     expect(stats.openEdges).toBe(0);
+  });
+
+  it('con muchas caras antes que sus vértices, informa del progreso mientras las divide (y siempre hacia delante)', () => {
+    const side = 200; // 200 × 200 = 40 000 caras de 4 vértices → 80 000 triángulos aplazados (> 65 536)
+    const faces: string[] = [];
+    const vertices: string[] = [];
+    for (let y = 0; y <= side; y++) for (let x = 0; x <= side; x++) vertices.push(`v ${x} ${y} 0`);
+    const at = (x: number, y: number): number => y * (side + 1) + x + 1;
+    for (let y = 0; y < side; y++) for (let x = 0; x < side; x++) faces.push(`f ${at(x, y)} ${at(x + 1, y)} ${at(x + 1, y + 1)} ${at(x, y + 1)}`);
+    const steps: number[] = [];
+    const mesh = parseObj(encode(`${faces.join('\n')}\n${vertices.join('\n')}\n`), (fraction) => steps.push(fraction));
+    expect(mesh.triangleCount).toBe(2 * side * side);
+    const deferred = steps.filter((fraction) => fraction >= 0.5 && fraction < 0.6);
+    expect(deferred.length).toBeGreaterThanOrEqual(2); // al empezar y tras 65 536 triángulos
+    expect(steps.every((fraction, i) => i === 0 || fraction >= (steps[i - 1] ?? 0))).toBe(true);
+    expect(steps.at(-1)).toBe(1);
   });
 });

@@ -15,7 +15,7 @@ Web que calcula el presupuesto de una pieza de impresión 3D: arrastras un STL, 
 - Desarrollo: `npm run dev` → <http://localhost:5173/printquote/>
 - Lint: `npm run lint`
 - Tipos: `npm run typecheck` (src y tests)
-- Tests: `npm test` (Vitest; `testTimeout` 30 s porque la Raspberry Pi va justa)
+- Tests: `npm test` (Vitest; `testTimeout` 30 s porque la Raspberry Pi va justa). Vitest va fijado a `~5.0.5`: la 5.1 usa `Map.groupBy` al informar de un fallo y con Node 20.19 (el de la Pi) el informe se cae y no se ve el error; no lo subas hasta Node ≥ 22.12 en la Pi (hay un `ignore` en `.github/dependabot.yml`).
 - Build: `npm run build` (typecheck + `vite build`; salida en `dist/`, con la CSP en `dist/index.html`)
 - Probar el build como en Pages: `npm run preview` → <http://localhost:4173/printquote/>
 - Prueba de integración del build en Chrome/Chromium (CSP, Trusted Types, worker, visor, PDF, service worker): `npm run build && npm run test:integracion` (`CHROME=/ruta` si no lo encuentra; en la Raspberry Pi tarda ~1 min y va con `nice`). También corre en el CI (ubuntu).

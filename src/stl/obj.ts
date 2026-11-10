@@ -161,11 +161,21 @@ export function parseObj(data: ArrayBuffer | Uint8Array, onProgress?: ProgressFn
       }
     }
   }
+  // Las caras aplazadas pueden ser muchas (un archivo con todas las caras antes que los vértices): se informa del
+  // progreso entre el 50 % y el 60 % cada PROGRESS_EVERY triángulos, y el último tramo va del 60 % al 100 %.
+  const pendingFrom = triangleCount;
+  let nextPendingReport = 0;
   for (let k = 0, start = 0; k < pendingEnds.length; k++) {
+    const done = triangleCount - pendingFrom;
+    if (onProgress && done >= nextPendingReport) {
+      onProgress(0.5 + (done / pendingTriangles) * 0.1);
+      nextPendingReport = done + PROGRESS_EVERY;
+    }
     const end = pendingEnds.data[k] ?? start;
     addFace(Array.from(pendingIndices.data.subarray(start, end)));
     start = end;
   }
+  const tail = pendingTriangles > 0 ? 0.6 : 0.5;
 
   if (vertexCount === 0) throw new ModelParseError('err.obj.noVertices');
   if (triangleCount === 0) {
@@ -182,7 +192,7 @@ export function parseObj(data: ArrayBuffer | Uint8Array, onProgress?: ProgressFn
     positions[i * 3] = vertices.data[v * 3] ?? 0;
     positions[i * 3 + 1] = vertices.data[v * 3 + 1] ?? 0;
     positions[i * 3 + 2] = vertices.data[v * 3 + 2] ?? 0;
-    if (i % PROGRESS_EVERY === 0) onProgress?.(0.5 + (i / (triangleCount * 3)) * 0.5);
+    if (i % PROGRESS_EVERY === 0) onProgress?.(tail + (i / (triangleCount * 3)) * (1 - tail));
   }
   onProgress?.(1);
   return { positions, triangleCount, format: 'obj', largePolygons };

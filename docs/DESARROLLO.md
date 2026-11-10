@@ -90,7 +90,7 @@ npm run dev        # http://localhost:5173/printquote/
 
 - TypeScript estricto y Vite, sin framework de UI: DOM y CSS propios.
 - three.js con `OrbitControls` para el visor.
-- Vitest y ESLint con `typescript-eslint`.
+- Vitest y ESLint con `typescript-eslint`. Vitest está fijado a `~5.0.5`: la 5.1 necesita `Map.groupBy` (Node ≥ 21) para informar de un test que falla, y con Node 20.19 no se vería el error. Se subirá cuando el mínimo pase a Node 22.
 - GitHub Actions para CI en Ubuntu y Windows y despliegue en GitHub Pages.
 - Parsers propios para STL, OBJ y 3MF; el ZIP y XML del 3MF se leen sin dependencias adicionales.
 - `pdf-lib` y `@pdf-lib/fontkit` para el PDF, cargados bajo demanda con `import()`.

@@ -1995,3 +1995,14 @@ input {
     color: #555;
   }
 }
+
+/* Pregunta al desmarcar «Guardar el correo y el teléfono»: ¿quitarlos también de los ya guardados? */
+.contact-purge {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-left: 2px solid var(--accent);
+}
+
+.contact-purge .history-actions {
+  margin-top: 6px;
+}

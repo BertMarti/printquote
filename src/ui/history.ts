@@ -8,9 +8,11 @@ import {
   partSurface,
   createBatchEntry,
   createEntry,
+  countWithContact,
   HISTORY_MAX,
   historyToCsv,
   removeEntry,
+  withoutContact,
   type HistoryEntry,
 } from '../quote/history';
 import type { Quote } from '../quote/model';
@@ -48,6 +50,10 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
   const phone = byId<HTMLInputElement>('in-client-phone');
   const saveContact = byId<HTMLInputElement>('in-contact-save');
   const emailError = byId('err-client-email');
+  const purge = byId('contact-purge');
+  const purgeText = byId('contact-purge-text');
+  const purgeYes = byId<HTMLButtonElement>('contact-purge-yes');
+  const purgeNo = byId<HTMLButtonElement>('contact-purge-no');
   const phoneError = byId('err-client-phone');
   const note = byId<HTMLTextAreaElement>('in-quote-notes');
   const saveButton = byId<HTMLButtonElement>('history-save');
@@ -146,6 +152,7 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
 
   function render(): void {
     recheckContact(); // también al cambiar de idioma: el aviso se vuelve a escribir en el nuevo
+    if (!purge.hidden) syncPurge();
     rendering = true;
     list.replaceChildren(...entries.map(row));
     rendering = false;
@@ -257,7 +264,39 @@ export function setupHistory(host: HistoryHost): { render(): void; sync(): void 
 
   saveButton.addEventListener('click', save);
   saveBatchButton.addEventListener('click', saveBatch);
-  saveContact.addEventListener('change', () => host.setContactSave(saveContact.checked));
+  /** Pregunta (al desmarcar la casilla) si se quita el contacto de los presupuestos ya guardados; el texto, en el idioma activo. */
+  function syncPurge(): void {
+    const n = countWithContact(entries);
+    if (saveContact.checked || n === 0) {
+      purge.hidden = true;
+      return;
+    }
+    purgeText.textContent = n === 1 ? t('hist.contactPurge.one') : t('hist.contactPurge', { n });
+  }
+  saveContact.addEventListener('change', () => {
+    host.setContactSave(saveContact.checked);
+    const ask = !saveContact.checked && countWithContact(entries) > 0;
+    purge.hidden = !ask;
+    syncPurge();
+    if (ask) purgeYes.focus();
+  });
+  purgeYes.addEventListener('click', () => {
+    const n = countWithContact(entries);
+    const next = withoutContact(entries);
+    if (!saveHistory(next)) {
+      host.showNotice(t('hist.save.failed.title'), t('hist.save.failed'));
+      return;
+    }
+    entries = next;
+    purge.hidden = true;
+    render();
+    saveContact.focus();
+    host.announce(n === 1 ? t('hist.contactPurged.one') : t('hist.contactPurged', { n }));
+  });
+  purgeNo.addEventListener('click', () => {
+    purge.hidden = true;
+    saveContact.focus();
+  });
   const validate = (input: HTMLInputElement, error: HTMLElement, valid: (value: string) => boolean, key: Key): void => {
     if (input.value === '' || valid(input.value)) {
       input.removeAttribute('aria-invalid');

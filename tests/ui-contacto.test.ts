@@ -123,4 +123,69 @@ describe('contacto del cliente en la interfaz', () => {
     expect($('err-client-email').textContent).toBe('');
     expect($('in-client-email').hasAttribute('aria-invalid')).toBe(false);
   });
+
+  describe('al desmarcar la casilla con presupuestos ya guardados', () => {
+    const stored = (): { email?: string; phone?: string; note?: string }[] =>
+      JSON.parse(window.localStorage.getItem('printquote:historial:v1') ?? '[]') as { email?: string; phone?: string }[];
+
+    async function saveTwo(): Promise<void> {
+      await start();
+      type('in-client-email', 'ana@example.com');
+      type('in-client-phone', '600123456');
+      type('in-quote-notes', 'Rojo');
+      $('history-save').click();
+      $('history-save').click();
+      expect(stored().filter((entry) => entry.email)).toHaveLength(2);
+    }
+
+    it('pregunta si se quitan de los ya guardados y, al confirmar, los quita de todos (y solo eso)', async () => {
+      await saveTwo();
+      expect($('contact-purge').hidden).toBe(true);
+      $('in-contact-save').click();
+      expect($('contact-purge').hidden).toBe(false);
+      expect($('contact-purge-text').textContent).toBe('¿Quitar también el correo y el teléfono de los 2 presupuestos ya guardados que los tienen?');
+      expect(document.activeElement).toBe($('contact-purge-yes'));
+      document.querySelector<HTMLButtonElement>('button[data-lang="en"]')?.click();
+      expect($('contact-purge-text').textContent).toBe('Also remove the email and phone from the 2 saved quotes that have them?');
+      expect($('contact-purge-yes').textContent).toBe('Remove them');
+      document.querySelector<HTMLButtonElement>('button[data-lang="es"]')?.click();
+      $('contact-purge-yes').click();
+      expect($('contact-purge').hidden).toBe(true);
+      expect(stored()).toHaveLength(2);
+      for (const entry of stored()) {
+        expect(entry).not.toHaveProperty('email');
+        expect(entry).not.toHaveProperty('phone');
+        expect(entry.note).toBe('Rojo');
+      }
+      expect(loadBusiness().saveContact).toBe(false);
+    });
+
+    it('«Dejarlos» no toca lo guardado, volver a marcar oculta la pregunta y sin contactos guardados no pregunta', async () => {
+      await saveTwo();
+      $('in-contact-save').click();
+      $('contact-purge-no').click();
+      expect($('contact-purge').hidden).toBe(true);
+      expect(stored().filter((entry) => entry.email === 'ana@example.com')).toHaveLength(2);
+      $('in-contact-save').click(); // marcada otra vez
+      expect($('contact-purge').hidden).toBe(true);
+      window.localStorage.removeItem('printquote:historial:v1');
+      document.body.innerHTML = body;
+      await start();
+      $('in-contact-save').click();
+      expect($('contact-purge').hidden).toBe(true);
+    });
+
+    it('si el navegador no deja escribir, avisa y no da por quitados los datos', async () => {
+      await saveTwo();
+      $('in-contact-save').click();
+      const setItem = vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
+        throw new Error('lleno');
+      });
+      $('contact-purge-yes').click();
+      setItem.mockRestore();
+      expect($('contact-purge').hidden).toBe(false);
+      expect(document.body.textContent).toContain('No se ha podido guardar');
+      expect(stored().filter((entry) => entry.email)).toHaveLength(2);
+    });
+  });
 });

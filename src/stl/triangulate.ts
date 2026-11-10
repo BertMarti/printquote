@@ -23,9 +23,14 @@ export const MAX_EAR_CLIPPING = 100_000;
 /** Por debajo de esto recorrer el anillo entero sale más barato que mantener la rejilla. */
 export const GRID_MIN = 64;
 
-/** Pasos (candidatas, celdas, puntos comprobados y reconstrucciones de la rejilla) por cara: lo normal es < 200 por vértice. */
+/**
+ * Pasos (candidatas, celdas, puntos comprobados y reconstrucciones de la rejilla) por cara. Medido (1.2): las caras
+ * simples de las pruebas gastan de 11 a 175 por vértice con 100 000 vértices (la peor, una estrella con radios al
+ * azar: 17,5 M de 30,2 M). Una cara que se cruza a sí misma de 100 000 vértices lo agota en ~5 s en la Raspberry Pi
+ * (con 1 000 000 + 1000 · n eran 13–17 s).
+ */
 export function budgetFor(n: number): number {
-  return 1_000_000 + 1_000 * n;
+  return 200_000 + 300 * n;
 }
 
 // Memoria de trabajo reutilizada entre caras (un archivo puede traer millones): crece por duplicación.
